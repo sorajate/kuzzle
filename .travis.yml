@@ -5,15 +5,15 @@
 # ------------------------
 stages:
   - name: Unit Tests & Linters
-    if: type =~ /^cron|push|pull_request$/
+    if: type =~ /(cron|push|pull_request)/
   - name: Integration tests
-    if: type =~ /^cron|push|pull_request$/
+    if: type =~ /(cron|push|pull_request)/
   - name: Cross-platform tests
     if: type = cron
   - name: Redis tests
     if: type = cron
   - name: Deployments
-    if: type = push AND branch =~ /^master|[0-9]+-dev|stable$/
+    if: type = push AND branch =~ /^master|[0-9]+-(dev|stable)$/
 
 # ---------------------------------------
 # Notifications
@@ -138,7 +138,7 @@ jobs:
 
     - <<: *integration-tests
       stage: Integration tests
-      if: type =~ /^push|cron$/ AND branch =~ /^master|[0-9]+-(dev|stable)$/
+      if: type =~ /(push|cron)/ AND branch =~ /^master|[0-9]+-(dev|stable)$/
       name: Node.js 8
       env:
         - <<: *integration-tests-env
@@ -146,7 +146,7 @@ jobs:
 
     - <<: *integration-tests
       stage: Integration tests
-      if: type =~ /^push|cron$/ AND branch =~ /^master|[0-9]+-(dev|stable)$/
+      if: type =~ /(push|cron)/ AND branch =~ /^master|[0-9]+-(dev|stable)$/
       name: Node.js 10
       env:
         - <<: *integration-tests-env
@@ -210,6 +210,7 @@ jobs:
         api_key:
           secure: gqLBt1Scnr8wAR0zauW3jI7M576Jr7d+d2C5gvCA+iI1Y6gBWMM04A3w1MHHcPUBNA+xbwNimyoxbrBozq7otiMEDbP5ConS+T3KRWyHYwjdSfmL5KmEoNqwjmo128qJq2uWFxEecBmBk63q9A3gbnhdw3/D+05NKL4B44PpyNDpT6fApsVyDNXQmeib6cYfjwB1rCv8Mcf2sbVE1eqcJuGTwDtxx/860405PqBSg7H8iGGJJr7cymaU8cK4RLre+u8GHRiSDoKeU1UiWIoIoLG0y8TisFllSstZu9kguA6ShPJJA28NLiNyJ7j0KxKW6muvY03AFxa4XQ0sMaxotjQxN3IRUnLdN1mnQydWqMRP2+HWK1uRXCiDoL9ZnSClS1BixSAv15tvhggqE76Rq4uGCcl7hYfagpUzQpsUIV40Wc7CHez/O4ZvvicWIOdo2jmh/6fRYWOFY2+ihzwszaZwAQT1cdTm75JMIqrATyNWEZvwvczQzC85HmJajhf1azyEY08kdIJxwmwh30AMl2Is0vlq9ujCp8XRsanbdj74CcDNf9RSgesiD83McLd/ZJZHSDIe//wNypcTcW4fQbSfGb1oDHWVLQ6L/jr+W3OJUgVBG31mMciGo2jSROOos8n4iHHqs3QbxTwh0B+t+1amvZlpelFUEoicprPCcN8=
         on:
+          repo: kuzzleio/kuzzle
           branch: master
           tags: true
 
