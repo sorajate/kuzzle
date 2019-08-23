@@ -780,18 +780,23 @@ describe('/lib/api/core/entrypoints/embedded/protocols/http', () => {
         process.env.NODE_ENV = env;
 
         const
-          kerr = errorsManager.getError('network', 'http', 'http_request_error', 'test'),
-          matcher = errorMatcher.fromMessage(
+          kerr = errorsManager.getError(
             'network',
             'http',
             'http_request_error',
-            'test'),
-          expected = (new Request(payload, {connectionId, kerr})).serialize();
+            'Error: foobar'),
+          matcher = errorMatcher.fromError(kerr),
+          expected = (new Request(payload, {connectionId, error: kerr}))
+            .serialize();
 
         // likely to be different, and we do not care about it
         delete expected.data.timestamp;
 
-        protocol._replyWithError({id: connectionId}, payload, response, kerr);
+        protocol._replyWithError(
+          {id: connectionId},
+          payload,
+          response,
+          new Error('foobar'));
 
         should(entrypoint.logAccess).be.calledOnce();
         should(entrypoint.logAccess.firstCall.args[0].serialize())
