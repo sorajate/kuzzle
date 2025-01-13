@@ -1,12 +1,10 @@
 ---
 code: true
 type: page
-title: loadMappings
+title: loadMappings | API | Core
 ---
 
 # loadMappings
-
-<SinceBadge version="1.7.0" />
 
 Apply mappings to the storage layer.
 

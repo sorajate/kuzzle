@@ -1,11 +1,14 @@
 ---
 code: false
 type: page
-title: API Controllers
-description: Extend Kuzzle API with controllers and actions
 order: 300
+title: API Controllers | Develop on Kuzzle | Guide | Core
+meta:
+  - name: description
+    content: Extend Kuzzle API with controllers and actions
+  - name: keywords
+    content: Kuzzle, Documentation, kuzzle write pluggins, General purpose backend, iot, backend, opensource,  API Controllers
 ---
-
 # API Controllers
 
 Kuzzle allows to extend its existing API using Controllers. Controllers are **logical containers of actions**.
@@ -225,9 +228,9 @@ By doing this, the action will only be available through the HTTP protocol with 
 
 The API action [server:openapi](/core/2/api/controllers/server/openapi) returns available API routes OpenAPI v3 specifications.
 
-By default, Kuzzle autogenerates specifications for actions added via a controller. When defining a controller action, it is possible to provide a custom specification which will overwrite the default one.
+When used with the `scope` argument to `app`, the API action will returns the OpenAPI specification of custom controllers added by plugins or the application.
 
-### HTTP Route
+Kuzzle generates specifications for custom API actions, although it is possible to customize the OpenAPI specifications for each HTTP route.
 
 To register this custom specification, it must be declared with http routes in an `openapi` property. To write this object, follow the official [openapi specification](https://swagger.io/specification/#paths-object) especially the paths object section.
 
@@ -269,6 +272,7 @@ app.controller.register('greeting', {
   }
 });
 ```
+
 Then Kuzzle will inject the http route specification as shown in the example below using each property `path`, `verb` and `openapi`.
 
 ```json
@@ -296,6 +300,26 @@ Then Kuzzle will inject the http route specification as shown in the example bel
     },
   }
 }
+```
+
+<SinceBadge version="2.17.0" />
+
+The complete OpenAPI definition is accessible and customizable with the [Backend.openapi.definition](/core/2/framework/classes/backend-openapi) property.
+
+**Example:** _Register an OpenAPI schema_
+
+```js
+app.openApi.definition.components.LogisticObjects = {
+  Item: {
+    type: 'object',
+    properties: {
+      name: { type: 'string' },
+      quantity: { type: 'integer' },
+    }
+  }
+};
+
+// Then you can reference this schema anywhere according to OpenAPI specification "#/components/LogisticObjects/Item"
 ```
 
 ## KuzzleRequest Input
@@ -538,7 +562,6 @@ app.controller.register('files', {
         request.response.configure({
           format: 'raw',
           headers: {
-            'Content-Length': csv.length.toString(),
             'Content-Type': 'text/csv',
             'Content-Disposition': 'attachment; filename="export.csv"'
           }
@@ -580,6 +603,50 @@ app.controller.register('redirect', {
         });
 
         return null;
+      }
+    }
+  }
+});
+```
+
+#### HTTP Streams
+<SinceBadge version="2.17.0" />
+
+Kuzzle sends response through HTTP using the JSON format.
+[Kuzzle Response](/core/2/guides/main-concepts/api#response-format) are standardized. This format is shared by all API actions, including custom controller actions.
+
+Kuzzle Response might be heavy when it comes to processing and sending large volumes of data, since the response are sent in one go,
+this imply that all the processing must be done before sending the response and must be stored in ram until the whole response is sent.
+
+To avoid having to process and store large amount of data before sending it, Kuzzle allow controller's actions to return an [HttpStream](/core/2/framework/classes/http-stream) instead
+of a JSON object.
+Kuzzle will then stream the data though the HTTP protocol in chunk until the stream is closed, this way you can process bits of your data at a time
+and not have everything stored in ram.
+
+::: warning
+Chunks are sent through the HTTP Protocol each time a chunk is emitted through the `data` event of the given stream.
+It's up to you to implement a buffer mechanism to avoid sending too many small consecutive chunks through the network.
+
+Sending too many small chunks instead of bigger chunks will increase the number of syscall made to the TCP Socket and might decrease performance and throughput.
+:::
+
+**Usage:**
+
+All you need to send a stream from any controller's actions is to wrap any [Readable Stream](https://nodejs.org/docs/latest-v14.x/api/stream.html#stream_class_stream_readable)
+from NodeJS with an [HttpStream](/core/2/framework/classes/http-stream).
+
+**Example: Read a file from the disk and send it.**
+
+```js
+const fs = require('fs');
+
+app.controller.register('myController', {
+  actions: {
+    myDownloadAction: {
+      handler: async (request: KuzzleRequest) => {
+        const readStream = fs.createReadStream('./Document.tar.gz');
+
+        return new HttpStream(readStream);
       }
     }
   }

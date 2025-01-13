@@ -1,9 +1,13 @@
 ---
 code: false
 type: page
-title: Run Kuzzle
-description: Run your first Kuzzle application
 order: 100
+title: Run Kuzzle | Kuzzle Getting Started | Guide | Core
+meta:
+  - name: description
+    content: Run your first Kuzzle application
+  - name: keywords
+    content: Kuzzle, Documentation, kuzzle write pluggins, General purpose backend, Write an Application, iot, backend, opensource, realtime, run kuzzle
 ---
 
 # Run Kuzzle
@@ -16,24 +20,24 @@ In this guide we will use Docker and Docker Compose to run those services.
 
 ### Prerequisites
 
- - [Node.js >= 12](https://nodejs.org/en/download/)
- - [Docker](https://docs.docker.com/engine/install/)
- - [Docker Compose](https://docs.docker.com/compose/install/)
- - [Kourou](https://github.com/kuzzleio/kourou)
-
 ::: info
-It's recommanded to use Node Version Manager to avoid rights problems when using Node.js and dependencies.  
+It is recommended to use Node Version Manager to avoid rights problems when using Node.js and dependencies.
 You can install NVM with the one-liner script documented on [NVM Github repository](https://github.com/nvm-sh/nvm#install--update-script)
 :::
+
+- [Node.js >= 16](https://nodejs.org/en/download/)
+- [Docker](https://docs.docker.com/engine/install/)
+- [Kourou](https://github.com/kuzzleio/kourou)
+
 
 Throughout this guide, we will need to use [Kourou](https://github.com/kuzzleio/kourou), the Kuzzle CLI.
 
 You can install Kourou globally by using NPM: `npm install -g kourou`
 
 ::: warning
-Kuzzle uses compiled C++ dependencies so a compile toolchain (a C++ compiler like g++ or clang, make and python) is necessary to run `npm install kuzzle`.  
-For the sake of simplicity we will use a Docker and Docker Compose throughout this guide. 
-::: 
+Kuzzle uses compiled C++ dependencies so a compile toolchain (a C++ compiler like g++ or clang, make and python) is necessary to run `npm install kuzzle`.
+For the sake of simplicity we will use a Docker and Docker Compose throughout this guide.
+:::
 
 ::: info
 If you encounter issues about permissions when trying to use Docker, please follow the [Docker as a non root user guide](https://docs.docker.com/engine/install/linux-postinstall/#manage-docker-as-a-non-root-user).
@@ -45,78 +49,95 @@ First, we will initialize a new application using Kourou:
 
 ```bash
 kourou app:scaffold playground
- 
-  🚀 Kourou - Scaffolds a new Kuzzle application
- 
-  ✔ Creating "playground/" directory
-  ✔ Creating and rendering application files
-  ✔ Installing latest Kuzzle version via NPM and Docker (this can take some time)
 
- [✔] Scaffolding complete! Use "npm run dev:docker" to run your application
+ 🚀 Kourou - Scaffolds a new Kuzzle application
 
+generic
+  ✔ Checking destination
+  ✔ Prepare temporary folder
+  ✔ Cloning template repository
+  ✔ Copying template files
+  ✔ Cleaning up
+
+ [✔] Scaffolding complete!
+ [✔] Use cd playground && docker compose up -d to start your Kuzzle stack.
 ```
 
 This will create the following files and directories:
 
 ```
-playground/
-├── lib                  < application code
-├── .eslintignore
-├── .eslintrc.json
-├── .gitignore
-├── .kuzzlerc            < kuzzle configuration file
-├── app.ts               < application entrypoint        
-├── docker-compose.yml   < Docker Compose configuration
-├── .mocharc.json
-├── package.json
-├── package-lock.json
+.
+├── Dockerfile
 ├── README.md
+├── app.ts
+├── docker-compose.yml
+├── environments
+│   ├── local
+│   │   ├── kourou.env
+│   │   └── kuzzlerc
+│   └── main
+│       ├── kourou.env
+│       └── kuzzlerc
+├── ergol.config.json
+├── jest.config.ts
+├── lib
+│   ├── MyApplication.ts
+│   └── modules
+│       └── index.ts
+├── package-lock.json
+├── package.json
+├── start.sh
+├── tests
+│   └── unit
+│       ├── MyApplication.test.ts
+│       └── utils.ts
 └── tsconfig.json
 ```
 
-The `app.ts` file contain the basic code to run a Kuzzle application. This file is meant to be executed with Node.js as any application.
+The `app.ts` file contains the basic code to run a Kuzzle application. This file is meant to be executed with Node.js like any other app.
 
 ```ts
-import { Backend } from 'kuzzle'
+import { Backend } from "kuzzle";
 
-const app = new Backend('playground')
+const app = new Backend("playground");
 
-app.start()
+app
+  .start()
   .then(() => {
-    app.log.info('Application started')
+    app.log.info("Application started");
   })
-  .catch(console.error)
+  .catch(console.error);
 ```
 
-We can now run our first application with `npm run dev:docker`
-
 ::: info
-Under the hood, the command `npm run dev:docker` uses [nodemon](https://nodemon.io/) and [ts-node](https://www.npmjs.com/package/ts-node) inside the Docker container to run the application.
+You can now run `cd playground && docker compose up -d` to start your application.
 :::
 
 Now visit [http://localhost:7512](http://localhost:7512) with your browser. You should see the result of the [server:info](/core/2/api/controllers/server/info) action.
 
 ### Admin Console
 
-We can also use the [Admin Console](https://next-console.kuzzle.io) which allows to manage your data, your users and your rights.
+You can also use the [Admin Console](https://console.kuzzle.io) which allows you to manage your data, your users and your rights.
 
 ::: info
-The Admin Console is a [Single Page Application](https://en.wikipedia.org/wiki/Single-page_application) written in Vue.js and using the [Javascript SDK](/sdk/js/7).  
+The Admin Console is a [Single Page Application](https://en.wikipedia.org/wiki/Single-page_application) written in Vue.js and using the [Javascript SDK](/sdk/js/7).
 No data related to your connection to Kuzzle will pass through our servers.
 :::
 
-First, we need to setup a new connection to a Kuzzle application. Open the [Admin Console](http://next-console.kuzzle.io) in your browser and then fill the form as follow:
+First, we need to setup a new connection to a Kuzzle application. Open the [Admin Console](http://console.kuzzle.io) in your browser and then fill the form as follows:
 
 ![Admin Console create connection form](./admin-console-create-connection.png)
 
-Click on `Create Connection` and then select your connection on the dropdown menu.
+Click on `Create Connection`, then select your connection on the dropdown menu.
 
 When asked for credentials, just choose `Login as Anonymous`.
 
-You are now connected to your local Kuzzle application with the Admin Console! Everything is empty but we are gonna change that in the next section.
+You are now connected to your local Kuzzle application using the Admin Console! Right now you can see that it is devoid of any data or configuration, but we are going to change that in the next section of this guide. 
+
+![Admin Console home page](./admin-console-home-page.png)
 
 ::: info
-The minimum rights required by an user to connect to the Kuzzle Admin Console are:
+The minimum rights required for an user to connect to the Kuzzle Admin Console are:
 
 ```js
 {
@@ -132,9 +153,8 @@ The minimum rights required by an user to connect to the Kuzzle Admin Console ar
   }
 }
 ```
-
 :::
 
-<GuidesLinks 
+<GuidesLinks
   :next="{ text: 'Store and Access Data', url: '/guides/getting-started/store-and-access-data/' }"
 />

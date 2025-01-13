@@ -2,7 +2,7 @@
  * Kuzzle, a backend software, self-hostable and ready to use
  * to power modern apps
  *
- * Copyright 2015-2020 Kuzzle
+ * Copyright 2015-2022 Kuzzle
  * mailto: support AT kuzzle.io
  * website: http://kuzzle.io
  *
@@ -19,7 +19,7 @@
  * limitations under the License.
  */
 
-import { JSONObject } from 'kuzzle-sdk';
+import { JSONObject } from "kuzzle-sdk";
 
 /**
  * Kuzzle authentication token.
@@ -65,4 +65,3 @@ export interface Token extends JSONObject {
    */
   type: string;
 }
-

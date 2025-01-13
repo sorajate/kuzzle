@@ -1,12 +1,10 @@
 ---
 code: true
 type: page
-title: join
+title: join | API | Core
 ---
 
 # join
-
-<DeprecatedBadge version="1.8.0" />
 
 Joins a previously created subscription.
 

@@ -1,11 +1,14 @@
 ---
 code: false
 type: page
-title: Cluster and Scalability
-description: Understand how a Kuzzle cluster works
 order: 700
+title: Cluster and Scalability | Kuzzle Advanced | Guide | Core
+meta:
+  - name: description
+    content: Understand how a Kuzzle cluster works
+  - name: keywords
+    content: Kuzzle, Documentation, kuzzle write pluggins, General purpose backend, opensource,  Cluster and Scalability 
 ---
-
 :::info
 This documentation page applies to Kuzzle versions 2.11 and above.  
 
@@ -98,7 +101,7 @@ If you want to quickly create a Kuzzle cluster on a single machine, you can use 
 
 Kuzzle's RC file features a `cluster` section, allowing to fine-tune its behavior.
 
-See the `cluster` section of our [.kuzzlerc.sample file](https://github.com/kuzzleio/kuzzle/blob/master/.kuzzlerc.sample) for a complete documentation.
+See the `cluster` section of our [.kuzzlerc.sample.jsonc file](https://github.com/kuzzleio/kuzzle/blob/master/.kuzzlerc.sample.jsonc) for a complete documentation.
 
 ---
 

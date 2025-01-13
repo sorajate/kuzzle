@@ -2,7 +2,7 @@
  * Kuzzle, a backend software, self-hostable and ready to use
  * to power modern apps
  *
- * Copyright 2015-2020 Kuzzle
+ * Copyright 2015-2022 Kuzzle
  * mailto: support AT kuzzle.io
  * website: http://kuzzle.io
  *
@@ -19,18 +19,18 @@
  * limitations under the License.
  */
 
-export * from './badRequestError';
-export * from './externalServiceError';
-export * from './forbiddenError';
-export * from './gatewayTimeoutError';
-export * from './internalError';
-export * from './kuzzleError';
-export * from './multipleErrorsError';
-export * from './notFoundError';
-export * from './partialError';
-export * from './pluginImplementationError';
-export * from './serviceUnavailableError';
-export * from './sizeLimitError';
-export * from './unauthorizedError';
-export * from './preconditionError';
-export * from './tooManyRequestsError';
+export * from "./badRequestError";
+export * from "./externalServiceError";
+export * from "./forbiddenError";
+export * from "./gatewayTimeoutError";
+export * from "./internalError";
+export * from "./kuzzleError";
+export * from "./multipleErrorsError";
+export * from "./notFoundError";
+export * from "./partialError";
+export * from "./pluginImplementationError";
+export * from "./serviceUnavailableError";
+export * from "./sizeLimitError";
+export * from "./unauthorizedError";
+export * from "./preconditionError";
+export * from "./tooManyRequestsError";

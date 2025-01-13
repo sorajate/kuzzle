@@ -1,30 +1,35 @@
-'use strict';
+"use strict";
 
-const should = require('should');
-const sinon = require('sinon');
-const mockRequire = require('mock-require');
+const should = require("should");
+const sinon = require("sinon");
+const mockRequire = require("mock-require");
 
 const {
   BadRequestError,
   PartialError,
   PreconditionError,
-} = require('../../../index');
-const KuzzleMock = require('../../mocks/kuzzle.mock');
-const ElasticsearchMock = require('../../mocks/elasticsearch.mock');
-const MutexMock = require('../../mocks/mutex.mock');
+} = require("../../../index");
+const KuzzleMock = require("../../mocks/kuzzle.mock");
+const ElasticsearchMock = require("../../mocks/elasticsearch.mock");
+const MutexMock = require("../../mocks/mutex.mock");
 
-const scopeEnum = require('../../../lib/core/storage/storeScopeEnum');
+const { storeScopeEnum } = require("../../../lib/core/storage/storeScopeEnum");
 
-describe('#core/storage/ClientAdapter', () => {
+describe("#core/storage/ClientAdapter", () => {
   let ClientAdapter;
   let publicAdapter;
   let privateAdapter;
   let kuzzle;
 
   before(() => {
-    mockRequire('../../../lib/util/mutex', { Mutex: MutexMock });
-    mockRequire('../../../lib/service/storage/elasticsearch', ElasticsearchMock);
-    ClientAdapter = mockRequire.reRequire('../../../lib/core/storage/clientAdapter');
+    mockRequire("../../../lib/util/mutex", { Mutex: MutexMock });
+    mockRequire(
+      "../../../lib/service/storage/Elasticsearch",
+      ElasticsearchMock,
+    );
+    ClientAdapter = mockRequire.reRequire(
+      "../../../lib/core/storage/clientAdapter",
+    );
   });
 
   after(() => {
@@ -33,80 +38,82 @@ describe('#core/storage/ClientAdapter', () => {
 
   beforeEach(async () => {
     kuzzle = new KuzzleMock();
+    kuzzle.config.services.storageEngine.majorVersion = "7";
     kuzzle.ask.restore();
 
-    publicAdapter = new ClientAdapter(scopeEnum.PUBLIC);
-    privateAdapter = new ClientAdapter(scopeEnum.PRIVATE);
+    publicAdapter = new ClientAdapter(storeScopeEnum.PUBLIC);
+    privateAdapter = new ClientAdapter(storeScopeEnum.PRIVATE);
 
-    return Promise.all([publicAdapter, privateAdapter].map(adapter => {
-      sinon.stub(adapter.cache);
-      return adapter.init();
-    }));
+    sinon.stub(publicAdapter, "populateCache").resolves();
+    sinon.stub(privateAdapter, "populateCache").resolves();
+
+    return Promise.all(
+      [publicAdapter, privateAdapter].map((adapter) => {
+        sinon.stub(adapter.cache);
+        return adapter.init();
+      }),
+    );
   });
 
-  describe('#constructor', () => {
-    it('should instantiate an ES client with the right scope', () => {
-      should(publicAdapter.scope).eql(scopeEnum.PUBLIC);
-      should(privateAdapter.scope).eql(scopeEnum.PRIVATE);
-
-      should(publicAdapter.client).not.eql(privateAdapter.client);
-
-      should(publicAdapter.client._scope).eql(scopeEnum.PUBLIC);
-      should(privateAdapter.client._scope).eql(scopeEnum.PRIVATE);
-    });
-  });
-
-  describe('#init', () => {
+  describe("#init", () => {
     let uninitializedAdapter;
 
     beforeEach(() => {
-      uninitializedAdapter = new ClientAdapter(scopeEnum.PUBLIC);
-      sinon.stub(uninitializedAdapter, 'populateCache').resolves();
+      uninitializedAdapter = new ClientAdapter(storeScopeEnum.PUBLIC);
+      sinon.stub(uninitializedAdapter, "populateCache").resolves();
 
       // prevents event conflicts with the already initialized adapters above
       kuzzle.onAsk.restore();
-      sinon.stub(kuzzle, 'onAsk');
-    });
-
-    it('should initialize a new ES client', async () => {
-      should(uninitializedAdapter.client.init).not.called();
-
-      await uninitializedAdapter.init();
-
-      should(uninitializedAdapter.client.init).calledOnce();
-      should(uninitializedAdapter.populateCache).calledOnce();
+      sinon.stub(kuzzle, "onAsk");
     });
   });
 
-  describe('#populateCache', () => {
+  describe("#populateCache", () => {
     let uninitializedAdapter;
 
     beforeEach(() => {
-      uninitializedAdapter = new ClientAdapter(scopeEnum.PUBLIC);
+      uninitializedAdapter = new ClientAdapter(storeScopeEnum.PUBLIC);
+
+      sinon
+        .stub(uninitializedAdapter.client, "generateMissingAliases")
+        .resolves();
 
       // prevents event conflicts with the already initialized adapters above
       kuzzle.onAsk.restore();
-      sinon.stub(kuzzle, 'onAsk');
+      sinon.stub(kuzzle, "onAsk");
     });
 
-    it('should populate the cache with index and collections', async () => {
+    it("should populate the cache with index and collections", async () => {
       uninitializedAdapter.client.getSchema.resolves({
-        foo: ['foo1', 'foo2'],
-        bar: ['bar1', 'bar2']
+        foo: ["foo1", "foo2"],
+        bar: ["bar1", "bar2"],
       });
 
-      sinon.stub(uninitializedAdapter.cache, 'addCollection');
+      sinon.stub(uninitializedAdapter.cache, "addCollection");
 
       await uninitializedAdapter.init();
 
-      should(uninitializedAdapter.cache.addCollection).calledWith('foo', 'foo1');
-      should(uninitializedAdapter.cache.addCollection).calledWith('foo', 'foo2');
-      should(uninitializedAdapter.cache.addCollection).calledWith('bar', 'bar1');
-      should(uninitializedAdapter.cache.addCollection).calledWith('bar', 'bar2');
+      should(uninitializedAdapter.client.generateMissingAliases).calledOnce();
+      should(uninitializedAdapter.cache.addCollection).calledWith(
+        "foo",
+        "foo1",
+      );
+      should(uninitializedAdapter.cache.addCollection).calledWith(
+        "foo",
+        "foo2",
+      );
+      should(uninitializedAdapter.cache.addCollection).calledWith(
+        "bar",
+        "bar1",
+      );
+      should(uninitializedAdapter.cache.addCollection).calledWith(
+        "bar",
+        "bar2",
+      );
     });
   });
 
-  describe('#global events', () => {
+  describe("#global events", () => {
     it('should register a global "info" event', async () => {
       for (const adapter of [publicAdapter, privateAdapter]) {
         await kuzzle.ask(`core:storage:${adapter.scope}:info:get`);
@@ -115,43 +122,82 @@ describe('#core/storage/ClientAdapter', () => {
     });
   });
 
-  describe('#index handling events', () => {
-    describe('#index:create', async () => {
+  describe("#index handling events", () => {
+    describe("#index:create", async () => {
       it('should register an "index:create" event', async () => {
         for (const adapter of [publicAdapter, privateAdapter]) {
-          await kuzzle.ask(`core:storage:${adapter.scope}:index:create`, 'foo');
+          await kuzzle.ask(`core:storage:${adapter.scope}:index:create`, "foo");
 
-          should(adapter.client.createIndex).calledWith('foo');
-          should(adapter.cache.addIndex).calledWith('foo');
+          should(adapter.client.createIndex).calledWith("foo");
+          should(adapter.cache.addIndex).calledWith("foo");
+          should(kuzzle.emit).be.calledWith("core:storage:index:create:after", {
+            index: "foo",
+            scope: adapter.scope,
+          });
         }
       });
 
-      it('should reject if the index already exists', async () => {
-        publicAdapter.cache.hasIndex.withArgs('foo').returns(true);
+      it("should reject if the index already exists", async () => {
+        publicAdapter.cache.hasIndex.withArgs("foo").returns(true);
 
-        return should(publicAdapter.createIndex('foo'))
-          .rejectedWith(PreconditionError, {
-            id: 'services.storage.index_already_exists',
+        return should(publicAdapter.createIndex("foo")).rejectedWith(
+          PreconditionError,
+          {
+            id: "services.storage.index_already_exists",
+          },
+        );
+      });
+
+      it("should not call core:storage:index:create:after if propagate option is false", async () => {
+        for (const adapter of [publicAdapter, privateAdapter]) {
+          await kuzzle.ask(
+            `core:storage:${adapter.scope}:index:create`,
+            "foo",
+            { propagate: false },
+          );
+
+          should(adapter.client.createIndex).calledWith("foo");
+          should(adapter.cache.addIndex).calledWith("foo");
+          should(kuzzle.emit).not.be.calledWith(
+            "core:storage:index:create:after",
+          );
+        }
+      });
+
+      it("should not create index inside database if indexCacheOnly option is true", async () => {
+        for (const adapter of [publicAdapter, privateAdapter]) {
+          await kuzzle.ask(
+            `core:storage:${adapter.scope}:index:create`,
+            "foo",
+            { indexCacheOnly: true },
+          );
+
+          should(adapter.client.createIndex).not.be.called();
+          should(adapter.cache.addIndex).calledWith("foo");
+          should(kuzzle.emit).be.calledWith("core:storage:index:create:after", {
+            index: "foo",
+            scope: adapter.scope,
           });
+        }
       });
     });
 
-    describe('#index:delete', () => {
+    describe("#index:delete", () => {
       it('should register an "index:delete" event', async () => {
         for (const adapter of [publicAdapter, privateAdapter]) {
-          await kuzzle.ask(`core:storage:${adapter.scope}:index:delete`, 'foo');
+          await kuzzle.ask(`core:storage:${adapter.scope}:index:delete`, "foo");
 
-          should(publicAdapter.cache.assertIndexExists).calledWith('foo');
-          should(publicAdapter.client.deleteIndex).calledWith('foo');
-          should(publicAdapter.cache.removeIndex).calledWith('foo');
+          should(publicAdapter.cache.assertIndexExists).calledWith("foo");
+          should(publicAdapter.client.deleteIndex).calledWith("foo");
+          should(publicAdapter.cache.removeIndex).calledWith("foo");
         }
       });
 
-      it('should reject if the index to delete does not exist', async () => {
-        const err = new Error('foo');
+      it("should reject if the index to delete does not exist", async () => {
+        const err = new Error("foo");
         publicAdapter.cache.assertIndexExists.throws(err);
 
-        await should(publicAdapter.deleteIndex('foo')).rejectedWith(err);
+        await should(publicAdapter.deleteIndex("foo")).rejectedWith(err);
         should(publicAdapter.client.deleteIndex).not.called();
         should(publicAdapter.cache.removeIndex).not.called();
       });
@@ -159,64 +205,71 @@ describe('#core/storage/ClientAdapter', () => {
 
     it('should register an "index:exist" event', async () => {
       for (const adapter of [publicAdapter, privateAdapter]) {
-        adapter.cache.hasIndex.returns('bar');
+        adapter.cache.hasIndex.returns("bar");
 
         const res = await kuzzle.ask(
           `core:storage:${adapter.scope}:index:exist`,
-          'foo');
+          "foo",
+        );
 
-        should(res).eql('bar');
-        should(adapter.cache.hasIndex).calledOnce().calledWith('foo');
+        should(res).eql("bar");
+        should(adapter.cache.hasIndex).calledOnce().calledWith("foo");
       }
     });
 
     it('should register an "index:list" event', async () => {
       for (const adapter of [publicAdapter, privateAdapter]) {
-        adapter.cache.listIndexes.resolves('bar');
+        adapter.cache.listIndexes.resolves("bar");
 
-        const res = await kuzzle.ask(`core:storage:${adapter.scope}:index:list`);
+        const res = await kuzzle.ask(
+          `core:storage:${adapter.scope}:index:list`,
+        );
 
-        should(res).eql('bar');
+        should(res).eql("bar");
         should(adapter.cache.listIndexes).calledOnce();
       }
     });
 
     it('should register an "index:stats" event', async () => {
       for (const adapter of [publicAdapter, privateAdapter]) {
-        adapter.client.stats.resolves('bar');
+        adapter.client.stats.resolves("bar");
 
-        const res = await kuzzle.ask(`core:storage:${adapter.scope}:index:stats`);
+        const res = await kuzzle.ask(
+          `core:storage:${adapter.scope}:index:stats`,
+        );
 
-        should(res).eql('bar');
+        should(res).eql("bar");
         should(adapter.client.stats).calledOnce();
       }
     });
 
-    describe('#index:mDelete', () => {
+    describe("#index:mDelete", () => {
       it('should register an "index:mDelete" event', async () => {
-        const indexes = ['foo', 'bar', 'baz'];
+        const indexes = ["foo", "bar", "baz"];
 
         for (const adapter of [publicAdapter, privateAdapter]) {
           adapter.client.deleteIndexes.resolves(indexes);
 
           const deleted = await kuzzle.ask(
             `core:storage:${adapter.scope}:index:mDelete`,
-            indexes);
+            indexes,
+          );
 
           should(publicAdapter.client.deleteIndexes).calledWith(indexes);
-          should(publicAdapter.cache.removeIndex).calledWith('foo');
-          should(publicAdapter.cache.removeIndex).calledWith('bar');
-          should(publicAdapter.cache.removeIndex).calledWith('baz');
+          should(publicAdapter.cache.removeIndex).calledWith("foo");
+          should(publicAdapter.cache.removeIndex).calledWith("bar");
+          should(publicAdapter.cache.removeIndex).calledWith("baz");
           should(deleted).eql(indexes);
         }
       });
 
-      it('should do nothing if at least 1 index does not exist', async () => {
-        const err = new Error('foo');
-        publicAdapter.cache.assertIndexExists.withArgs('bar').throws(err);
+      it("should do nothing if at least 1 index does not exist", async () => {
+        const err = new Error("foo");
+        publicAdapter.cache.assertIndexExists.withArgs("bar").throws(err);
 
-        await should(publicAdapter.deleteIndexes(['foo', 'bar', 'baz']))
-          .rejectedWith(err);
+        await should(
+          publicAdapter.deleteIndexes(["foo", "bar", "baz"]),
+        ).rejectedWith(err);
 
         should(publicAdapter.client.deleteIndexes).not.called();
         should(publicAdapter.cache.removeIndex).not.called();
@@ -224,43 +277,104 @@ describe('#core/storage/ClientAdapter', () => {
     });
   });
 
-  describe('#collection handling events', () => {
-    it('#collection:create', async () => {
-      for (const adapter of [publicAdapter, privateAdapter]) {
-        await kuzzle.ask(
-          `core:storage:${adapter.scope}:collection:create`,
-          'foo',
-          'bar',
-          'opts');
+  describe("#collection handling events", () => {
+    describe("#collection:create", () => {
+      it('should register a "collection:create" event', async () => {
+        for (const adapter of [publicAdapter, privateAdapter]) {
+          await kuzzle.ask(
+            `core:storage:${adapter.scope}:collection:create`,
+            "foo",
+            "bar",
+            "opts",
+          );
 
-        should(publicAdapter.client.createCollection)
-          .calledOnce()
-          .calledWith('foo', 'bar', 'opts');
+          should(publicAdapter.client.createCollection)
+            .calledOnce()
+            .calledWith("foo", "bar", "opts");
 
-        should(publicAdapter.cache.addCollection).calledWith('foo', 'bar');
-      }
+          should(publicAdapter.cache.addCollection).calledWith("foo", "bar");
+          should(kuzzle.emit).be.calledWith(
+            "core:storage:collection:create:after",
+            {
+              collection: "bar",
+              index: "foo",
+              scope: adapter.scope,
+            },
+          );
+        }
+      });
+
+      it("should not call core:storage:collection:create:after if propagate option is false", async () => {
+        for (const adapter of [publicAdapter, privateAdapter]) {
+          await kuzzle.ask(
+            `core:storage:${adapter.scope}:collection:create`,
+            "foo",
+            "bar",
+            "opts",
+            { propagate: false },
+          );
+
+          should(publicAdapter.client.createCollection)
+            .calledOnce()
+            .calledWith("foo", "bar", "opts");
+
+          should(publicAdapter.cache.addCollection).calledWith("foo", "bar");
+          should(kuzzle.emit).not.be.calledWith(
+            "core:storage:collection:create:after",
+          );
+        }
+      });
+
+      it("should not create collection inside database if indexCacheOnly option is true", async () => {
+        for (const adapter of [publicAdapter, privateAdapter]) {
+          await kuzzle.ask(
+            `core:storage:${adapter.scope}:collection:create`,
+            "foo",
+            "bar",
+            "opts",
+            { indexCacheOnly: true },
+          );
+
+          should(publicAdapter.client.createCollection).not.be.called();
+
+          should(publicAdapter.cache.addCollection).calledWith("foo", "bar");
+          should(kuzzle.emit).be.calledWith(
+            "core:storage:collection:create:after",
+            {
+              collection: "bar",
+              index: "foo",
+              scope: adapter.scope,
+            },
+          );
+        }
+      });
     });
 
-    describe('#collection:delete', () => {
+    describe("#collection:delete", () => {
       it('should register a "collection:delete" event', async () => {
         for (const adapter of [publicAdapter, privateAdapter]) {
           await kuzzle.ask(
             `core:storage:${adapter.scope}:collection:delete`,
-            'foo',
-            'bar');
+            "foo",
+            "bar",
+          );
 
-          should(publicAdapter.client.deleteCollection).calledWith('foo', 'bar');
-          should(publicAdapter.cache.removeCollection).calledWith('foo', 'bar');
+          should(publicAdapter.client.deleteCollection).calledWith(
+            "foo",
+            "bar",
+          );
+          should(publicAdapter.cache.removeCollection).calledWith("foo", "bar");
         }
       });
 
-      it('should reject if the collection does not exist in the cache', async () => {
+      it("should reject if the collection does not exist in the cache", async () => {
         const err = new Error();
 
         publicAdapter.cache.assertCollectionExists.throws(err);
 
-        await should(publicAdapter.deleteCollection('foo', 'bar'))
-          .rejectedWith(err);
+        await should(publicAdapter.deleteCollection("foo", "bar")).rejectedWith(
+          err,
+        );
 
         should(publicAdapter.client.deleteCollection).not.called();
         should(publicAdapter.cache.removeCollection).not.called();
@@ -271,106 +385,115 @@ describe('#core/storage/ClientAdapter', () => {
       for (const adapter of [publicAdapter, privateAdapter]) {
         await kuzzle.ask(
           `core:storage:${adapter.scope}:collection:exist`,
-          'foo',
-          'bar');
+          "foo",
+          "bar",
+        );
 
         should(adapter.cache.hasCollection)
           .calledOnce()
-          .calledWith('foo', 'bar');
+          .calledWith("foo", "bar");
       }
     });
 
     it('should register a "collection:list" event', async () => {
       for (const adapter of [publicAdapter, privateAdapter]) {
-        await kuzzle.ask(`core:storage:${adapter.scope}:collection:list`, 'foo');
+        await kuzzle.ask(
+          `core:storage:${adapter.scope}:collection:list`,
+          "foo",
+        );
 
-        should(adapter.cache.listCollections).calledOnce().calledWith('foo');
+        should(adapter.cache.listCollections).calledOnce().calledWith("foo");
       }
     });
 
-    describe('#collection:refresh', async () => {
+    describe("#collection:refresh", async () => {
       it('should register a "collection:refresh" event', async () => {
-
         for (const adapter of [publicAdapter, privateAdapter]) {
           await kuzzle.ask(
             `core:storage:${adapter.scope}:collection:refresh`,
-            'foo',
-            'bar');
+            "foo",
+            "bar",
+          );
 
           should(adapter.client.refreshCollection)
             .calledOnce()
-            .calledWith('foo', 'bar');
-          should(adapter.cache.assertCollectionExists).calledWith('foo', 'bar');
+            .calledWith("foo", "bar");
+          should(adapter.cache.assertCollectionExists).calledWith("foo", "bar");
         }
       });
 
-      it('should reject if the collection does not exist in the cache', async () => {
+      it("should reject if the collection does not exist in the cache", async () => {
         const err = new Error();
 
         publicAdapter.cache.assertCollectionExists.throws(err);
 
-        await should(kuzzle.ask('core:storage:public:collection:refresh', 'foo', 'bar'))
-          .rejectedWith(err);
+        await should(
+          kuzzle.ask("core:storage:public:collection:refresh", "foo", "bar"),
+        ).rejectedWith(err);
 
         should(publicAdapter.client.refreshCollection).not.called();
       });
     });
 
-    describe('#collection:truncate', () => {
+    describe("#collection:truncate", () => {
       it('should register a "collection:truncate" event', async () => {
         for (const adapter of [publicAdapter, privateAdapter]) {
           await kuzzle.ask(
             `core:storage:${adapter.scope}:collection:truncate`,
-            'foo',
-            'bar');
+            "foo",
+            "bar",
+          );
 
-          should(adapter.cache.assertCollectionExists).calledWith('foo', 'bar');
+          should(adapter.cache.assertCollectionExists).calledWith("foo", "bar");
 
           should(adapter.client.truncateCollection)
             .calledOnce()
-            .calledWith('foo', 'bar');
+            .calledWith("foo", "bar");
         }
       });
 
-      it('should reject if the collection does not exist in the cache', async () => {
+      it("should reject if the collection does not exist in the cache", async () => {
         const err = new Error();
 
         publicAdapter.cache.assertCollectionExists.throws(err);
 
-        await should(kuzzle.ask('core:storage:public:collection:truncate', 'foo', 'bar'))
-          .rejectedWith(err);
+        await should(
+          kuzzle.ask("core:storage:public:collection:truncate", "foo", "bar"),
+        ).rejectedWith(err);
 
         should(publicAdapter.client.truncateCollection).not.called();
       });
     });
 
-    describe('#collection:update', () => {
+    describe("#collection:update", () => {
       it('should register a "collection:update" event', async () => {
         for (const adapter of [publicAdapter, privateAdapter]) {
           await kuzzle.ask(
             `core:storage:${adapter.scope}:collection:update`,
-            'foo',
-            'bar',
-            'changes');
+            "foo",
+            "bar",
+            "changes",
+          );
 
-          should(adapter.cache.assertCollectionExists).calledWith('foo', 'bar');
+          should(adapter.cache.assertCollectionExists).calledWith("foo", "bar");
 
           should(adapter.client.updateCollection)
             .calledOnce()
-            .calledWith('foo', 'bar', 'changes');
+            .calledWith("foo", "bar", "changes");
         }
       });
 
-      it('should reject if the collection does not exist in the cache', async () => {
+      it("should reject if the collection does not exist in the cache", async () => {
         const err = new Error();
 
         publicAdapter.cache.assertCollectionExists.throws(err);
 
         const promise = kuzzle.ask(
-          'core:storage:public:collection:update',
-          'foo',
-          'bar',
-          'changes');
+          "core:storage:public:collection:update",
+          "foo",
+          "bar",
+          "changes",
+        );
 
         await should(promise).rejectedWith(err);
 
@@ -379,34 +502,36 @@ describe('#core/storage/ClientAdapter', () => {
     });
   });
 
-  describe('#mappings related events', () => {
-    describe('#mappings:get', () => {
+  describe("#mappings related events", () => {
+    describe("#mappings:get", () => {
       it('should register a "mappings:get" event', async () => {
         for (const adapter of [publicAdapter, privateAdapter]) {
           await kuzzle.ask(
             `core:storage:${adapter.scope}:mappings:get`,
-            'foo',
-            'bar',
-            'opts');
+            "foo",
+            "bar",
+            "opts",
+          );
 
-          should(adapter.cache.assertCollectionExists).calledWith('foo', 'bar');
+          should(adapter.cache.assertCollectionExists).calledWith("foo", "bar");
 
           should(adapter.client.getMapping)
             .calledOnce()
-            .calledWith('foo', 'bar', 'opts');
+            .calledWith("foo", "bar", "opts");
         }
       });
 
-      it('should reject if the collection does not exist in the cache', async () => {
+      it("should reject if the collection does not exist in the cache", async () => {
         const err = new Error();
 
         publicAdapter.cache.assertCollectionExists.throws(err);
 
         const promise = kuzzle.ask(
-          'core:storage:public:mappings:get',
-          'foo',
-          'bar',
-          'opts');
+          "core:storage:public:mappings:get",
+          "foo",
+          "bar",
+          "opts",
+        );
 
         await should(promise).rejectedWith(err);
 
@@ -414,7 +539,7 @@ describe('#core/storage/ClientAdapter', () => {
       });
     });
 
-    describe('#mappings:import', () => {
+    describe("#mappings:import", () => {
       let mappings;
 
       beforeEach(() => {
@@ -423,8 +548,8 @@ describe('#core/storage/ClientAdapter', () => {
             collection: {
               mappings: {
                 properties: {
-                  foo: 'bar',
-                  baz: 'qux',
+                  foo: "bar",
+                  baz: "qux",
                 },
               },
             },
@@ -436,29 +561,37 @@ describe('#core/storage/ClientAdapter', () => {
         for (const adapter of [publicAdapter, privateAdapter]) {
           await kuzzle.ask(
             `core:storage:${adapter.scope}:mappings:import`,
-            mappings);
+            mappings,
+            {
+              propagate: true,
+              indexCacheOnly: false,
+            },
+          );
 
-          should(adapter.client.createIndex).calledWith('index');
-          should(adapter.client.createCollection)
-            .calledWith('index', 'collection', mappings.index.collection );
+          should(adapter.client.createIndex).calledWith("index");
+          should(adapter.client.createCollection).calledWith(
+            "index",
+            "collection",
+            mappings.index.collection,
+          );
 
-          should(adapter.cache.addIndex).calledWith('index');
-          should(adapter.cache.addCollection).calledWith('index', 'collection');
+          should(adapter.cache.addIndex).calledWith("index");
+          should(adapter.cache.addCollection).calledWith("index", "collection");
 
           const mutex = MutexMock.__getLastMutex();
-          should(mutex.resource).eql('loadMappings');
+          should(mutex.resource).eql("loadMappings");
           should(mutex.lock).calledOnce();
           should(mutex.unlock).calledOnce();
         }
       });
 
-      it('should handle rawMappings option', async () => {
+      it("should handle rawMappings option", async () => {
         const rawMappings = {
           index: {
             collection: {
               properties: {
-                foo: 'bar',
-                baz: 'qux',
+                foo: "bar",
+                baz: "qux",
               },
             },
           },
@@ -467,88 +600,103 @@ describe('#core/storage/ClientAdapter', () => {
           await kuzzle.ask(
             `core:storage:${adapter.scope}:mappings:import`,
             rawMappings,
-            { rawMappings: true });
+            { rawMappings: true },
+          );
 
-          should(adapter.client.createCollection)
-            .calledWith('index', 'collection', mappings.index.collection );
+          should(adapter.client.createCollection).calledWith(
+            "index",
+            "collection",
+            mappings.index.collection,
+          );
         }
       });
 
-      it('should reject if the provided argument is not a valid object', async () => {
-        for (const arg of [null, [], 'foo', 123, true]) {
-          const result = kuzzle.ask('core:storage:public:mappings:import', arg);
+      it("should reject if the provided argument is not a valid object", async () => {
+        for (const arg of [null, [], "foo", 123, true]) {
+          const result = kuzzle.ask("core:storage:public:mappings:import", arg);
 
           await should(result).rejectedWith(BadRequestError, {
-            id: 'api.assert.invalid_argument',
+            id: "api.assert.invalid_argument",
           });
         }
       });
 
-      it('should reject if the provided mappings are malformed', async () => {
-        for (const arg of [null, [], 'foo', 123, true]) {
+      it("should reject if the provided mappings are malformed", async () => {
+        for (const arg of [null, [], "foo", 123, true]) {
           mappings.index = arg;
 
           const result = kuzzle.ask(
-            'core:storage:public:mappings:import',
-            mappings);
+            "core:storage:public:mappings:import",
+            mappings,
+          );
 
           await should(result).rejectedWith(BadRequestError, {
-            id: 'api.assert.invalid_argument',
+            id: "api.assert.invalid_argument",
           });
         }
       });
 
-      it('should reject if creating a new index fails', () => {
+      it("should reject if creating a new index fails", () => {
         const err = new Error();
 
         publicAdapter.client.createIndex.rejects(err);
 
-        return should(kuzzle.ask('core:storage:public:mappings:import', mappings))
-          .rejectedWith(err);
+        return should(
+          kuzzle.ask("core:storage:public:mappings:import", mappings),
+        ).rejectedWith(err);
       });
 
-      it('should ignore rejections due to an already existing index', async () => {
+      it("should ignore rejections due to an already existing index", async () => {
         mappings.index2 = mappings.index;
 
         const err = new Error();
-        err.id = 'services.storage.index_already_exists';
+        err.id = "services.storage.index_already_exists";
 
         publicAdapter.client.createIndex.onFirstCall().rejects(err);
 
-        await should(kuzzle.ask('core:storage:public:mappings:import', mappings))
-          .fulfilled();
+        await should(
+          kuzzle.ask("core:storage:public:mappings:import", mappings),
+        ).fulfilled();
 
-        should(publicAdapter.client.createIndex).calledWith('index');
-        should(publicAdapter.client.createIndex).calledWith('index2');
+        should(publicAdapter.client.createIndex).calledWith("index");
+        should(publicAdapter.client.createIndex).calledWith("index2");
       });
     });
 
-    describe('#mappings:update', () => {
+    describe("#mappings:update", () => {
       it('should register a "mappings:update" event', async () => {
         for (const adapter of [publicAdapter, privateAdapter]) {
           await kuzzle.ask(
             `core:storage:${adapter.scope}:mappings:update`,
-            'index',
-            'collection',
-            'mappings');
+            "index",
+            "collection",
+            "mappings",
+          );
 
-          should(adapter.cache.assertCollectionExists).calledWith('index', 'collection');
+          should(adapter.cache.assertCollectionExists).calledWith(
+            "index",
+            "collection",
+          );
 
-          should(adapter.client.updateMapping)
-            .calledWith('index', 'collection', 'mappings');
+          should(adapter.client.updateMapping).calledWith(
+            "index",
+            "collection",
+            "mappings",
+          );
         }
       });
 
-      it('should reject if the index/collection pair does not exist', async () => {
+      it("should reject if the index/collection pair does not exist", async () => {
         const err = new Error();
 
         publicAdapter.cache.assertCollectionExists.throws(err);
 
         const result = kuzzle.ask(
-          'core:storage:public:mappings:update',
-          'index',
-          'collection',
-          'mappings');
+          "core:storage:public:mappings:update",
+          "index",
+          "collection",
+          "mappings",
+        );
 
         await should(result).rejectedWith(err);
 
@@ -557,36 +705,44 @@ describe('#core/storage/ClientAdapter', () => {
     });
   });
 
-  describe('#document handling events', () => {
-    describe('#document:bulk', () => {
+  describe("#document handling events", () => {
+    describe("#document:bulk", () => {
       it('should register a "document:bulk" event', async () => {
         for (const adapter of [publicAdapter, privateAdapter]) {
           await kuzzle.ask(
             `core:storage:${adapter.scope}:document:bulk`,
-            'index',
-            'collection',
-            'documents',
-            'options');
+            "index",
+            "collection",
+            "documents",
+            "options",
+          );
 
-          should(adapter.cache.assertCollectionExists)
-            .calledWith('index', 'collection');
+          should(adapter.cache.assertCollectionExists).calledWith(
+            "index",
+            "collection",
+          );
 
-          should(adapter.client.import)
-            .calledWith('index', 'collection', 'documents', 'options');
+          should(adapter.client.import).calledWith(
+            "index",
+            "collection",
+            "documents",
+            "options",
+          );
         }
       });
 
-      it('should reject if the collection does not exist', async () => {
+      it("should reject if the collection does not exist", async () => {
         const err = new Error();
 
         publicAdapter.cache.assertCollectionExists.throws(err);
 
         const result = kuzzle.ask(
-          'core:storage:public:document:bulk',
-          'index',
-          'collection',
-          'documents',
-          'options');
+          "core:storage:public:document:bulk",
+          "index",
+          "collection",
+          "documents",
+          "options",
+        );
 
         await should(result).rejectedWith(err);
 
@@ -594,33 +750,40 @@ describe('#core/storage/ClientAdapter', () => {
       });
     });
 
-    describe('#document:count', () => {
+    describe("#document:count", () => {
       it('should register a "document:count" event', async () => {
         for (const adapter of [publicAdapter, privateAdapter]) {
           await kuzzle.ask(
             `core:storage:${adapter.scope}:document:count`,
-            'index',
-            'collection',
-            'filters');
+            "index",
+            "collection",
+            "filters",
+          );
 
-          should(adapter.cache.assertCollectionExists)
-            .calledWith('index', 'collection');
+          should(adapter.cache.assertCollectionExists).calledWith(
+            "index",
+            "collection",
+          );
 
-          should(adapter.client.count)
-            .calledWith('index', 'collection', 'filters');
+          should(adapter.client.count).calledWith(
+            "index",
+            "collection",
+            "filters",
+          );
         }
       });
 
-      it('should reject if the collection does not exist', async () => {
+      it("should reject if the collection does not exist", async () => {
         const err = new Error();
 
         publicAdapter.cache.assertCollectionExists.throws(err);
 
         const result = kuzzle.ask(
-          'core:storage:public:document:count',
-          'index',
-          'collection',
-          'filters');
+          "core:storage:public:document:count",
+          "index",
+          "collection",
+          "filters",
+        );
 
         await should(result).rejectedWith(err);
 
@@ -628,35 +791,43 @@ describe('#core/storage/ClientAdapter', () => {
       });
     });
 
-    describe('#document:create', () => {
+    describe("#document:create", () => {
       it('should register a "document:create" event', async () => {
         for (const adapter of [publicAdapter, privateAdapter]) {
           await kuzzle.ask(
             `core:storage:${adapter.scope}:document:create`,
-            'index',
-            'collection',
-            'content',
-            'options');
+            "index",
+            "collection",
+            "content",
+            "options",
+          );
 
-          should(adapter.cache.assertCollectionExists)
-            .calledWith('index', 'collection');
+          should(adapter.cache.assertCollectionExists).calledWith(
+            "index",
+            "collection",
+          );
 
-          should(adapter.client.create)
-            .calledWith('index', 'collection', 'content', 'options');
+          should(adapter.client.create).calledWith(
+            "index",
+            "collection",
+            "content",
+            "options",
+          );
         }
       });
 
-      it('should reject if the collection does not exist', async () => {
+      it("should reject if the collection does not exist", async () => {
         const err = new Error();
 
         publicAdapter.cache.assertCollectionExists.throws(err);
 
         const result = kuzzle.ask(
-          'core:storage:public:document:create',
-          'index',
-          'collection',
-          'content',
-          'options');
+          "core:storage:public:document:create",
+          "index",
+          "collection",
+          "content",
+          "options",
+        );
 
         await should(result).rejectedWith(err);
 
@@ -664,37 +835,46 @@ describe('#core/storage/ClientAdapter', () => {
       });
     });
 
-    describe('#document:createOrReplace', () => {
+    describe("#document:createOrReplace", () => {
       it('should register a "document:createOrReplace" event', async () => {
         for (const adapter of [publicAdapter, privateAdapter]) {
           await kuzzle.ask(
             `core:storage:${adapter.scope}:document:createOrReplace`,
-            'index',
-            'collection',
-            'id',
-            'content',
-            'options');
+            "index",
+            "collection",
+            "id",
+            "content",
+            "options",
+          );
 
-          should(adapter.cache.assertCollectionExists)
-            .calledWith('index', 'collection');
+          should(adapter.cache.assertCollectionExists).calledWith(
+            "index",
+            "collection",
+          );
 
-          should(adapter.client.createOrReplace)
-            .calledWith('index', 'collection', 'id', 'content', 'options');
+          should(adapter.client.createOrReplace).calledWith(
+            "index",
+            "collection",
+            "id",
+            "content",
+            "options",
+          );
         }
       });
 
-      it('should reject if the collection does not exist', async () => {
+      it("should reject if the collection does not exist", async () => {
         const err = new Error();
 
         publicAdapter.cache.assertCollectionExists.throws(err);
 
         const result = kuzzle.ask(
-          'core:storage:public:document:createOrReplace',
-          'index',
-          'collection',
-          'id',
-          'content',
-          'options');
+          "core:storage:public:document:createOrReplace",
+          "index",
+          "collection",
+          "id",
+          "content",
+          "options",
+        );
 
         await should(result).rejectedWith(err);
 
@@ -702,35 +882,43 @@ describe('#core/storage/ClientAdapter', () => {
       });
     });
 
-    describe('#document:delete', () => {
+    describe("#document:delete", () => {
       it('should register a "document:delete" event', async () => {
         for (const adapter of [publicAdapter, privateAdapter]) {
           await kuzzle.ask(
             `core:storage:${adapter.scope}:document:delete`,
-            'index',
-            'collection',
-            'id',
-            'options');
+            "index",
+            "collection",
+            "id",
+            "options",
+          );
 
-          should(adapter.cache.assertCollectionExists)
-            .calledWith('index', 'collection');
+          should(adapter.cache.assertCollectionExists).calledWith(
+            "index",
+            "collection",
+          );
 
-          should(adapter.client.delete)
-            .calledWith('index', 'collection', 'id', 'options');
+          should(adapter.client.delete).calledWith(
+            "index",
+            "collection",
+            "id",
+            "options",
+          );
         }
       });
 
-      it('should reject if the collection does not exist', async () => {
+      it("should reject if the collection does not exist", async () => {
         const err = new Error();
 
         publicAdapter.cache.assertCollectionExists.throws(err);
 
         const result = kuzzle.ask(
-          'core:storage:public:document:delete',
-          'index',
-          'collection',
-          'id',
-          'options');
+          "core:storage:public:document:delete",
+          "index",
+          "collection",
+          "id",
+          "options",
+        );
 
         await should(result).rejectedWith(err);
 
@@ -738,35 +926,43 @@ describe('#core/storage/ClientAdapter', () => {
       });
     });
 
-    describe('#document:deleteByQuery', () => {
+    describe("#document:deleteByQuery", () => {
       it('should register a "document:deleteByQuery" event', async () => {
         for (const adapter of [publicAdapter, privateAdapter]) {
           await kuzzle.ask(
             `core:storage:${adapter.scope}:document:deleteByQuery`,
-            'index',
-            'collection',
-            'query',
-            'options');
+            "index",
+            "collection",
+            "query",
+            "options",
+          );
 
-          should(adapter.cache.assertCollectionExists)
-            .calledWith('index', 'collection');
+          should(adapter.cache.assertCollectionExists).calledWith(
+            "index",
+            "collection",
+          );
 
-          should(adapter.client.deleteByQuery)
-            .calledWith('index', 'collection', 'query', 'options');
+          should(adapter.client.deleteByQuery).calledWith(
+            "index",
+            "collection",
+            "query",
+            "options",
+          );
         }
       });
 
-      it('should reject if the collection does not exist', async () => {
+      it("should reject if the collection does not exist", async () => {
         const err = new Error();
 
         publicAdapter.cache.assertCollectionExists.throws(err);
 
         const result = kuzzle.ask(
-          'core:storage:public:document:deleteByQuery',
-          'index',
-          'collection',
-          'query',
-          'options');
+          "core:storage:public:document:deleteByQuery",
+          "index",
+          "collection",
+          "query",
+          "options",
+        );
 
         await should(result).rejectedWith(err);
 
@@ -774,35 +970,43 @@ describe('#core/storage/ClientAdapter', () => {
       });
     });
 
-    describe('#document:deleteFields', () => {
+    describe("#document:deleteFields", () => {
       it('should register a "document:deleteFields" event', async () => {
         for (const adapter of [publicAdapter, privateAdapter]) {
           await kuzzle.ask(
             `core:storage:${adapter.scope}:document:deleteFields`,
-            'index',
-            'collection',
-            ['query'],
-            'options');
+            "index",
+            "collection",
+            ["query"],
+            "options",
+          );
 
-          should(adapter.cache.assertCollectionExists)
-            .calledWith('index', 'collection');
+          should(adapter.cache.assertCollectionExists).calledWith(
+            "index",
+            "collection",
+          );
 
-          should(adapter.client.deleteFields)
-            .calledWith('index', 'collection', ['query'], 'options');
+          should(adapter.client.deleteFields).calledWith(
+            "index",
+            "collection",
+            ["query"],
+            "options",
+          );
         }
       });
 
-      it('should reject if the collection does not exist', async () => {
+      it("should reject if the collection does not exist", async () => {
         const err = new Error();
 
         publicAdapter.cache.assertCollectionExists.throws(err);
 
         const result = kuzzle.ask(
-          'core:storage:public:document:deleteFields',
-          'index',
-          'collection',
-          'query',
-          'options');
+          "core:storage:public:document:deleteFields",
+          "index",
+          "collection",
+          "query",
+          "options",
+        );
 
         await should(result).rejectedWith(err);
 
@@ -810,33 +1014,36 @@ describe('#core/storage/ClientAdapter', () => {
       });
     });
 
-    describe('#document:exist', () => {
+    describe("#document:exist", () => {
       it('should register a "document:exist" event', async () => {
         for (const adapter of [publicAdapter, privateAdapter]) {
           await kuzzle.ask(
             `core:storage:${adapter.scope}:document:exist`,
-            'index',
-            'collection',
-            'id');
+            "index",
+            "collection",
+            "id",
+          );
 
-          should(adapter.cache.assertCollectionExists)
-            .calledWith('index', 'collection');
+          should(adapter.cache.assertCollectionExists).calledWith(
+            "index",
+            "collection",
+          );
 
-          should(adapter.client.exists)
-            .calledWith('index', 'collection', 'id');
+          should(adapter.client.exists).calledWith("index", "collection", "id");
         }
       });
 
-      it('should reject if the collection does not exist', async () => {
+      it("should reject if the collection does not exist", async () => {
         const err = new Error();
 
         publicAdapter.cache.assertCollectionExists.throws(err);
 
         const result = kuzzle.ask(
-          'core:storage:public:document:exist',
-          'index',
-          'collection',
-          'id');
+          "core:storage:public:document:exist",
+          "index",
+          "collection",
+          "id",
+        );
 
         await should(result).rejectedWith(err);
 
@@ -844,33 +1051,36 @@ describe('#core/storage/ClientAdapter', () => {
       });
     });
 
-    describe('#document:get', () => {
+    describe("#document:get", () => {
       it('should register a "document:get" event', async () => {
         for (const adapter of [publicAdapter, privateAdapter]) {
           await kuzzle.ask(
             `core:storage:${adapter.scope}:document:get`,
-            'index',
-            'collection',
-            'id');
+            "index",
+            "collection",
+            "id",
+          );
 
-          should(adapter.cache.assertCollectionExists)
-            .calledWith('index', 'collection');
+          should(adapter.cache.assertCollectionExists).calledWith(
+            "index",
+            "collection",
+          );
 
-          should(adapter.client.get)
-            .calledWith('index', 'collection', 'id');
+          should(adapter.client.get).calledWith("index", "collection", "id");
         }
       });
 
-      it('should reject if the collection does not exist', async () => {
+      it("should reject if the collection does not exist", async () => {
         const err = new Error();
 
         publicAdapter.cache.assertCollectionExists.throws(err);
 
         const result = kuzzle.ask(
-          'core:storage:public:document:get',
-          'index',
-          'collection',
-          'id');
+          "core:storage:public:document:get",
+          "index",
+          "collection",
+          "id",
+        );
 
         await should(result).rejectedWith(err);
 
@@ -878,16 +1088,13 @@ describe('#core/storage/ClientAdapter', () => {
       });
     });
 
-    describe('#document:import', () => {
+    describe("#document:import", () => {
       let fixtures;
 
       beforeEach(() => {
         fixtures = {
           index: {
-            collection: [
-              { foo: 'bar' },
-              { baz: 'qux' },
-            ],
+            collection: [{ foo: "bar" }, { baz: "qux" }],
           },
         };
       });
@@ -898,74 +1105,88 @@ describe('#core/storage/ClientAdapter', () => {
 
           await kuzzle.ask(
             `core:storage:${adapter.scope}:document:import`,
-            fixtures);
+            fixtures,
+          );
 
-          should(adapter.client.import)
-            .calledWith('index', 'collection', fixtures.index.collection);
+          should(adapter.client.import).calledWith(
+            "index",
+            "collection",
+            fixtures.index.collection,
+          );
         }
       });
 
-      it('should reject if the provided argument is not a valid object', async () => {
-        for (const arg of [null, [], 'foo', 123, true]) {
-          const result = kuzzle.ask('core:storage:public:document:import', arg);
+      it("should reject if the provided argument is not a valid object", async () => {
+        for (const arg of [null, [], "foo", 123, true]) {
+          const result = kuzzle.ask("core:storage:public:document:import", arg);
 
           await should(result).rejectedWith(BadRequestError, {
-            id: 'api.assert.invalid_argument',
+            id: "api.assert.invalid_argument",
           });
         }
       });
 
-      it('should reject if the provided fixtures are malformed', async () => {
-        for (const arg of [null, [], 'foo', 123, true]) {
+      it("should reject if the provided fixtures are malformed", async () => {
+        for (const arg of [null, [], "foo", 123, true]) {
           fixtures.index = arg;
 
           const result = kuzzle.ask(
-            'core:storage:public:document:import',
-            fixtures);
+            "core:storage:public:document:import",
+            fixtures,
+          );
 
           await should(result).rejectedWith(BadRequestError, {
-            id: 'api.assert.invalid_argument',
+            id: "api.assert.invalid_argument",
           });
         }
       });
 
-      it('should wrap import errors', async () => {
-        publicAdapter.client.import.resolves({ errors: [ 'oh', 'noes' ] });
+      it("should wrap import errors", async () => {
+        publicAdapter.client.import.resolves({ errors: ["oh", "noes"] });
 
-        await should(kuzzle.ask('core:storage:public:document:import', fixtures))
-          .rejectedWith(PartialError, { id: 'services.storage.import_failed' });
+        await should(
+          kuzzle.ask("core:storage:public:document:import", fixtures),
+        ).rejectedWith(PartialError, { id: "services.storage.import_failed" });
       });
     });
 
-    describe('#document:mCreate', () => {
+    describe("#document:mCreate", () => {
       it('should register a "document:mCreate" event', async () => {
         for (const adapter of [publicAdapter, privateAdapter]) {
           await kuzzle.ask(
             `core:storage:${adapter.scope}:document:mCreate`,
-            'index',
-            'collection',
-            'documents',
-            'options');
+            "index",
+            "collection",
+            "documents",
+            "options",
+          );
 
-          should(adapter.cache.assertCollectionExists)
-            .calledWith('index', 'collection');
+          should(adapter.cache.assertCollectionExists).calledWith(
+            "index",
+            "collection",
+          );
 
-          should(adapter.client.mCreate)
-            .calledWith('index', 'collection', 'documents', 'options');
+          should(adapter.client.mCreate).calledWith(
+            "index",
+            "collection",
+            "documents",
+            "options",
+          );
         }
       });
 
-      it('should reject if the collection does not exist', async () => {
+      it("should reject if the collection does not exist", async () => {
         const err = new Error();
 
         publicAdapter.cache.assertCollectionExists.throws(err);
 
         const result = kuzzle.ask(
-          'core:storage:public:document:mCreate',
-          'index',
-          'collection',
-          'documents',
-          'options');
+          "core:storage:public:document:mCreate",
+          "index",
+          "collection",
+          "documents",
+          "options",
+        );
 
         await should(result).rejectedWith(err);
 
@@ -973,35 +1194,43 @@ describe('#core/storage/ClientAdapter', () => {
       });
     });
 
-    describe('#document:mCreateOrReplace', () => {
+    describe("#document:mCreateOrReplace", () => {
       it('should register a "document:mCreateOrReplace" event', async () => {
         for (const adapter of [publicAdapter, privateAdapter]) {
           await kuzzle.ask(
             `core:storage:${adapter.scope}:document:mCreateOrReplace`,
-            'index',
-            'collection',
-            'documents',
-            'options');
+            "index",
+            "collection",
+            "documents",
+            "options",
+          );
 
-          should(adapter.cache.assertCollectionExists)
-            .calledWith('index', 'collection');
+          should(adapter.cache.assertCollectionExists).calledWith(
+            "index",
+            "collection",
+          );
 
-          should(adapter.client.mCreateOrReplace)
-            .calledWith('index', 'collection', 'documents', 'options');
+          should(adapter.client.mCreateOrReplace).calledWith(
+            "index",
+            "collection",
+            "documents",
+            "options",
+          );
         }
       });
 
-      it('should reject if the collection does not exist', async () => {
+      it("should reject if the collection does not exist", async () => {
         const err = new Error();
 
         publicAdapter.cache.assertCollectionExists.throws(err);
 
         const result = kuzzle.ask(
-          'core:storage:public:document:mCreateOrReplace',
-          'index',
-          'collection',
-          'documents',
-          'options');
+          "core:storage:public:document:mCreateOrReplace",
+          "index",
+          "collection",
+          "documents",
+          "options",
+        );
 
         await should(result).rejectedWith(err);
 
@@ -1009,35 +1238,43 @@ describe('#core/storage/ClientAdapter', () => {
       });
     });
 
-    describe('#document:mDelete', () => {
+    describe("#document:mDelete", () => {
       it('should register a "document:mDelete" event', async () => {
         for (const adapter of [publicAdapter, privateAdapter]) {
           await kuzzle.ask(
             `core:storage:${adapter.scope}:document:mDelete`,
-            'index',
-            'collection',
-            'ids',
-            'options');
+            "index",
+            "collection",
+            "ids",
+            "options",
+          );
 
-          should(adapter.cache.assertCollectionExists)
-            .calledWith('index', 'collection');
+          should(adapter.cache.assertCollectionExists).calledWith(
+            "index",
+            "collection",
+          );
 
-          should(adapter.client.mDelete)
-            .calledWith('index', 'collection', 'ids', 'options');
+          should(adapter.client.mDelete).calledWith(
+            "index",
+            "collection",
+            "ids",
+            "options",
+          );
         }
       });
 
-      it('should reject if the collection does not exist', async () => {
+      it("should reject if the collection does not exist", async () => {
         const err = new Error();
 
         publicAdapter.cache.assertCollectionExists.throws(err);
 
         const result = kuzzle.ask(
-          'core:storage:public:document:mDelete',
-          'index',
-          'collection',
-          'ids',
-          'options');
+          "core:storage:public:document:mDelete",
+          "index",
+          "collection",
+          "ids",
+          "options",
+        );
 
         await should(result).rejectedWith(err);
 
@@ -1045,35 +1282,43 @@ describe('#core/storage/ClientAdapter', () => {
       });
     });
 
-    describe('#document:mReplace', () => {
+    describe("#document:mReplace", () => {
       it('should register a "document:mReplace" event', async () => {
         for (const adapter of [publicAdapter, privateAdapter]) {
           await kuzzle.ask(
             `core:storage:${adapter.scope}:document:mReplace`,
-            'index',
-            'collection',
-            'documents',
-            'options');
+            "index",
+            "collection",
+            "documents",
+            "options",
+          );
 
-          should(adapter.cache.assertCollectionExists)
-            .calledWith('index', 'collection');
+          should(adapter.cache.assertCollectionExists).calledWith(
+            "index",
+            "collection",
+          );
 
-          should(adapter.client.mReplace)
-            .calledWith('index', 'collection', 'documents', 'options');
+          should(adapter.client.mReplace).calledWith(
+            "index",
+            "collection",
+            "documents",
+            "options",
+          );
         }
       });
 
-      it('should reject if the collection does not exist', async () => {
+      it("should reject if the collection does not exist", async () => {
         const err = new Error();
 
         publicAdapter.cache.assertCollectionExists.throws(err);
 
         const result = kuzzle.ask(
-          'core:storage:public:document:mReplace',
-          'index',
-          'collection',
-          'documents',
-          'options');
+          "core:storage:public:document:mReplace",
+          "index",
+          "collection",
+          "documents",
+          "options",
+        );
 
         await should(result).rejectedWith(err);
 
@@ -1081,35 +1326,43 @@ describe('#core/storage/ClientAdapter', () => {
       });
     });
 
-    describe('#document:mUpdate', () => {
+    describe("#document:mUpdate", () => {
       it('should register a "document:mUpdate" event', async () => {
         for (const adapter of [publicAdapter, privateAdapter]) {
           await kuzzle.ask(
             `core:storage:${adapter.scope}:document:mUpdate`,
-            'index',
-            'collection',
-            'documents',
-            'options');
+            "index",
+            "collection",
+            "documents",
+            "options",
+          );
 
-          should(adapter.cache.assertCollectionExists)
-            .calledWith('index', 'collection');
+          should(adapter.cache.assertCollectionExists).calledWith(
+            "index",
+            "collection",
+          );
 
-          should(adapter.client.mUpdate)
-            .calledWith('index', 'collection', 'documents', 'options');
+          should(adapter.client.mUpdate).calledWith(
+            "index",
+            "collection",
+            "documents",
+            "options",
+          );
         }
       });
 
-      it('should reject if the collection does not exist', async () => {
+      it("should reject if the collection does not exist", async () => {
         const err = new Error();
 
         publicAdapter.cache.assertCollectionExists.throws(err);
 
         const result = kuzzle.ask(
-          'core:storage:public:document:mUpdate',
-          'index',
-          'collection',
-          'documents',
-          'options');
+          "core:storage:public:document:mUpdate",
+          "index",
+          "collection",
+          "documents",
+          "options",
+        );
 
         await should(result).rejectedWith(err);
 
@@ -1117,35 +1370,43 @@ describe('#core/storage/ClientAdapter', () => {
       });
     });
 
-    describe('#document:mUpsert', () => {
+    describe("#document:mUpsert", () => {
       it('should register a "document:mUpsert" event', async () => {
         for (const adapter of [publicAdapter, privateAdapter]) {
           await kuzzle.ask(
             `core:storage:${adapter.scope}:document:mUpsert`,
-            'index',
-            'collection',
-            'documents',
-            'options');
+            "index",
+            "collection",
+            "documents",
+            "options",
+          );
 
-          should(adapter.cache.assertCollectionExists)
-            .calledWith('index', 'collection');
+          should(adapter.cache.assertCollectionExists).calledWith(
+            "index",
+            "collection",
+          );
 
-          should(adapter.client.mUpsert)
-            .calledWith('index', 'collection', 'documents', 'options');
+          should(adapter.client.mUpsert).calledWith(
+            "index",
+            "collection",
+            "documents",
+            "options",
+          );
         }
       });
 
-      it('should reject if the collection does not exist', async () => {
+      it("should reject if the collection does not exist", async () => {
         const err = new Error();
 
         publicAdapter.cache.assertCollectionExists.throws(err);
 
         const result = kuzzle.ask(
-          'core:storage:public:document:mUpsert',
-          'index',
-          'collection',
-          'documents',
-          'options');
+          "core:storage:public:document:mUpsert",
+          "index",
+          "collection",
+          "documents",
+          "options",
+        );
 
         await should(result).rejectedWith(err);
 
@@ -1153,37 +1414,46 @@ describe('#core/storage/ClientAdapter', () => {
       });
     });
 
-    describe('#document:mExecute', () => {
+    describe("#document:mExecute", () => {
       it('should register a "document:mExecute" event', async () => {
         for (const adapter of [publicAdapter, privateAdapter]) {
           await kuzzle.ask(
             `core:storage:${adapter.scope}:document:mExecute`,
-            'index',
-            'collection',
-            'query',
-            'callback',
-            'options');
+            "index",
+            "collection",
+            "query",
+            "callback",
+            "options",
+          );
 
-          should(adapter.cache.assertCollectionExists)
-            .calledWith('index', 'collection');
+          should(adapter.cache.assertCollectionExists).calledWith(
+            "index",
+            "collection",
+          );
 
-          should(adapter.client.mExecute)
-            .calledWith('index', 'collection', 'query', 'callback', 'options');
+          should(adapter.client.mExecute).calledWith(
+            "index",
+            "collection",
+            "query",
+            "callback",
+            "options",
+          );
         }
       });
 
-      it('should reject if the collection does not exist', async () => {
+      it("should reject if the collection does not exist", async () => {
         const err = new Error();
 
         publicAdapter.cache.assertCollectionExists.throws(err);
 
         const result = kuzzle.ask(
-          'core:storage:public:document:mExecute',
-          'index',
-          'collection',
-          'query',
-          'callback',
-          'options');
+          "core:storage:public:document:mExecute",
+          "index",
+          "collection",
+          "query",
+          "callback",
+          "options",
+        );
 
         await should(result).rejectedWith(err);
 
@@ -1191,33 +1461,37 @@ describe('#core/storage/ClientAdapter', () => {
       });
     });
 
-    describe('#document:mGet', () => {
+    describe("#document:mGet", () => {
       it('should register a "document:mGet" event', async () => {
         for (const adapter of [publicAdapter, privateAdapter]) {
           await kuzzle.ask(
             `core:storage:${adapter.scope}:document:mGet`,
-            'index',
-            'collection',
-            'ids');
+            "index",
+            "collection",
+            "ids",
+          );
 
-          should(adapter.cache.assertCollectionExists)
-            .calledWith('index', 'collection');
+          should(adapter.cache.assertCollectionExists).calledWith(
+            "index",
+            "collection",
+          );
 
-          should(adapter.client.mGet).calledWith('index', 'collection', 'ids');
+          should(adapter.client.mGet).calledWith("index", "collection", "ids");
         }
       });
 
-      it('should reject if the collection does not exist', async () => {
+      it("should reject if the collection does not exist", async () => {
         const err = new Error();
 
         publicAdapter.cache.assertCollectionExists.throws(err);
 
         const result = kuzzle.ask(
-          'core:storage:public:document:mGet',
-          'index',
-          'collection',
-          'ids',
-          'options');
+          "core:storage:public:document:mGet",
+          "index",
+          "collection",
+          "ids",
+          "options",
+        );
 
         await should(result).rejectedWith(err);
 
@@ -1225,37 +1499,46 @@ describe('#core/storage/ClientAdapter', () => {
       });
     });
 
-    describe('#document:replace', () => {
+    describe("#document:replace", () => {
       it('should register a "document:replace" event', async () => {
         for (const adapter of [publicAdapter, privateAdapter]) {
           await kuzzle.ask(
             `core:storage:${adapter.scope}:document:replace`,
-            'index',
-            'collection',
-            'id',
-            'content',
-            'options');
+            "index",
+            "collection",
+            "id",
+            "content",
+            "options",
+          );
 
-          should(adapter.cache.assertCollectionExists)
-            .calledWith('index', 'collection');
+          should(adapter.cache.assertCollectionExists).calledWith(
+            "index",
+            "collection",
+          );
 
-          should(adapter.client.replace)
-            .calledWith('index', 'collection', 'id', 'content', 'options');
+          should(adapter.client.replace).calledWith(
+            "index",
+            "collection",
+            "id",
+            "content",
+            "options",
+          );
         }
       });
 
-      it('should reject if the collection does not exist', async () => {
+      it("should reject if the collection does not exist", async () => {
         const err = new Error();
 
         publicAdapter.cache.assertCollectionExists.throws(err);
 
         const result = kuzzle.ask(
-          'core:storage:public:document:replace',
-          'index',
-          'collection',
-          'id',
-          'content',
-          'options');
+          "core:storage:public:document:replace",
+          "index",
+          "collection",
+          "id",
+          "content",
+          "options",
+        );
 
         await should(result).rejectedWith(err);
 
@@ -1263,48 +1546,59 @@ describe('#core/storage/ClientAdapter', () => {
       });
     });
 
-    describe('#document:scroll', () => {
+    describe("#document:scroll", () => {
       it('should register a "document:scroll" event', async () => {
         for (const adapter of [publicAdapter, privateAdapter]) {
           await kuzzle.ask(
             `core:storage:${adapter.scope}:document:scroll`,
-            'id',
-            'options');
+            "id",
+            "options",
+          );
 
-          should(adapter.client.scroll).calledWith('id', 'options');
+          should(adapter.client.scroll).calledWith("id", "options");
         }
       });
     });
 
-    describe('#document:search', () => {
+    describe("#document:search", () => {
       it('should register a "document:search" event', async () => {
         for (const adapter of [publicAdapter, privateAdapter]) {
           await kuzzle.ask(
             `core:storage:${adapter.scope}:document:search`,
-            'index',
-            'collection',
-            'query',
-            'options');
+            "index",
+            "collection",
+            "query",
+            "options",
+          );
 
-          should(adapter.cache.assertCollectionExists)
-            .calledWith('index', 'collection');
+          should(adapter.cache.assertCollectionExists).calledWith(
+            "index",
+            "collection",
+          );
 
-          should(adapter.client.search)
-            .calledWith('index', 'collection', 'query', 'options');
+          should(adapter.client.search).calledWith(
+            {
+              index: "index",
+              collection: "collection",
+              searchBody: "query",
+            },
+            "options",
+          );
         }
       });
 
-      it('should reject if the collection does not exist', async () => {
+      it("should reject if the collection does not exist", async () => {
         const err = new Error();
 
         publicAdapter.cache.assertCollectionExists.throws(err);
 
         const result = kuzzle.ask(
-          'core:storage:public:document:search',
-          'index',
-          'collection',
-          'query',
-          'options');
+          "core:storage:public:document:search",
+          "index",
+          "collection",
+          "query",
+          "options",
+        );
 
         await should(result).rejectedWith(err);
 
@@ -1312,37 +1606,93 @@ describe('#core/storage/ClientAdapter', () => {
       });
     });
 
-    describe('#document:update', () => {
-      it('should register a "document:update" event', async () => {
+    describe("#document:multiSearch", () => {
+      it('should register a "document:multiSearch" event', async () => {
         for (const adapter of [publicAdapter, privateAdapter]) {
           await kuzzle.ask(
-            `core:storage:${adapter.scope}:document:update`,
-            'index',
-            'collection',
-            'id',
-            'content',
-            'options');
+            `core:storage:${adapter.scope}:document:multiSearch`,
+            [{ index: "index1", collections: ["collection1", "collection2"] }],
+            "query",
+            "options",
+          );
 
           should(adapter.cache.assertCollectionExists)
-            .calledWith('index', 'collection');
+            .calledWith("index1", "collection1")
+            .and.calledWith("index1", "collection2");
 
-          should(adapter.client.update)
-            .calledWith('index', 'collection', 'id', 'content', 'options');
+          should(adapter.client.search).calledWith(
+            {
+              targets: [
+                {
+                  index: "index1",
+                  collections: ["collection1", "collection2"],
+                },
+              ],
+              searchBody: "query",
+            },
+            "options",
+          );
         }
       });
 
-      it('should reject if the collection does not exist', async () => {
+      it("should reject if the collection does not exist", async () => {
         const err = new Error();
 
         publicAdapter.cache.assertCollectionExists.throws(err);
 
         const result = kuzzle.ask(
-          'core:storage:public:document:update',
-          'index',
-          'collection',
-          'id',
-          'content',
-          'options');
+          "core:storage:public:document:multiSearch",
+          [{ index: "index1", collections: ["collection1", "collection2"] }],
+          "query",
+          "options",
+        );
+
+        await should(result).rejectedWith(err);
+
+        should(publicAdapter.client.search).not.called();
+      });
+    });
+
+    describe("#document:update", () => {
+      it('should register a "document:update" event', async () => {
+        for (const adapter of [publicAdapter, privateAdapter]) {
+          await kuzzle.ask(
+            `core:storage:${adapter.scope}:document:update`,
+            "index",
+            "collection",
+            "id",
+            "content",
+            "options",
+          );
+
+          should(adapter.cache.assertCollectionExists).calledWith(
+            "index",
+            "collection",
+          );
+
+          should(adapter.client.update).calledWith(
+            "index",
+            "collection",
+            "id",
+            "content",
+            "options",
+          );
+        }
+      });
+
+      it("should reject if the collection does not exist", async () => {
+        const err = new Error();
+
+        publicAdapter.cache.assertCollectionExists.throws(err);
+
+        const result = kuzzle.ask(
+          "core:storage:public:document:update",
+          "index",
+          "collection",
+          "id",
+          "content",
+          "options",
+        );
 
         await should(result).rejectedWith(err);
 
@@ -1350,37 +1700,46 @@ describe('#core/storage/ClientAdapter', () => {
       });
     });
 
-    describe('#document:updateByQuery', () => {
+    describe("#document:updateByQuery", () => {
       it('should register a "document:updateByQuery" event', async () => {
         for (const adapter of [publicAdapter, privateAdapter]) {
           await kuzzle.ask(
             `core:storage:${adapter.scope}:document:updateByQuery`,
-            'index',
-            'collection',
-            'query',
-            'changes',
-            'options');
+            "index",
+            "collection",
+            "query",
+            "changes",
+            "options",
+          );
 
-          should(adapter.cache.assertCollectionExists)
-            .calledWith('index', 'collection');
+          should(adapter.cache.assertCollectionExists).calledWith(
+            "index",
+            "collection",
+          );
 
-          should(adapter.client.updateByQuery)
-            .calledWith('index', 'collection', 'query', 'changes', 'options');
+          should(adapter.client.updateByQuery).calledWith(
+            "index",
+            "collection",
+            "query",
+            "changes",
+            "options",
+          );
         }
       });
 
-      it('should reject if the collection does not exist', async () => {
+      it("should reject if the collection does not exist", async () => {
         const err = new Error();
 
         publicAdapter.cache.assertCollectionExists.throws(err);
 
         const result = kuzzle.ask(
-          'core:storage:public:document:updateByQuery',
-          'index',
-          'collection',
-          'query',
-          'changes',
-          'options');
+          "core:storage:public:document:updateByQuery",
+          "index",
+          "collection",
+          "query",
+          "changes",
+          "options",
+        );
 
         await should(result).rejectedWith(err);
 
@@ -1388,37 +1747,46 @@ describe('#core/storage/ClientAdapter', () => {
       });
     });
 
-    describe('#bulk:updateByQuery', () => {
+    describe("#bulk:updateByQuery", () => {
       it('should register a "bulk:updateByQuery" event', async () => {
         for (const adapter of [publicAdapter, privateAdapter]) {
           await kuzzle.ask(
             `core:storage:${adapter.scope}:bulk:updateByQuery`,
-            'index',
-            'collection',
-            'query',
-            'changes',
-            'options');
+            "index",
+            "collection",
+            "query",
+            "changes",
+            "options",
+          );
 
-          should(adapter.cache.assertCollectionExists)
-            .calledWith('index', 'collection');
+          should(adapter.cache.assertCollectionExists).calledWith(
+            "index",
+            "collection",
+          );
 
-          should(adapter.client.bulkUpdateByQuery)
-            .calledWith('index', 'collection', 'query', 'changes', 'options');
+          should(adapter.client.bulkUpdateByQuery).calledWith(
+            "index",
+            "collection",
+            "query",
+            "changes",
+            "options",
+          );
         }
       });
 
-      it('should reject if the collection does not exist', async () => {
+      it("should reject if the collection does not exist", async () => {
         const err = new Error();
 
         publicAdapter.cache.assertCollectionExists.throws(err);
 
         const result = kuzzle.ask(
-          'core:storage:public:bulk:updateByQuery',
-          'index',
-          'collection',
-          'query',
-          'changes',
-          'options');
+          "core:storage:public:bulk:updateByQuery",
+          "index",
+          "collection",
+          "query",
+          "changes",
+          "options",
+        );
 
         await should(result).rejectedWith(err);
 
@@ -1426,93 +1794,108 @@ describe('#core/storage/ClientAdapter', () => {
       });
     });
 
-    describe('#document:upsert', () => {
+    describe("#document:upsert", () => {
       it('should register a "document:upsert" event', async () => {
         for (const adapter of [publicAdapter, privateAdapter]) {
           await kuzzle.ask(
             `core:storage:${adapter.scope}:document:upsert`,
-            'index',
-            'collection',
-            'id',
-            'changes',
-            'options');
+            "index",
+            "collection",
+            "id",
+            "changes",
+            "options",
+          );
 
-          should(adapter.cache.assertCollectionExists)
-            .calledWith('index', 'collection');
+          should(adapter.cache.assertCollectionExists).calledWith(
+            "index",
+            "collection",
+          );
 
-          should(adapter.client.upsert)
-            .calledWith('index', 'collection', 'id', 'changes', 'options');
+          should(adapter.client.upsert).calledWith(
+            "index",
+            "collection",
+            "id",
+            "changes",
+            "options",
+          );
         }
       });
 
-      it('should reject if the collection does not exist', async () => {
+      it("should reject if the collection does not exist", async () => {
         const err = new Error();
 
         publicAdapter.cache.assertCollectionExists.throws(err);
 
         const result = kuzzle.ask(
-          'core:storage:public:document:upsert',
-          'index',
-          'collection',
-          'id',
-          'changes',
-          'options');
+          "core:storage:public:document:upsert",
+          "index",
+          "collection",
+          "id",
+          "changes",
+          "options",
+        );
 
         await should(result).rejectedWith(err);
 
         should(publicAdapter.client.update).not.called();
       });
     });
-
   });
 
-  describe('#cache handling events', () => {
-    describe('#cache:addIndex', () => {
-      it('should handle adding a single index', async () => {
+  describe("#cache handling events", () => {
+    describe("#cache:addIndex", () => {
+      it("should handle adding a single index", async () => {
         for (const adapter of [publicAdapter, privateAdapter]) {
-          await kuzzle.ask(`core:storage:${adapter.scope}:cache:addIndex`, 'index');
+          await kuzzle.ask(
+            `core:storage:${adapter.scope}:cache:addIndex`,
+            "index",
+          );
 
-          should(adapter.cache.addIndex).calledWith('index');
+          should(adapter.cache.addIndex).calledWith("index");
           should(adapter.cache.addCollection).not.called();
         }
       });
 
-      it('should handle adding an index/collection pair', async () => {
+      it("should handle adding an index/collection pair", async () => {
         for (const adapter of [publicAdapter, privateAdapter]) {
           await kuzzle.ask(
             `core:storage:${adapter.scope}:cache:addCollection`,
-            'index',
-            'collection');
+            "index",
+            "collection",
+          );
 
-          should(adapter.cache.addCollection).calledWith('index', 'collection');
+          should(adapter.cache.addCollection).calledWith("index", "collection");
         }
       });
     });
 
-    describe('#cache:remove', () => {
-      it('should handle removing indexes', async () => {
+    describe("#cache:remove", () => {
+      it("should handle removing indexes", async () => {
         for (const adapter of [publicAdapter, privateAdapter]) {
-          await kuzzle.ask(`core:storage:${adapter.scope}:cache:removeIndexes`, [
-            'index1',
-            'index2',
-            'index3',
-          ]);
+          await kuzzle.ask(
+            `core:storage:${adapter.scope}:cache:removeIndexes`,
+            ["index1", "index2", "index3"],
+          );
 
-          should(adapter.cache.removeIndex).calledWith('index1');
-          should(adapter.cache.removeIndex).calledWith('index2');
-          should(adapter.cache.removeIndex).calledWith('index3');
+          should(adapter.cache.removeIndex).calledWith("index1");
+          should(adapter.cache.removeIndex).calledWith("index2");
+          should(adapter.cache.removeIndex).calledWith("index3");
         }
       });
 
-      it('should handle removing a collection pair', async () => {
+      it("should handle removing a collection pair", async () => {
         for (const adapter of [publicAdapter, privateAdapter]) {
           await kuzzle.ask(
             `core:storage:${adapter.scope}:cache:removeCollection`,
-            'index',
-            'collection');
+            "index",
+            "collection",
+          );
 
           should(adapter.cache.removeIndex).not.called();
-          should(adapter.cache.removeCollection).calledWith('index', 'collection');
+          should(adapter.cache.removeCollection).calledWith(
+            "index",
+            "collection",
+          );
         }
       });
     });

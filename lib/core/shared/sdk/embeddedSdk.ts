@@ -2,7 +2,7 @@
  * Kuzzle, a backend software, self-hostable and ready to use
  * to power modern apps
  *
- * Copyright 2015-2020 Kuzzle
+ * Copyright 2015-2022 Kuzzle
  * mailto: support AT kuzzle.io
  * website: http://kuzzle.io
  *
@@ -26,15 +26,43 @@ import {
   ScopeOption,
   UserOption,
   Kuzzle,
-} from 'kuzzle-sdk';
+  ResponsePayload,
+  BaseRequest,
+} from "kuzzle-sdk";
 
-import { RequestPayload, ResponsePayload } from '../../../types';
-import FunnelProtocol from './funnelProtocol';
-import { isPlainObject } from '../../../util/safeObject';
-import kerror from '../../../kerror';
-import ImpersonatedSDK from './impersonatedSdk';
+import _ from "lodash";
+import { FunnelProtocol } from "./funnelProtocol";
+import { isPlainObject } from "../../../util/safeObject";
+import * as kerror from "../../../kerror";
+import ImpersonatedSDK from "./impersonatedSdk";
 
-const contextError = kerror.wrap('plugin', 'context');
+const contextError = kerror.wrap("plugin", "context");
+
+const forbiddenEmbeddedActions = {
+  auth: new Set([
+    "checkRights",
+    "createApiKey",
+    "createMyCredentials",
+    "credentialsExist",
+    "deleteApiKey",
+    "getCurrentUser",
+    "getMyCredentials",
+    "getMyRights",
+    "getStrategies",
+    "logout",
+    "refreshToken",
+    "searchApiKeys",
+    "updateMyCredentials",
+    "updateSelf",
+    "validateMyCredentials",
+  ]),
+};
+
+const warnEmbeddedActions = {
+  auth: {
+    login: "EmbeddedSDK.login is deprecated, use user impersonation instead",
+  },
+};
 
 interface EmbeddedRealtime extends RealtimeController {
   /**
@@ -42,7 +70,7 @@ interface EmbeddedRealtime extends RealtimeController {
    * and, optionally, user events matching the provided filters will generate
    * real-time notifications.
    *
-   * @see https://docs.kuzzle.io/core/2/guides/main-concepts/6-realtime-engine/
+   * @see https://docs.kuzzle.io/core/2/guides/main-concepts/realtime-engine/
    *
    * @param index Index name
    * @param collection Collection name
@@ -57,7 +85,7 @@ interface EmbeddedRealtime extends RealtimeController {
    *
    * @returns A string containing the room ID
    */
-  subscribe (
+  subscribe(
     index: string,
     collection: string,
     filters: JSONObject,
@@ -83,8 +111,8 @@ interface EmbeddedRealtime extends RealtimeController {
        * Propagate the callback execution on each cluster node (default: false)
        */
       propagate?: boolean;
-    }
-  ): Promise<string>
+    },
+  ): Promise<string>;
 }
 
 /**
@@ -93,8 +121,9 @@ interface EmbeddedRealtime extends RealtimeController {
 export class EmbeddedSDK extends Kuzzle {
   realtime: EmbeddedRealtime;
 
-  constructor () {
-    super(new FunnelProtocol(), { autoResubscribe: false });
+  constructor() {
+    // FunnelProtocol is not technically a valid SDK protocol
+    super(new FunnelProtocol() as any, { autoResubscribe: false });
   }
 
   /**
@@ -103,9 +132,9 @@ export class EmbeddedSDK extends Kuzzle {
    * @param user - User to impersonate the SDK with
    * @param options - Optional sdk arguments
    */
-  as (user: { _id: string }, options = { checkRights: false }): EmbeddedSDK {
-    if (! isPlainObject(user) || typeof user._id !== 'string') {
-      throw contextError.get('invalid_user');
+  as(user: { _id: string }, options = { checkRights: false }): EmbeddedSDK {
+    if (!isPlainObject(user) || typeof user._id !== "string") {
+      throw contextError.get("invalid_user");
     }
 
     return new ImpersonatedSDK(user._id, options) as EmbeddedSDK;
@@ -120,18 +149,46 @@ export class EmbeddedSDK extends Kuzzle {
    * @param request - API request (https://docs.kuzzle.io/core/2/guides/main-concepts/1-api#other-protocols)
    * @param options - Optional arguments
    */
-  query (
-    request: RequestPayload,
-    options: { propagate?: boolean } = {}
-  ): Promise<ResponsePayload> {
+  query<
+    TRequest extends BaseRequest = BaseRequest,
+    TResult extends JSONObject = JSONObject,
+  >(
+    request: TRequest,
+    options: { propagate?: boolean } = {},
+  ): Promise<ResponsePayload<TResult>> {
     // By default, do not propagate realtime notification accross cluster nodes
-    if ( isPlainObject(request)
-      && request.controller === 'realtime'
-      && request.action === 'subscribe'
+    if (
+      isPlainObject(request) &&
+      request.controller === "realtime" &&
+      request.action === "subscribe"
     ) {
-      request.propagate = options.propagate === undefined || options.propagate === null
-        ? false
-        : options.propagate;
+      // @ts-expect-error
+      request.propagate =
+        options.propagate === undefined || options.propagate === null
+          ? false
+          : options.propagate;
+    }
+
+    if (
+      forbiddenEmbeddedActions[request.controller] !== undefined &&
+      forbiddenEmbeddedActions[request.controller].has(request.action)
+    ) {
+      throw kerror.get(
+        "api",
+        "process",
+        "forbidden_embedded_sdk_action",
+        request.controller,
+        request.action,
+        ", use user impersonation or security controller instead",
+      );
+    }
+
+    const warning = _.get(warnEmbeddedActions, [
+      request.controller,
+      request.action,
+    ]);
+    if (warning) {
+      global.kuzzle.log.warn(warning);
     }
 
     return super.query(request, options);

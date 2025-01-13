@@ -2,7 +2,7 @@
  * Kuzzle, a backend software, self-hostable and ready to use
  * to power modern apps
  *
- * Copyright 2015-2020 Kuzzle
+ * Copyright 2015-2022 Kuzzle
  * mailto: support AT kuzzle.io
  * website: http://kuzzle.io
  *
@@ -19,9 +19,9 @@
  * limitations under the License.
  */
 
-'use strict';
+"use strict";
 
-const UpgradeContext = require('./context');
+const UpgradeContext = require("./context");
 
 class ConnectorContext extends UpgradeContext {
   constructor(context, source, target) {
@@ -30,7 +30,7 @@ class ConnectorContext extends UpgradeContext {
     this.target = target;
   }
 
-  get inPlace () {
+  get inPlace() {
     return this.source === this.target;
   }
 }

@@ -2,7 +2,7 @@
  * Kuzzle, a backend software, self-hostable and ready to use
  * to power modern apps
  *
- * Copyright 2015-2020 Kuzzle
+ * Copyright 2015-2022 Kuzzle
  * mailto: support AT kuzzle.io
  * website: http://kuzzle.io
  *
@@ -19,36 +19,38 @@
  * limitations under the License.
  */
 
-import _ from 'lodash';
+import _ from "lodash";
 
-import kerror from '../../kerror';
-import kuzzleConfig from '../../config';
-import { JSONObject } from '../../../index';
-import { ApplicationManager, Backend } from './index';
+import * as kerror from "../../kerror";
+import { ApplicationManager, Backend } from "./index";
+import { KuzzleConfiguration } from "../../types/config/KuzzleConfiguration";
+import { loadConfig } from "../../config/index.js";
 
-const runtimeError = kerror.wrap('plugin', 'runtime');
+const runtimeError = kerror.wrap("plugin", "runtime");
 
 export class BackendConfig extends ApplicationManager {
   /**
-   * Configuration content
+   * Configuration content.
    */
-  public content: JSONObject;
+  public content: KuzzleConfiguration;
 
-  constructor (application: Backend) {
+  constructor(application: Backend) {
     super(application);
 
-    this.content = kuzzleConfig.load();
+    this.content = loadConfig();
   }
 
   /**
    * Sets a configuration value
    *
+   * @deprecated use app.config.content instead
+   *
    * @param path - Path to the configuration key (lodash style)
    * @param value - Value for the configuration key
    */
-  set (path: string, value: any) {
+  set(path: string, value: any) {
     if (this._application.started) {
-      throw runtimeError.get('already_started', 'config');
+      throw runtimeError.get("already_started", "config");
     }
 
     _.set(this.content, path, value);
@@ -57,11 +59,13 @@ export class BackendConfig extends ApplicationManager {
   /**
    * Merges a configuration object into the current configuration
    *
+   * @deprecated use app.config.content instead
+   *
    * @param config - Configuration object to merge
    */
-  merge (config: JSONObject) {
+  merge(config: KuzzleConfiguration) {
     if (this._application.started) {
-      throw runtimeError.get('already_started', 'config');
+      throw runtimeError.get("already_started", "config");
     }
 
     this.content = _.merge(this.content, config);

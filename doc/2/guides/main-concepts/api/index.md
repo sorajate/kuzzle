@@ -1,14 +1,18 @@
 ---
 code: false
 type: page
-title: API
-description: Discover Kuzzle API usage and formats  
 order: 100
+title: Kuzzle API | Main Concepts | Guide | Core
+meta:
+  - name: description
+    content: Discover Kuzzle API usage and formats
+  - name: keywords
+    content: Kuzzle, Documentation, Kuzzle API main concepts, Authentication
 ---
 
 # API
 
-Kuzzle exposes most of its features through a **multi-protocol API**.  
+Kuzzle exposes most of its features through a **multi-protocol API**.
 
 This API uses the **JSON format** to communicate with a **standardized request and response format**.
 
@@ -22,8 +26,8 @@ The Kuzzle API is accessible by default through 3 protocols:
 Each protocol has advantages and disadvantages. The choice of a protocol must therefore be adapted to a situation and a use.
 
 ::: info
-Kuzzle is able to integrate to its API any protocol operating on [IP](https://en.wikipedia.org/wiki/Internet_Protocol).  
-More info on [Writing Protocol Plugin](/core/2/guides/write-protocols/start-writing-protocols).  
+Kuzzle is able to integrate to its API any protocol operating on [IP](https://en.wikipedia.org/wiki/Internet_Protocol).
+More info on [Writing Protocol Plugin](/core/2/guides/write-protocols/start-writing-protocols).
 :::
 
 ## Request Format
@@ -55,7 +59,7 @@ Body contents can be sent in the following formats:
 - `application/json`: raw JSON
 - `multipart/form-data`: HTML forms; both field-value pairs and field-files pairs can be sent that way
 
-If a HTML form is sent that way, the **resulting body content will be translated into a JSON object**, with as many keys as the provided form fields.  
+If a HTML form is sent that way, the **resulting body content will be translated into a JSON object**, with as many keys as the provided form fields.
 If the form field holds a file, then the corresponding JSON key will refer to an object instead of a mere value, with the following properties:
 
 - `filename`: file's name
@@ -65,7 +69,7 @@ If the form field holds a file, then the corresponding JSON key will refer to an
 
 #### JSON Query Endpoint
 
-Kuzzle also exposes an endpoint to **send requests using the standard JSON request format** used by other protocols.  
+Kuzzle also exposes an endpoint to **send requests using the standard JSON request format** used by other protocols.
 
 This makes it possible to avoid the use of the REST API and to send requests via the HTTP protocol the same way as for any other protocols.
 
@@ -73,8 +77,8 @@ This endpoint is accessible with the route `POST /_query`:
 
 ```bash
 curl -X POST -H  "Content-Type: application/json" "http://localhost:7512/_query" --data '{
-  "controller":"server", 
-  "action":"now" 
+  "controller":"server",
+  "action":"now"
 }'
 ```
 
@@ -83,6 +87,20 @@ The body of the request will be processed by Kuzzle as a standard request.
 ::: warning
 This endpoint does not allow to benefit from the advantages of the cache system integrated to HTTP via URLs.
 :::
+
+#### Healthcheck endpoint
+
+Kuzzle exposes a healthcheck endpoint.
+
+This endpoint is accessible with the route `GET /_healthcheck`.
+
+```bash
+curl "http://localhost:7512/_healthcheck"
+```
+
+This route does not require any authentication. It returns a `200` status code if the server is up and running.
+
+This is useful when kuzzle is deployed inside a Kubernetes cluster and you want to configure probes to check the server.
 
 ---
 
@@ -168,7 +186,7 @@ A Kuzzle Response is a **JSON object** with the following format:
 **Example:** _Display the entire response content of server:now action with Kourou_
 
 ```bash
-kourou sdk:request server:now --display ""
+kourou server:now --display ""
 
 # {
 #   "requestId": "60b6c20d-6cd6-4478-b2e0-5638475ae64b",
@@ -221,11 +239,11 @@ A document notification contains the following fields:
 
 The `result` object is the notification content, and it has the following structure:
 
-| Property         | Type     | Description                                                                                 |
-|------------------|----------|---------------------------------------------------------------------------------------------|
-| `_id`            | string   | Document unique ID<br/>`null` if the notification is from a real-time message               |
-| `_source`        | object   | The message or full document content. Not present if the event is about a document deletion |
-| `_updatedFields` | string[] | List of fields that have been updated (only available on document partial updates)          |
+| Property         | Type     | Description                                                                        |
+|------------------|----------|------------------------------------------------------------------------------------|
+| `_id`            | string   | Document unique ID<br/>`null` if the notification is from a real-time message      |
+| `_source`        | object   | The message or full document content.                                              |
+| `_updatedFields` | string[] | List of fields that have been updated (only available on document partial updates) |
 
 **Example:** _Document notification_
 ```js

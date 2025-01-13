@@ -1,9 +1,9 @@
 {
   "code": 4,
-  "subdomains": {
+  "subDomains": {
     "assert": {
       "code": 1,
-      "errors" : {
+      "errors": {
         "invalid_plugins_dir": {
           "description": "The enabled plugins directory cannot be opened",
           "code": 1,
@@ -93,6 +93,12 @@
           "code": 15,
           "message": "Plugin \"%s\" not found.%s",
           "class": "NotFoundError"
+        },
+        "invalid_openapi_schema": {
+          "description": "OpenAPI specification is invalid",
+          "code": 16,
+          "message": "Invalid OpenAPI specification: \"%s\"",
+          "class": "PluginImplementationError"
         }
       }
     },
@@ -102,7 +108,7 @@
         "failed_init": {
           "description": "An exception was thrown by a plugin's init function",
           "code": 1,
-          "message": "Something went wrong during initialization of \"%s\" plugin.",
+          "message": "Something went wrong during initialization of \"%s\" plugin. Set \"plugins.common.failsafeMode\" to true to bypass plugin initialization.",
           "class": "PluginImplementationError"
         },
         "unexpected_error": {
@@ -158,7 +164,7 @@
     },
     "strategy": {
       "code": 3,
-      "errors" : {
+      "errors": {
         "invalid_description": {
           "description": "The strategy.description field must be an object",
           "code": 1,

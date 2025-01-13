@@ -1,12 +1,10 @@
 ---
 code: true
 type: page
-title: create
+title: create | API | Core
 ---
 
 # create
-
-<SinceBadge version="1.0.0"/>
 
 Creates a new [collection](/core/2/guides/main-concepts/data-storage), in the provided `index`.
 

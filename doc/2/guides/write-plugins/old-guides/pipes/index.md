@@ -1,10 +1,14 @@
 ---
 code: false
 type: page
-title: Pipes
 order: 300
+title: Pipes | Old Guides | Write plugins | Guide
+meta:
+  - name: description
+    content: Pipes are functions plugged to events, called synchronously by Kuzzle, and receiving information regarding that event.
+  - name: keywords
+    content: Kuzzle, Documentation, kuzzle write pluggins, old guides, pipes
 ---
-
 <DeprecatedBadge version="2.8.0" />
 
 ::: warning
@@ -20,8 +24,9 @@ Pipes can:
 - Decide to abort a task. If a pipe throws an error, Kuzzle interrupts the task, and forwards a standardized version of the thrown error to the originating user
 - Change the received information. Kuzzle will use the updated information upon resuming the task
 
-<DeprecatedBadge version="2.2.0"/>
-Before Kuzzle 2.2.0, if a pipe takes too long to respond, Kuzzle will eventually abort the user request with a [GatewayTimeout](/core/2/api/errors/types) error. 
+<DeprecatedBadge version="2.2.0">
+
+Before Kuzzle 2.2.0, if a pipe takes too long to respond, Kuzzle will eventually abort the user request with a [GatewayTimeout](/core/2/api/errors/types) error.
 
 Note that while Kuzzle respond early with a Timeout error to users, the pipe task is still continuing.
 

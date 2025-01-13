@@ -1,70 +1,69 @@
 ################################################################################
-# Production build image
-################################################################################
-FROM node:12.18.1-stretch-slim as builder
+ARG NODE_VERSION="20"
+FROM node:${NODE_VERSION}-bookworm-slim AS builder
 
-RUN  set -x \
-  && apt-get update && apt-get install -y \
-       curl \
-       python \
-       make \
-       g++ \
-       python \
-       libzmq3-dev \
-  && curl -sfL https://install.goreleaser.com/github.com/tj/node-prune.sh | sh -s -- -b /usr/local/bin \
-  && curl -L https://github.com/tdewolff/minify/releases/download/v2.7.4/minify_2.7.4_linux_amd64.tar.gz > /tmp/minify_2.7.4_linux_amd64.tar.gz \
-  && tar xf /tmp/minify_2.7.4_linux_amd64.tar.gz -C /usr/bin/
-
-ADD ./bin /app/bin
-ADD ./config /app/config
-ADD ./lib /app/lib
-ADD ./package.json /app/package.json
-ADD ./package-lock.json /app/package-lock.json
-ADD ./index.js /app/index.js
-ADD ./.kuzzlerc.sample /app/.kuzzlerc.sample
+RUN set -x \
+     \
+     && apt-get update \
+     && apt-get install -y \
+     bash-completion \
+     build-essential \
+     curl \
+     g++ \
+     gdb \
+     git \
+     gnupg \
+     libfontconfig \
+     libzmq3-dev \
+     python3 \
+     procps \
+     wget \
+     libunwind-dev \
+     && npm install -g kourou \
+     && apt-get clean \
+     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-ENV NODE_ENV=production
+COPY ./bin bin
+COPY ./config config
+COPY ./lib lib
+COPY ./package.json package.json
+COPY ./package-lock.json package-lock.json
+COPY ./index.ts index.ts
+COPY ./tsconfig.json tsconfig.json
+COPY ./check-node-version.js check-node-version.js
 
-# Install dependencies
-RUN  npm install --production \
-  && npm install -g --unsafe-perm --production \
-      pm2
+RUN npm ci
+RUN npm run build
+RUN npm prune --omit=dev
 
-ADD ./docker/scripts/clean-node.sh /usr/bin/clean-node
+RUN rm -rf tsconfig.json index.ts
 
-ADD ./plugins/available/ /app/plugins/available/
-
-RUN  set -x \
-  # Remove useless leftover dependencies
-  && rm -rf node_modules/rxjs/ \
-  # Strip binaries
-  ; strip node_modules/re2/build/Release/re2.node \
-  ; true
+COPY ./plugins/available/ /app/plugins/available/
 
 ################################################################################
-# Production build 2 image
-################################################################################
-FROM node:12.18.1-stretch-slim as minifier
+FROM node:${NODE_VERSION}-bookworm-slim AS minifier
 
 ENV NODE_ENV=production
 
 COPY --from=builder /app /app
 
 RUN  set -x \
-  && apt-get update && apt-get install -y \
-    curl \
-  && apt-get clean autoclean \
-  && apt-get autoremove --yes
+     && apt-get update && apt-get install -y \
+     curl \
+     && apt-get clean autoclean \
+     && apt-get autoremove --yes
 
 ################################################################################
-# Production image
-################################################################################
-FROM bitnami/minideb:stretch
+FROM node:${NODE_VERSION}-bookworm-slim
 
 LABEL io.kuzzle.vendor="Kuzzle <support@kuzzle.io>"
 LABEL description="Run your Kuzzle backend in production mode"
+
+RUN set -x \
+     && apt-get update && apt-get install -y \
+     libunwind-dev
 
 COPY --from=minifier /lib /lib
 COPY --from=minifier /usr /usr
@@ -72,8 +71,8 @@ COPY --from=minifier /app /var/app
 
 ENV NODE_ENV=production
 
-ADD ./docker/scripts/entrypoint.sh /bin/entrypoint
-ADD ./docker/scripts/run-prod.sh /bin/kuzzle
+COPY ./docker/scripts/entrypoint.sh /bin/entrypoint
+COPY ./docker/scripts/run-prod.sh /bin/kuzzle
 
 RUN ln -s /var/app /app
 

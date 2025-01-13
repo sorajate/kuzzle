@@ -2,7 +2,7 @@
  * Kuzzle, a backend software, self-hostable and ready to use
  * to power modern apps
  *
- * Copyright 2015-2020 Kuzzle
+ * Copyright 2015-2022 Kuzzle
  * mailto: support AT kuzzle.io
  * website: http://kuzzle.io
  *
@@ -19,8 +19,8 @@
  * limitations under the License.
  */
 
-import { JSONObject } from 'kuzzle-sdk';
-import { KuzzleRequest } from '../api/request';
+import { JSONObject } from "kuzzle-sdk";
+import { KuzzleRequest } from "../api/request";
 
 /**
  * API controller definition.
@@ -30,7 +30,7 @@ import { KuzzleRequest } from '../api/request';
  *   actions: {
  *     sayHello: {
  *       handler: async request => `Hello, ${request.input.args.name}`,
- *       http: [{ verb: 'POST', path: '/greeting/hello/:name' }]
+ *       http: [{ verb: 'post', path: '/greeting/hello/:name' }]
  *     }
  *   }
  * }
@@ -44,7 +44,7 @@ export type ControllerDefinition = {
    *   sayHello: {
    *     handler: async request => `Hello, ${request.input.args.name}`,
    *     http: [{
-   *       verb: 'POST',
+   *       verb: 'post',
    *       path: '/greeting/hello/:name',
    *       openapi: {
    *         description: "Simply say hello",
@@ -73,15 +73,15 @@ export type ControllerDefinition = {
       /**
        * Function handler for incoming requests.
        */
-      handler: (request: KuzzleRequest) => Promise<any>,
+      handler: (request: KuzzleRequest) => Promise<any>;
       /**
        * Declare HTTP routes (optional).
        * Http routes will be auto-generated unless at least one is provided
        * or an empty array is provided.
        */
-      http?: HttpRoute[]
-    }
-  }
+      http?: HttpRoute[];
+    };
+  };
 };
 
 /**
@@ -91,13 +91,15 @@ export type HttpRoute = {
   /**
    * HTTP verb.
    */
-  verb: 'get' | 'post' | 'put' | 'delete' | 'head',
+  verb: "get" | "head" | "post" | "put" | "delete" | "patch" | "options";
+
   /**
    * Route path.
    * A route starting with `/` will be prefixed by `/_` otherwise the route
    * will be prefixed by `/_/<application-name>/`.
    */
-  path: string
+  path: string;
+
   /**
    * Provide a (openAPI specification v3)[https://swagger.io/specification/#paths-object] for this route.
    * Kuzzle only expect the `paths` object of the specification.
@@ -128,5 +130,5 @@ export type HttpRoute = {
    *   }
    * }
    */
-  openapi?: JSONObject
+  openapi?: JSONObject;
 };

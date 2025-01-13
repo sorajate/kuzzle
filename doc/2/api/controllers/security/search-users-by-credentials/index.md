@@ -1,7 +1,7 @@
 ---
 code: true
 type: page
-title: searchUsersByCredentials
+title: searchUsersByCredentials | API | Core
 ---
 
 # searchUsersByCredentials
@@ -54,15 +54,17 @@ Body:
   "action": "searchUsersByCredentials",
   "strategy": "<strategy>",
   "body": {
-    "bool": {
-      "must": [
-        {
-          "match": {
-            // example with the "local" authentication strategy
-            "username":  "test@example.com"
+    "query":{
+      "bool": {
+        "must": [
+          {
+            "match": {
+              // example with the "local" authentication strategy
+              "username":  "test@example.com"
+            }
           }
-        }
-      ]
+        ]
+      }
     }
   },
 }

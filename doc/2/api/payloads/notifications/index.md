@@ -1,8 +1,8 @@
 ---
 code: false
 type: page
-title: Notifications
-description: Notifications payloads reference  
+title: Notifications | API | Core
+description: Notifications payloads reference
 order: 300
 ---
 
@@ -43,11 +43,11 @@ A document notification contains the following fields:
 
 The `result` object is the notification content, and it has the following structure:
 
-| Property         | Type     | Description                                                                                 |
-|------------------|----------|---------------------------------------------------------------------------------------------|
-| `_id`            | string   | Document unique ID<br/>`null` if the notification is from a real-time message               |
-| `_source`        | object   | The message or full document content. Not present if the event is about a document deletion |
-| `_updatedFields` | string[] | List of fields that have been updated (only available on document partial updates)          |
+| Property         | Type     | Description                                                                        |
+|------------------|----------|------------------------------------------------------------------------------------|
+| `_id`            | string   | Document unique ID<br/>`null` if the notification is from a real-time message      |
+| `_source`        | object   | The message or full document content.                                              |
+| `_updatedFields` | string[] | List of fields that have been updated (only available on document partial updates) |
 
 ### Example
 
@@ -156,5 +156,36 @@ Other events may be added in the future.
 {
   "message": "Authentication Token Expired",
   "type": "TokenExpired"
+}
+```
+
+## Debugger Notification
+
+Debugger notifications are triggered by the [Debug Controller](/core/2/api/controllers/debug) only when the debugger is enabled.
+Those notifications are sent to every connections currently listening to events from the [Debug Controller](/core/2/api/controllers/debug) using
+the action [debug:addListener](/core/2/api/controllers/debug/add-listener).
+
+### Format
+
+| Property     | Type   | Description                                                                                           |
+|--------------|--------|-------------------------------------------------------------------------------------------------------|
+| `event`      | string | Name of the event that triggered the notification                                                     |
+| `result`     | object | Notification content                                                                                  |
+| `room`       | string | Subscription channel identifier. Will always be `kuzzle-debugger-event` |
+
+### Example
+
+```js
+{
+  "room": "kuzzle-debugger-event",
+  "event": "HeapProfiler.reportHeapSnapshotProgress",
+  "result": {
+      "method": "HeapProfiler.reportHeapSnapshotProgress",
+      "params": {
+          "done": 238276,
+          "total": 238276,
+          "finished": true
+      }
+  }
 }
 ```

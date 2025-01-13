@@ -20,7 +20,7 @@ Feature: Document Controller
   @mappings
   Scenario: Search with highlight
     Given an existing collection "nyc-open-data":"yellow-taxi"
-    And I "create" the following documents:
+    And I "create" the following multiple documents:
       | _id          | body                               |
       | "document-1" | { "name": "document1", "age": 42 } |
       | -            | { "name": "document2", "age": 21 } |
@@ -69,7 +69,7 @@ Feature: Document Controller
   @mappings
   Scenario: Search with search_after
     Given an existing collection "nyc-open-data":"yellow-taxi"
-    And I "create" the following documents:
+    And I "create" the following multiple documents:
       | _id          | body                               |
       | "document-1" | { "name": "document1", "age": 42 } |
       | "document-2" | { "name": "document2", "age": 21 } |
@@ -96,7 +96,7 @@ Feature: Document Controller
   @mappings
   Scenario: Search with scroll
     Given an existing collection "nyc-open-data":"yellow-taxi"
-    And I "create" the following documents:
+    And I "create" the following multiple documents:
       | _id          | body                    |
       | "document-1" | { "name": "document1" } |
       | "document-2" | { "name": "document2" } |
@@ -132,7 +132,7 @@ Feature: Document Controller
   @mappings
   Scenario: Search with Koncorde filters
     Given an existing collection "nyc-open-data":"yellow-taxi"
-    And I "create" the following documents:
+    And I "create" the following multiple documents:
       | _id          | body                                                |
       | "document-1" | { "name": "Melis", "age": 25, "city": "Istanbul" }  |
       | -            | { "age": 25, "city": "Istanbul" }                   |
@@ -173,6 +173,90 @@ Feature: Document Controller
       | _id          |
       | "document-1" |
 
+  @mappings
+  Scenario: Search with Koncorde filters and ES clause
+    Given an existing collection "nyc-open-data":"yellow-taxi"
+    And I "create" the following multiple documents:
+      | _id          | body                                                   |
+      | "document-1" | { "name": "Melis", "age": 25, "city": "Istanbul" }     |
+      | "document-2" | { "name": "Cavadanti", "age": 32, "city": "Istanbul" } |
+      | "document-3" | { "name": "Aschen", "age": 27, "city": "Istanbul" }    |
+    And I refresh the collection
+    When I search documents with the following query:
+      """
+      {
+        "and": [
+          {
+            "equals": {
+              "city": "Istanbul"
+            }
+          },
+          {
+            "wildcard": {
+              "name": {
+                "value": "*e*"
+              }
+            }
+          }
+        ]
+      }
+      """
+    And with the following search options:
+      """
+      {
+        "lang": "koncorde"
+      }
+      """
+    And I execute the search query
+    Then I should receive a "hits" array of objects matching:
+      | _id          |
+      | "document-1" |
+      | "document-3" |
+
+  @not-http
+  @mappings
+  Scenario: Search on multiple index and collections
+    Given an existing collection "nyc-open-data":"yellow-taxi"
+    And I "create" the following multiple documents:
+      | _id          | body                               |
+      | "document-1" | { "name": "document1", "age": 69 } |
+      | "document-2" | { "name": "document2", "age": 20 } |
+      | "document-3" | { "name": "document2", "age": 42 } |
+    And I refresh the collection
+    Given an existing collection "mtp-open-data":"green-taxi"
+    And I "create" the following multiple documents:
+      | _id          | body                               |
+      | "document-1" | { "name": "document1", "age": 18 } |
+      | "document-2" | { "name": "document2", "age": 21 } |
+      | "document-3" | { "name": "document2", "age": 99 } |
+    And I refresh the collection
+    When I search documents with the following search body:
+      """
+      {
+        "query": {
+          "range": {
+            "age": {
+              "gt": 42
+            }
+          }
+        }
+      }
+      """
+    And with the following search options:
+      """
+      {
+        "lang": "koncorde"
+      }
+      """
+    And I execute the multisearch query:
+      | index           | collections     |
+      | "nyc-open-data" | ["yellow-taxi"] |
+      | "mtp-open-data" | ["green-taxi"]  |
+    Then I should receive a "hits" array of objects matching:
+      | _id          | index           | collection    |
+      | "document-3" | "mtp-open-data" | "green-taxi"  |
+      | "document-1" | "nyc-open-data" | "yellow-taxi" |
+
   # document:deleteFields ===========================================================
   @mappings
   Scenario: Delete fields of a document returning the document without the specified fields
@@ -190,7 +274,7 @@ Feature: Document Controller
       | _id     | "document-1"  |
       | _source | { "age": 42 } |
     And The document "document-1" content match:
-      | age  | 42 |
+      | age | 42 |
 
   # document:exists ============================================================
 
@@ -198,21 +282,175 @@ Feature: Document Controller
   Scenario: Check document existence
     Given an existing collection "nyc-open-data":"yellow-taxi"
     Then The document "document-1" should not exist
-    When I "create" the following documents:
+    When I "create" the following multiple documents:
       | _id          | body                               |
       | "document-1" | { "name": "document1", "age": 42 } |
     Then The document "document-1" should exist
-    When I "delete" the following document ids:
+    When I "mDelete" the following document ids:
       | "document-1" |
     And I refresh the collection
     Then The document "document-1" should not exist
+
+  # document:mExists ============================================================
+
+  @mappings
+  Scenario: Check multiple document existence
+    Given an existing collection "nyc-open-data":"yellow-taxi"
+    And I "create" the following multiple documents:
+      | _id          | body                    |
+      | "document-1" | { "name": "document1" } |
+      | "document-2" | { "name": "document2" } |
+      | "document-3" | { "name": "document3" } |
+    When I execute the action "document":"mExists" with args:
+      | index      | "nyc-open-data"                         |
+      | collection | "yellow-taxi"                           |
+      | strict     | true                                    |
+      | body       | { ids: [ "document-1", "document-2" ] } |
+    Then I should receive a "successes" array matching:
+      | "document-1" |
+      | "document-2" |
+    And I should receive a empty "errors" array
+
+  @mappings
+  Scenario: Get multiple documents with errors
+    Given an existing collection "nyc-open-data":"yellow-taxi"
+    And I "create" the following multiple documents:
+      | _id          | body                    |
+      | "document-1" | { "name": "document1" } |
+      | "document-2" | { "name": "document2" } |
+      | "document-3" | { "name": "document3" } |
+    When I execute the action "document":"mExists" with args:
+      | index      | "nyc-open-data"                                    |
+      | collection | "yellow-taxi"                                      |
+      | strict     | false                                              |
+      | body       | { ids: [ "document-1", "214284", "document-42" ] } |
+    Then I should receive a "successes" array matching:
+      | "document-1" |
+    And I should receive a "errors" array matching:
+      | "214284"      |
+      | "document-42" |
+
+  @mappings
+  Scenario: Get multiple documents with success and with errors
+    Given an existing collection "nyc-open-data":"yellow-taxi"
+    And I "create" the following multiple documents:
+      | _id          | body                    |
+      | "document-1" | { "name": "document1" } |
+      | "document-2" | { "name": "document2" } |
+      | "document-3" | { "name": "document3" } |
+    When I execute the action "document":"mExists" with args:
+      | index      | "nyc-open-data"                                                       |
+      | collection | "yellow-taxi"                                                         |
+      | strict     | false                                                                 |
+      | body       | { ids: [ "document-1", "document-2", "document-42", "document-21" ] } |
+    Then I should receive a "successes" array matching:
+      | "document-1" |
+      | "document-2" |
+    And I should receive a "errors" array matching:
+      | "document-42" |
+      | "document-21" |
+
+  @mappings
+  Scenario: Get multiple documents in strict mode with errors
+    Given an existing collection "nyc-open-data":"yellow-taxi"
+    And I "create" the following multiple documents:
+      | _id          | body                    |
+      | "document-1" | { "name": "document1" } |
+      | "document-2" | { "name": "document2" } |
+    When I execute the action "document":"mExists" with args:
+      | index      | "nyc-open-data"                          |
+      | collection | "yellow-taxi"                            |
+      | strict     | true                                     |
+      | body       | { ids: [ "document-1", "document-42" ] } |
+    Then I should receive an error matching:
+      | id | "api.process.incomplete_multiple_request" |
+
+  # document:export ============================================================
+
+  @mappings
+  @http
+  Scenario: Verify exported documents in format jsonl
+    Given an existing collection "nyc-open-data":"yellow-taxi"
+    Then The document "document-1" should not exist
+    And The document "document-2" should not exist
+    When I "create" the following multiple documents:
+      | _id          | body                                |
+      | "document-1" | { "name": "document1", "age": 42 }  |
+      | "document-2" | { "name": "document2", "age": 666 } |
+    And I refresh the collection
+    When I export the collection "nyc-open-data":"yellow-taxi" in the format "jsonl"
+    Then the streamed data should be equal to:
+      | {"collection":"yellow-taxi","index":"nyc-open-data","type":"collection"}                                                                          |
+      | {"_id":"document-1","body":{"_kuzzle_info":{"author":"test-admin","createdAt":\d+,"updatedAt":null,"updater":null},"name":"document1","age":42}}  |
+      | {"_id":"document-2","body":{"_kuzzle_info":{"author":"test-admin","createdAt":\d+,"updatedAt":null,"updater":null},"name":"document2","age":666}} |
+
+  @mappings
+  @http
+  Scenario: Verify exported documents in format csv
+    Given an existing collection "nyc-open-data":"yellow-taxi"
+    Then The document "document-1" should not exist
+    And The document "document-2" should not exist
+    When I "create" the following multiple documents:
+      | _id          | body                                |
+      | "document-1" | { "name": "document1", "age": 42 }  |
+      | "document-2" | { "name": "document2", "age": 666 } |
+    And I refresh the collection
+    When I export the collection "nyc-open-data":"yellow-taxi" in the format "csv" with GET:
+      | fields | ["age", "name"]        |
+      | query  | { term: { age: 666 } } |
+    Then the streamed data should be equal to:
+      | _id,age,name             |
+      | document-2,666,document2 |
+    When I export the collection "nyc-open-data":"yellow-taxi" in the format "csv" with POST:
+      | fields | ["age", "name"]        |
+      | query  | { term: { age: 666 } } |
+    Then the streamed data should be equal to:
+      | _id,age,name             |
+      | document-2,666,document2 |
+
+  @mappings
+  @http
+  Scenario: Verify exported documents in format csv with specified fields
+    Given an existing collection "nyc-open-data":"yellow-taxi"
+    Then The document "document-1" should not exist
+    And The document "document-2" should not exist
+    When I "create" the following multiple documents:
+      | _id          | body                                |
+      | "document-1" | { "name": "document1", "age": 42 }  |
+      | "document-2" | { "name": "document2", "age": 666 } |
+    And I refresh the collection
+    When I export the collection "nyc-open-data":"yellow-taxi" in the format "csv" with GET:
+      | fields | ["age","name"] |
+    Then the streamed data should be equal to:
+      | _id,age,name             |
+      | document-1,42,document1  |
+      | document-2,666,document2 |
+
+  @mappings
+  @http
+  Scenario: Verify exported documents in format csv with renamed fields
+    Given an existing collection "nyc-open-data":"yellow-taxi"
+    Then The document "document-1" should not exist
+    And The document "document-2" should not exist
+    When I "create" the following multiple documents:
+      | _id          | body                                |
+      | "document-1" | { "name": "document1", "age": 42 }  |
+      | "document-2" | { "name": "document2", "age": 666 } |
+    And I refresh the collection
+    When I export the collection "nyc-open-data":"yellow-taxi" in the format "csv" with GET:
+      | fields     | [ "age", "name" ]                                         |
+      | fieldsName | { "age": "cityAge", "name": "documentName", "_id": "id" } |
+    Then the streamed data should be equal to:
+      | id,cityAge,documentName  |
+      | document-1,42,document1  |
+      | document-2,666,document2 |
 
   # document:mCreate ===========================================================
 
   @mappings
   Scenario: Create multiple documents
     Given an existing collection "nyc-open-data":"yellow-taxi"
-    When I "create" the following documents:
+    When I "create" the following multiple documents:
       | _id          | body                    |
       | "document-1" | { "name": "document1" } |
       | -            | { "name": "document2" } |
@@ -232,7 +470,7 @@ Feature: Document Controller
     And I can create the following document:
       | _id  | "document-1"                       |
       | body | { "name": "document1", "age": 42 } |
-    When I "create" the following documents:
+    When I "create" the following multiple documents:
       | _id          | body                    |
       | "document-1" | { "name": "replaced1" } |
       | "document-2" | { "name": "document2" } |
@@ -260,18 +498,18 @@ Feature: Document Controller
       | _id        | "document-1"            |
       | body       | { "name": "document1" } |
     Then I should receive a result matching:
-      | _id     | "document-1"             |
-      | _source | { "name": "document1" }  |
-      | created | true                     |
+      | _id     | "document-1"            |
+      | _source | { "name": "document1" } |
+      | created | true                    |
     And I refresh the collection
     And I count 1 documents
     And The document "document-1" content match:
       | name | "document1" |
-  
+
   @mappings
   Scenario: CreateOrReplace on an existing document
     Given an existing collection "nyc-open-data":"yellow-taxi"
-    And I "create" the following documents:
+    And I "create" the following multiple documents:
       | _id          | body                               |
       | "document-1" | { "name": "document1", "age": 42 } |
     When I successfully execute the action "document":"createOrReplace" with args:
@@ -280,9 +518,9 @@ Feature: Document Controller
       | _id        | "document-1"            |
       | body       | { "name": "replaced1" } |
     Then I should receive a result matching:
-      | _id     | "document-1"             |
-      | _source | { "name": "replaced1" }  |
-      | created | false                    |
+      | _id     | "document-1"            |
+      | _source | { "name": "replaced1" } |
+      | created | false                   |
     And I refresh the collection
     And I count 1 documents
     And The document "document-1" content match:
@@ -291,29 +529,9 @@ Feature: Document Controller
   # document:mCreateOrReplace ==================================================
 
   @mappings
-  Scenario: CreateOrReplace multiple documents
-    Given an existing collection "nyc-open-data":"yellow-taxi"
-    And I "create" the following documents:
-      | _id          | body                               |
-      | "document-1" | { "name": "document1", "age": 42 } |
-    When I "createOrReplace" the following documents:
-      | _id          | body                    |
-      | "document-1" | { "name": "replaced1" } |
-      | -            | { "name": "document2" } |
-    Then I should receive a "successes" array of objects matching:
-      | _id          | _source                 | status | result    | created |
-      | "document-1" | { "name": "replaced1" } | 200    | "updated" | false   |
-      | -            | { "name": "document2" } | 201    | "created" | true    |
-    And I should receive a empty "errors" array
-    And I refresh the collection
-    And I count 2 documents
-    And The document "document-1" content match:
-      | name | "replaced1" |
-
-  @mappings
   Scenario: CreateOrReplace multiple documents with errors
     Given an existing collection "nyc-open-data":"yellow-taxi"
-    When I "createOrReplace" the following documents:
+    When I "createOrReplace" the following multiple documents:
       | _id          | body                    |
       | "document-1" | { "name": "document1" } |
       | -            | "not a body"            |
@@ -326,6 +544,41 @@ Feature: Document Controller
     And The document "document-1" content match:
       | name | "document1" |
 
+  @mappings
+  Scenario: CreateOrReplace multiple documents and return _source
+    Given an existing collection "nyc-open-data":"yellow-taxi"
+    And I "create" the following multiple documents:
+      | _id          | body                               |
+      | "document-1" | { "name": "document1", "age": 42 } |
+    When I successfully execute the action "document":"mCreateOrReplace" with args:
+      | index      | "nyc-open-data"                                                               |
+      | collection | "yellow-taxi"                                                                 |
+      | body       | { "documents": [ { "_id": "document-1", "body": { "name": "replaced1" } } ] } |
+      | source     | true                                                                          |
+    Then I should receive a "successes" array of objects matching:
+      | _id          | _source                 | status | result    | created |
+      | "document-1" | { "name": "replaced1" } | 200    | "updated" | false   |
+    And I should receive a empty "errors" array
+    And I refresh the collection
+    And I count 1 documents
+    And The document "document-1" content match:
+      | name | "replaced1" |
+
+  @mappings
+  Scenario: CreateOrReplace multiple documents and return response without _source
+    Given an existing collection "nyc-open-data":"yellow-taxi"
+    And I "create" the following multiple documents:
+      | _id          | body                               |
+      | "document-1" | { "name": "document1", "age": 42 } |
+    When I successfully execute the action "document":"mCreateOrReplace" with args:
+      | index      | "nyc-open-data"                                                               |
+      | collection | "yellow-taxi"                                                                 |
+      | body       | { "documents": [ { "_id": "document-1", "body": { "name": "replaced1" } } ] } |
+      | source     | "false"                                                                       |
+    Then I should receive a "successes" array of objects matching:
+      | _id          | _source       | status | result    | created |
+      | "document-1" | "_UNDEFINED_" | 200    | "updated" | false   |
+    And I should receive a empty "errors" array
 
   # document:update ===========================================================
   @mappings
@@ -364,11 +617,11 @@ Feature: Document Controller
   @mappings
   Scenario: Update multiple documents
     Given an existing collection "nyc-open-data":"yellow-taxi"
-    And I "create" the following documents:
+    And I "create" the following multiple documents:
       | _id          | body                               |
       | "document-1" | { "name": "document1", "age": 42 } |
       | "document-2" | { "name": "document2" }            |
-    When I "update" the following documents:
+    When I "update" the following multiple documents:
       | _id          | body                   |
       | "document-1" | { "name": "updated1" } |
       | "document-2" | { "age": 21 }          |
@@ -387,11 +640,11 @@ Feature: Document Controller
   @mappings
   Scenario: Update multiple documents with errors
     Given an existing collection "nyc-open-data":"yellow-taxi"
-    And I "create" the following documents:
+    And I "create" the following multiple documents:
       | _id          | body                               |
       | "document-1" | { "name": "document1", "age": 42 } |
       | "document-2" | { "name": "document2" }            |
-    When I "update" the following documents:
+    When I "update" the following multiple documents:
       | _id           | body                   |
       | -             | { "name": "updated1" } |
       | "document-42" | { "name": "updated1" } |
@@ -416,33 +669,33 @@ Feature: Document Controller
   @mappings
   Scenario: Upsert multiple documents
     Given an existing collection "nyc-open-data":"yellow-taxi"
-    And I "create" the following documents:
+    And I "create" the following multiple documents:
       | _id          | body                               |
       | "document-1" | { "name": "document1", "age": 42 } |
-    When I execute the "upsert" action on the following documents:
+    When I execute the "mUpsert" action on the following documents:
       | _id          | changes                | default                |
       | "document-1" | { "name": "updated1" } | -                      |
       | "document-2" | { "age": 21 }          | { "name": "created2" } |
     Then I should receive a "successes" array of objects matching:
-      | _id          | _source                            | _version | status | created |
-      | "document-1" | { "name": "updated1", "age": 42 }  | 2        | 200    | false   |
-      | "document-2" | { "name": "created2", "age": 21 }  | 1        | 201    | true    |
+      | _id          | _source                           | _version | status | created |
+      | "document-1" | { "name": "updated1", "age": 42 } | 2        | 200    | false   |
+      | "document-2" | { "name": "created2", "age": 21 } | 1        | 201    | true    |
     And I should receive a empty "errors" array
     And The document "document-1" content match:
       | name | "updated1" |
       | age  | 42         |
     And The document "document-2" content match:
       | name | "created2" |
-      | age  | 21          |
+      | age  | 21         |
 
   @mappings
   Scenario: Upsert multiple documents with errors
     Given an existing collection "nyc-open-data":"yellow-taxi"
-    And I "create" the following documents:
+    And I "create" the following multiple documents:
       | _id          | body                               |
       | "document-1" | { "name": "document1", "age": 42 } |
       | "document-2" | { "name": "document2" }            |
-    When I execute the "upsert" action on the following documents:
+    When I execute the "mUpsert" action on the following documents:
       | _id           | changes                 | default                 |
       | -             | { "name": "updated0" }  | -                       |
       | "document-42" | { "name": "updated42" } | { "name": "created42" } |
@@ -452,13 +705,13 @@ Feature: Document Controller
       | _id           | _source                 | _version | status | created |
       | "document-42" | { "name": "created42" } | 1        | 201    | true    |
     And I should receive a "errors" array of objects matching:
-      | reason                               | status | document                                                    |
-      | "document _id must be a string"      | 400    | { "changes": { "name": "updated0" } }                       |
-      | "document default must be an object" | 400    | { "_id": "document-1", "changes": { "name": "updated1" } }  |
-      | "document changes must be an object" | 400    | { "_id": "document-2", "changes": "not an object" }         |
+      | reason                               | status | document                                                   |
+      | "document _id must be a string"      | 400    | { "changes": { "name": "updated0" } }                      |
+      | "document default must be an object" | 400    | { "_id": "document-1", "changes": { "name": "updated1" } } |
+      | "document changes must be an object" | 400    | { "_id": "document-2", "changes": "not an object" }        |
     And The document "document-1" content match:
       | name | "document1" |
-      | age  | 42         |
+      | age  | 42          |
     And The document "document-2" content match:
       | name | "document2" |
     And The document "document-42" content match:
@@ -469,11 +722,11 @@ Feature: Document Controller
   @mappings
   Scenario: Replace multiple documents
     Given an existing collection "nyc-open-data":"yellow-taxi"
-    And I "create" the following documents:
+    And I "create" the following multiple documents:
       | _id          | body                               |
       | "document-1" | { "name": "document1", "age": 42 } |
       | "document-2" | { "name": "document2" }            |
-    When I "replace" the following documents:
+    When I "replace" the following multiple documents:
       | _id          | body                    |
       | "document-1" | { "name": "replaced1" } |
       | "document-2" | { "name": "replaced2" } |
@@ -490,11 +743,11 @@ Feature: Document Controller
   @mappings
   Scenario: Replace multiple documents with errors
     Given an existing collection "nyc-open-data":"yellow-taxi"
-    And I "create" the following documents:
+    And I "create" the following multiple documents:
       | _id          | body                               |
       | "document-1" | { "name": "document1", "age": 42 } |
       | "document-2" | { "name": "document2" }            |
-    When I "replace" the following documents:
+    When I "replace" the following multiple documents:
       | _id           | body                    |
       | -             | { "name": "replaced1" } |
       | "document-42" | { "name": "replaced1" } |
@@ -520,12 +773,12 @@ Feature: Document Controller
   @mappings
   Scenario: Delete multiple documents
     Given an existing collection "nyc-open-data":"yellow-taxi"
-    And I "create" the following documents:
+    And I "create" the following multiple documents:
       | _id          | body                    |
       | "document-1" | { "name": "document1" } |
       | "document-2" | { "name": "document2" } |
       | "document-3" | { "name": "document3" } |
-    When I "delete" the following document ids:
+    When I "mDelete" the following document ids:
       | "document-1" |
       | "document-2" |
     Then I should receive a "successes" array matching:
@@ -538,12 +791,12 @@ Feature: Document Controller
   @mappings
   Scenario: Delete multiple documents with errors
     Given an existing collection "nyc-open-data":"yellow-taxi"
-    And I "create" the following documents:
+    And I "create" the following multiple documents:
       | _id          | body                    |
       | "document-1" | { "name": "document1" } |
       | "document-2" | { "name": "document2" } |
       | "document-3" | { "name": "document3" } |
-    When I "delete" the following document ids:
+    When I "mDelete" the following document ids:
       | "document-1"  |
       | 214284        |
       | "document-42" |
@@ -562,12 +815,12 @@ Feature: Document Controller
   @mappings
   Scenario: Get multiple documents
     Given an existing collection "nyc-open-data":"yellow-taxi"
-    And I "create" the following documents:
+    And I "create" the following multiple documents:
       | _id          | body                    |
       | "document-1" | { "name": "document1" } |
       | "document-2" | { "name": "document2" } |
       | "document-3" | { "name": "document3" } |
-    When I "get" the following document ids:
+    When I "mGet" the following document ids:
       | "document-1" |
       | "document-2" |
     Then I should receive a "successes" array of objects matching:
@@ -575,7 +828,7 @@ Feature: Document Controller
       | "document-1" | { "name": "document1" } |
       | "document-2" | { "name": "document2" } |
     And I should receive a empty "errors" array
-    When I "get" the following document ids with verb "POST":
+    When I "mGet" the following document ids with verb "POST":
       | "document-1" |
       | "document-2" |
     Then I should receive a "successes" array of objects matching:
@@ -588,12 +841,12 @@ Feature: Document Controller
   @mappings
   Scenario: Get multiple documents with errors
     Given an existing collection "nyc-open-data":"yellow-taxi"
-    And I "create" the following documents:
+    And I "create" the following multiple documents:
       | _id          | body                    |
       | "document-1" | { "name": "document1" } |
       | "document-2" | { "name": "document2" } |
       | "document-3" | { "name": "document3" } |
-    When I "get" the following document ids:
+    When I "mGet" the following document ids:
       | "document-1"  |
       | 214284        |
       | "document-42" |
@@ -607,7 +860,7 @@ Feature: Document Controller
   @mappings
   Scenario: Get multiple documents in strict mode with errors
     Given an existing collection "nyc-open-data":"yellow-taxi"
-    And I "create" the following documents:
+    And I "create" the following multiple documents:
       | _id          | body                    |
       | "document-1" | { "name": "document1" } |
       | "document-2" | { "name": "document2" } |
@@ -617,14 +870,14 @@ Feature: Document Controller
       | strict     | true                                     |
       | body       | { ids: [ "document-1", "document-42" ] } |
     Then I should receive an error matching:
-      | id     | "api.process.incomplete_multiple_request" |
+      | id | "api.process.incomplete_multiple_request" |
 
   # document:count =============================================================
 
   @mappings
   Scenario: Count documents
     Given an existing collection "nyc-open-data":"yellow-taxi"
-    And I "create" the following documents:
+    And I "create" the following multiple documents:
       | _id | body                   |
       | -   | { "job": "developer" } |
       | -   | { "job": "developer" } |
@@ -634,12 +887,29 @@ Feature: Document Controller
     And I count 2 documents matching:
       | job | "developer" |
 
+  @mappings
+  Scenario: Count documents with Koncorde filters
+    Given an existing collection "nyc-open-data":"yellow-taxi"
+    And I "create" the following multiple documents:
+      | _id | body                   |
+      | -   | { "job": "developer" } |
+      | -   | { "job": "developer" } |
+      | -   | { "job": "cto" }       |
+    And I refresh the collection
+    When I successfully execute the action "document":"count" with args:
+      | index      | "nyc-open-data"                                  |
+      | collection | "yellow-taxi"                                    |
+      | body       | { "query": { "equals": {"job": "developer" } } } |
+      | lang       | "koncorde"                                       |
+    Then I should receive a result matching:
+      | count | 2 |
+
   # document:delete ============================================================
 
   @mappings
   Scenario: Delete document
     Given an existing collection "nyc-open-data":"yellow-taxi"
-    And I "create" the following documents:
+    And I "create" the following multiple documents:
       | _id          | body                    |
       | "document-1" | { "name": "document1" } |
       | "document-2" | { "name": "document2" } |
@@ -651,7 +921,7 @@ Feature: Document Controller
   @mappings
   Scenario: Delete document and retrieve its source
     Given an existing collection "nyc-open-data":"yellow-taxi"
-    And I "create" the following documents:
+    And I "create" the following multiple documents:
       | _id          | body                    |
       | "document-1" | { "name": "document1" } |
     When I successfully execute the action "document":"delete" with args:
@@ -667,7 +937,7 @@ Feature: Document Controller
   @mappings
   Scenario: deleteByQuery
     Given an existing collection "nyc-open-data":"yellow-taxi"
-    And I "create" the following documents:
+    And I "create" the following multiple documents:
       | _id | body                               |
       | -   | { "name": "document1", "age": 42 } |
       | -   | { "name": "document2", "age": 84 } |
@@ -684,7 +954,7 @@ Feature: Document Controller
   @mappings
   Scenario: deleteByQuery and retrieve sources
     Given an existing collection "nyc-open-data":"yellow-taxi"
-    And I "create" the following documents:
+    And I "create" the following multiple documents:
       | _id | body                               |
       | -   | { "name": "document1", "age": 42 } |
       | -   | { "name": "document2", "age": 84 } |
@@ -705,7 +975,7 @@ Feature: Document Controller
   @mappings
   Scenario: deleteByQuery with Koncorde filters
     Given an existing collection "nyc-open-data":"yellow-taxi"
-    And I "create" the following documents:
+    And I "create" the following multiple documents:
       | _id | body                               |
       | -   | { "name": "document1", "age": 42 } |
       | -   | { "name": "document2", "age": 84 } |
@@ -723,7 +993,7 @@ Feature: Document Controller
   @mappings
   Scenario: updateByQuery
     Given an existing collection "nyc-open-data":"yellow-taxi"
-    And I "create" the following documents:
+    And I "create" the following multiple documents:
       | _id          | body                              |
       | "document-1" | { "name": "Sylvanas Windrunner" } |
       | "document-2" | { "name": "Tirion Fordring" }     |
@@ -738,7 +1008,7 @@ Feature: Document Controller
       | _id          |
       | "document-1" |
       | "document-4" |
-    When I "get" the following document ids:
+    When I "mGet" the following document ids:
       | "document-1" |
       | "document-4" |
     Then I should receive a "successes" array of objects matching:
@@ -750,7 +1020,7 @@ Feature: Document Controller
   @mappings
   Scenario: UpdateByQuery with Koncorde filters
     Given an existing collection "nyc-open-data":"yellow-taxi"
-    And I "create" the following documents:
+    And I "create" the following multiple documents:
       | _id          | body                              |
       | "document-1" | { "name": "Sylvanas Windrunner" } |
       | "document-2" | { "name": "Tirion Fordring" }     |
@@ -766,7 +1036,7 @@ Feature: Document Controller
       | _id          |
       | "document-1" |
       | "document-4" |
-    When I "get" the following document ids:
+    When I "mGet" the following document ids:
       | "document-1" |
       | "document-4" |
     Then I should receive a "successes" array of objects matching:
@@ -780,22 +1050,22 @@ Feature: Document Controller
   Scenario: Upsert document with and without returning updated document
     Given an existing collection "nyc-open-data":"yellow-taxi"
     When I successfully execute the action "document":"upsert" with args:
-      | index      | "nyc-open-data"        |
-      | collection | "yellow-taxi"          |
-      | _id        | "document-1"           |
+      | index      | "nyc-open-data"                                                                 |
+      | collection | "yellow-taxi"                                                                   |
+      | _id        | "document-1"                                                                    |
       | body       | { "changes": { "name": "document-1", "age": 42 }, "default": { "foo": "bar" } } |
-      | source     | true                   |
+      | source     | true                                                                            |
     Then I should receive a result matching:
-      | _id      | "document-1"                      |
+      | _id      | "document-1"                                      |
       | _source  | { "name": "document-1", "age": 42, "foo": "bar" } |
       | _version | 1                                                 |
       | created  | true                                              |
     When I successfully execute the action "document":"upsert" with args:
-      | index      | "nyc-open-data"        |
-      | collection | "yellow-taxi"          |
-      | _id        | "document-1"           |
+      | index      | "nyc-open-data"                                                        |
+      | collection | "yellow-taxi"                                                          |
+      | _id        | "document-1"                                                           |
       | body       | { "changes": { "name": "updated1" }, "default": { "foo": "oh noes" } } |
-      | source     | true                   |
+      | source     | true                                                                   |
     Then I should receive a result matching:
       | _id      | "document-1"                                    |
       | _source  | { "name": "updated1", "age": 42, "foo": "bar" } |

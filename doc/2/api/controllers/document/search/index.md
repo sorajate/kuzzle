@@ -1,7 +1,7 @@
 ---
 code: true
 type: page
-title: search
+title: search | API | Core
 ---
 
 # search
@@ -18,7 +18,6 @@ When using a cursor with the `scroll` option, Elasticsearch has to duplicate the
 It can lead to memory leaks if a scroll duration too large is provided, or if too many scroll sessions are open simultaneously.
 :::
 
-
 ::: info
 <SinceBadge version="2.2.0"/>
 You can restrict the scroll session maximum duration under the `services.storage.maxScrollDuration` configuration key.
@@ -31,6 +30,18 @@ Koncorde filters will be translated into an Elasticsearch query.
 
 ::: warning
 Koncorde `bool` operator and `regexp` clause are not supported for search queries.
+:::
+
+## Multi Search
+
+<SinceBadge version="2.17.0"/>
+
+This method also support searching accross multiple indexes and collections
+using the `targets` parameter instead of `index`, `collection` parameters.
+See [Target Format](#target-format).
+
+::: warning
+Multi Search is only supported in WebSocket and MQTT protocols.
 :::
 
 ---
@@ -68,10 +79,45 @@ Method: GET
 
 ### Other protocols
 
+Search using `index` & `collection` parameters
+
 ```js
 {
   "index": "<index>",
   "collection": "<collection>",
+  "controller": "document",
+  "action": "search",
+  "body": {
+    "query": {
+      // ...
+    },
+    "aggregations": {
+      // ...
+    },
+    "sort": [
+      // ...
+    ]
+  },
+
+  // optional:
+  "from": <starting offset>,
+  "size": <page size>,
+  "scroll": "<scroll duration>",
+  "lang": "<query language>"
+}
+```
+
+Search using `targets` parameter <SinceBadge version="2.17.0" />
+
+```js
+{
+  "targets": [
+    {
+      "index": "<index>"
+      "collections": ["<collection>", "<anotherCollection>"]
+    },
+    // ...
+  ],
   "controller": "document",
   "action": "search",
   "body": {
@@ -108,6 +154,10 @@ kourou document:search <index> <collection> <query> --sort <sort> --size <size>
 - `collection`: collection name
 - `index`: index name
 
+or
+
+- `targets`: list of target. See [Target Format](#target-format).
+
 ### Optional:
 
 - `from`: paginates search results by defining the offset from the first result you want to fetch. Usually used with the `size` argument
@@ -128,7 +178,7 @@ kourou document:search <index> <collection> <query> --sort <sort> --size <size>
 An empty body matches all documents in the queried collection.
 
 ::: info
-Only the following fields are available in the top level of the search body: `aggregations`, `aggs`, `collapse`, `explain`, `from`, `highlight`, `query`, `search_timeout`, `size`, `sort`, `_name`, `_source`, `_source_excludes`, `_source_includes`
+Only the following fields are available in the top level of the search body: `aggregations`, `aggs`, `collapse`, `explain`, `fields`, `from`, `highlight`, `query`, `search_timeout`, `size`, `sort`, `_name`, `_source`, `_source_excludes`, `_source_includes`
 :::
 
 ---
@@ -140,6 +190,8 @@ Returns a paginated search result set, with the following properties:
 - `aggregations`: provides aggregation information. Present only if an `aggregations` object has been provided in the search body
 - `hits`: array of found documents. Each document has the following properties:
   - `_id`: document unique identifier
+  - `index`: index name <SinceBadge version="2.17.0" />
+  - `collection`: collection name <SinceBadge version="2.17.0" />
   - `_score`: [relevance score](https://www.elastic.co/guide/en/elasticsearch/guide/current/relevance-intro.html)
   - `_source`: new document content
   - `highlight`: optional result from [highlight API](https://www.elastic.co/guide/en/elasticsearch/reference/7.4/search-request-body.html#request-body-search-highlighting)
@@ -183,5 +235,14 @@ Returns a paginated search result set, with the following properties:
     },
     "total": 42
   }
+}
+```
+
+## Target Format
+
+```js
+{
+  "index": "<index>"
+  "collections": ["<collection>", "<anotherCollection>"]
 }
 ```

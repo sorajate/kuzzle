@@ -2,7 +2,7 @@
  * Kuzzle, a backend software, self-hostable and ready to use
  * to power modern apps
  *
- * Copyright 2015-2020 Kuzzle
+ * Copyright 2015-2022 Kuzzle
  * mailto: support AT kuzzle.io
  * website: http://kuzzle.io
  *
@@ -19,28 +19,26 @@
  * limitations under the License.
  */
 
-'use strict';
+"use strict";
 
-const clc = require('cli-color');
+const clc = require("cli-color");
 
 function noop(str) {
   return str;
 }
 
 class ColorOutput {
-  constructor (opts) {
+  constructor(opts) {
     // /!\ "opts" might be a string
     const noColors =
-      typeof opts === 'object' &&
-        opts.parent &&
-        opts.parent.noColors;
+      typeof opts === "object" && opts.parent && opts.parent.noColors;
 
     this.format = {
       error: noColors ? noop : clc.red,
       warn: noColors ? noop : clc.yellow,
       notice: noColors ? noop : clc.cyanBright,
       ok: noColors ? noop : clc.green.bold,
-      question: noColors ? noop : clc.whiteBright
+      question: noColors ? noop : clc.whiteBright,
     };
   }
 

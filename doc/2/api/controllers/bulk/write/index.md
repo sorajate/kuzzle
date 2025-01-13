@@ -1,12 +1,10 @@
 ---
 code: true
 type: page
-title: write
+title: write | API | Core
 ---
 
 # write
-
-<SinceBadge version="1.8.0" />
 
 Create or replace a document directly into the storage engine.
 

@@ -1,9 +1,13 @@
 ---
 code: false
 type: page
-title: Deploy your Application
-description: Deploy your Kuzzle application on a remote server
 order: 900
+title: Deploy your Application | Kuzzle Getting Started | Guide | Core
+meta:
+  - name: description
+    content: Deploy your Kuzzle application on a remote server
+  - name: keywords
+    content: Kuzzle, Documentation, kuzzle write pluggins, General purpose backend, Write an Application, iot, backend, opensource, realtime, Deploy your application
 ---
 
 # Deploy your Application
@@ -44,6 +48,26 @@ This deployment does not use any SSL encryption (HTTPS).
 A production deployment must include a reverse proxy to securize the connection with SSL.
 :::
 
+::: warning
+# Authentication Security in Production
+
+## ⚠️ Important Security Requirement
+
+You must set the `kuzzle_security__authToken__secret` environment variable before deploying Kuzzle to production. This secret is used to sign and verify JSON Web Tokens (JWTs) for user authentication.
+
+## Why This Matters
+- Prevents tokens from being stored in Elasticsearch
+- Improves overall security
+- Gives you direct control over token management
+
+## Security Notes
+1. **Fallback Warning**: If you don't set this variable, Kuzzle will use a less secure fallback method (not recommended for production)
+2. **Token Invalidation**: Changing the secret value will immediately invalidate all existing authentication tokens
+3. **User Impact**: Users will need to log in again if the secret changes
+
+## Additional Resources
+For other configuration options, see the [sample configuration file](https://github.com/kuzzleio/kuzzle/blob/master/.kuzzlerc.sample.jsonc).
+:::
 ## Prepare our Docker Compose deployment
 
 We are going to write a `docker-compose.yml` file that describes our services.  
@@ -108,7 +132,7 @@ Create the `deployment/kuzzle.dockerfile` file with the following content:
 
 ```dockerfile
 # builder image
-FROM node:12.18.1-stretch-slim as builder
+FROM node:18 as builder
 
 RUN  set -x \
   && apt-get update && apt-get install -y \
@@ -122,10 +146,10 @@ ADD . /var/app
 
 WORKDIR /var/app
 
-RUN  npm install && npm run build && npm prune --production
+RUN  npm ci && npm run build && npm prune --production
 
 # run image
-FROM node:12.18.1-stretch-slim
+FROM node:18
 
 COPY --from=builder /var/app /var/app
 
@@ -146,7 +170,7 @@ $ ssh <user>@<server-ip>
 
 [...]
 
-$ docker-compose -f deployment/docker-compose.yml up -d
+$ docker compose -f deployment/docker-compose.yml up -d
 ```
 
 Your Kuzzle application is now up and running on port 7512!

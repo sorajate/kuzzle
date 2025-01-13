@@ -2,7 +2,7 @@
  * Kuzzle, a backend software, self-hostable and ready to use
  * to power modern apps
  *
- * Copyright 2015-2020 Kuzzle
+ * Copyright 2015-2022 Kuzzle
  * mailto: support AT kuzzle.io
  * website: http://kuzzle.io
  *
@@ -19,28 +19,25 @@
  * limitations under the License.
  */
 
+import Bluebird from "bluebird";
+import { Koncorde } from "../shared/KoncordeWrapper";
+import { JSONObject } from "kuzzle-sdk";
 
-import Bluebird from 'bluebird';
-import { Koncorde } from '../shared/KoncordeWrapper';
-import { Client } from '@elastic/elasticsearch';
-import { JSONObject } from 'kuzzle-sdk';
+import {
+  KuzzleRequest,
+  Request,
+  RequestContext,
+  RequestInput,
+} from "../../../index";
 
-import { EmbeddedSDK } from '../shared/sdk/embeddedSdk';
-import PluginRepository from './pluginRepository';
-import Store from '../shared/store';
-import Elasticsearch from '../../service/storage/elasticsearch';
-import { isPlainObject } from '../../util/safeObject';
-import Promback from '../../util/promback';
-import { Mutex } from '../../util/mutex';
-import kerror from '../../kerror';
-import storeScopeEnum from '../storage/storeScopeEnum';
+import * as kerror from "../../kerror";
 import {
   BadRequestError,
   ExternalServiceError,
   ForbiddenError,
   GatewayTimeoutError,
-  InternalError as KuzzleInternalError,
   KuzzleError,
+  InternalError as KuzzleInternalError,
   NotFoundError,
   PartialError,
   PluginImplementationError,
@@ -49,33 +46,35 @@ import {
   SizeLimitError,
   TooManyRequestsError,
   UnauthorizedError,
-} from '../../kerror/errors';
-import {
-  RequestContext,
-  RequestInput,
-  KuzzleRequest,
-  Request,
-} from '../../../index';
-import { BackendCluster } from '../backend';
+} from "../../kerror/errors";
+import { Elasticsearch } from "../../service/storage/Elasticsearch";
+import { Mutex } from "../../util/mutex";
+import Promback from "../../util/promback";
+import { isPlainObject } from "../../util/safeObject";
+import { BackendCluster } from "../backend";
+import { EmbeddedSDK } from "../shared/sdk/embeddedSdk";
+import { Store } from "../shared/store";
+import { storeScopeEnum } from "../storage/storeScopeEnum";
+import PluginRepository from "./pluginRepository";
 
-const contextError = kerror.wrap('plugin', 'context');
+const contextError = kerror.wrap("plugin", "context");
 
 export interface Repository {
- create(document: JSONObject, options: any): Promise<any>;
+  create(document: JSONObject, options: any): Promise<any>;
 
- createOrReplace(document: JSONObject, options: any): Promise<any>;
+  createOrReplace(document: JSONObject, options: any): Promise<any>;
 
- delete(documentId: string, options: any): Promise<any>;
+  delete(documentId: string, options: any): Promise<any>;
 
- get(documentId: string): Promise<any>;
+  get(documentId: string): Promise<any>;
 
- mGet(ids: string[]): Promise<any>;
+  mGet(ids: string[]): Promise<any>;
 
- replace(document: JSONObject, options: any): Promise<any>;
+  replace(document: JSONObject, options: any): Promise<any>;
 
- search(query: JSONObject, options: any): Promise<any>;
+  search(query: JSONObject, options: any): Promise<any>;
 
- update(document: JSONObject, options: any): Promise<any>;
+  update(document: JSONObject, options: any): Promise<any>;
 }
 
 export class PluginContext {
@@ -83,12 +82,12 @@ export class PluginContext {
     /**
      * Embedded SDK
      */
-    sdk: EmbeddedSDK,
+    sdk: EmbeddedSDK;
 
     /**
      * Trigger a custom plugin event
      */
-    trigger: (eventName: string, payload: any) => Promise<any>,
+    trigger: (eventName: string, payload: any) => Promise<any>;
 
     /**
      * Add or remove strategies dynamically
@@ -97,28 +96,28 @@ export class PluginContext {
       /**
        * Adds a new authentication strategy
        */
-      add: (name: string, properties: any) => Promise<void>,
+      add: (name: string, properties: any) => Promise<void>;
 
       /**
        * Removes an authentication strategy, preventing new authentications from using it.
        */
-      remove: (name: string) => Promise<void>
-    },
+      remove: (name: string) => Promise<void>;
+    };
 
     /**
      * Accessor to the Data Validation API
      */
     validation: {
-      addType: any,
-      validate: any
-    },
+      addType: any;
+      validate: any;
+    };
 
     /**
      * Execute an API action.
      *
      * @deprecated use "accessors.sdk" instead (unless you need the original context)
      */
-    execute: (request: KuzzleRequest, callback?: any) => Promise<KuzzleRequest>,
+    execute: (request: KuzzleRequest, callback?: any) => Promise<KuzzleRequest>;
 
     /**
      * Adds or removes realtime subscriptions from the backend.
@@ -127,13 +126,22 @@ export class PluginContext {
       /**
        * Registers a new realtime subscription on behalf of a client.
        */
-      register: (connectionId: string, index: string, collection: string, filters: JSONObject) => Promise<{ roomId: string }>,
+      register: (
+        connectionId: string,
+        index: string,
+        collection: string,
+        filters: JSONObject,
+      ) => Promise<{ roomId: string }>;
 
       /**
        * Removes a realtime subscription on an existing `roomId` and `connectionId`
        */
-      unregister: (connectionId: string, roomId: string, notify: boolean) => Promise<void>
-    },
+      unregister: (
+        connectionId: string,
+        roomId: string,
+        notify: boolean,
+      ) => Promise<void>;
+    };
 
     /**
      * Initializes the plugin's private data storage.
@@ -142,19 +150,24 @@ export class PluginContext {
       /**
        * Initializes the plugin storage
        */
-      bootstrap: (collections: any) => Promise<void>,
+      bootstrap: (collections: any) => Promise<void>;
 
       /**
        * Creates a collection in the plugin storage
        */
-      createCollection: (collection: string, mappings: any) => Promise<void>
-    },
+      createCollection: (collection: string, mappings: any) => Promise<void>;
+    };
 
     /**
      * Cluster accessor
      * @type {BackendCluster}
      */
-    cluster: BackendCluster,
+    cluster: BackendCluster;
+
+    /**
+     * Current Kuzzle node unique identifier
+     */
+    nodeId: string;
   };
 
   public config: JSONObject;
@@ -168,6 +181,10 @@ export class PluginContext {
      * @deprecated import directly: `import { Koncorde } from 'kuzzle'`
      */
     Koncorde: Koncorde;
+    /**
+     * Mutex class
+     */
+    Mutex: typeof Mutex;
     /**
      * Plugin private storage space
      */
@@ -188,7 +205,7 @@ export class PluginContext {
     /**
      * Constructor for Elasticsearch SDK Client
      */
-    ESClient: new () => Client
+    ESClient: new () => any;
   };
 
   /**
@@ -215,15 +232,15 @@ export class PluginContext {
    * Internal Logger
    */
   public log: {
-    debug: (message: any) => void
-    error: (message: any) => void
-    info: (message: any) => void
-    silly: (message: any) => void
-    verbose: (message: any) => void
-    warn: (message: any) => void
+    debug: (message: any) => void;
+    error: (message: any) => void;
+    info: (message: any) => void;
+    silly: (message: any) => void;
+    verbose: (message: any) => void;
+    warn: (message: any) => void;
   };
 
-  constructor (pluginName) {
+  constructor(pluginName) {
     this.config = JSON.parse(JSON.stringify(global.kuzzle.config));
 
     Object.freeze(this.config);
@@ -245,7 +262,7 @@ export class PluginContext {
       TooManyRequestsError,
       UnauthorizedError,
     };
-    this.kerror = kerror.wrap('plugin', pluginName);
+    this.kerror = kerror.wrap("plugin", pluginName);
 
     // @deprecated - backward compatibility only
     this.errorsManager = this.kerror;
@@ -261,22 +278,18 @@ export class PluginContext {
 
     /* context.constructors =============================================== */
 
-    const pluginStore = new Store(
-      pluginIndex,
-      storeScopeEnum.PRIVATE);
+    const pluginStore = new Store(pluginIndex, storeScopeEnum.PRIVATE);
 
     // eslint-disable-next-line no-inner-declarations
-    function PluginContextRepository (
+    function PluginContextRepository(
       collection: string,
-      ObjectConstructor: any = null)
-    {
-      if (! collection) {
-        throw contextError.get('missing_collection');
+      ObjectConstructor: any = null,
+    ) {
+      if (!collection) {
+        throw contextError.get("missing_collection");
       }
 
-      const pluginRepository = new PluginRepository(
-        pluginStore,
-        collection);
+      const pluginRepository = new PluginRepository(pluginStore, collection);
 
       pluginRepository.init({ ObjectConstructor });
 
@@ -288,21 +301,25 @@ export class PluginContext {
         mGet: (...args) => pluginRepository.loadMultiFromDatabase(...args),
         replace: (...args) => pluginRepository.replace(...args),
         search: (...args) => pluginRepository.search(...args),
-        update: (...args) => pluginRepository.update(...args)
+        update: (...args) => pluginRepository.update(...args),
       } as Repository;
     }
 
-    // eslint-disable-next-line no-inner-declarations
-    function PluginContextESClient () {
-      return Elasticsearch
-        .buildClient(global.kuzzle.config.services.storageEngine.client);
+    function PluginContextESClient(): any {
+      return Elasticsearch.buildClient(
+        global.kuzzle.config.services.storageEngine.client,
+      );
     }
 
     this.constructors = {
-      BaseValidationType: require('../validation/baseType'),
-      ESClient: PluginContextESClient as unknown as new () => Client,
+      BaseValidationType: require("../validation/baseType"),
+      ESClient: PluginContextESClient as any,
       Koncorde: Koncorde as any,
-      Repository: PluginContextRepository as unknown as new (collection: string, objectConstructor: any) => Repository,
+      Mutex: Mutex,
+      Repository: PluginContextRepository as unknown as new (
+        collection: string,
+        objectConstructor: any,
+      ) => Repository,
       Request: instantiateRequest as any,
       RequestContext: RequestContext as any,
       RequestInput: RequestInput as any,
@@ -313,12 +330,12 @@ export class PluginContext {
     /* context.log ======================================================== */
 
     this.log = {
-      debug: msg => global.kuzzle.log.debug(`[${pluginName}] ${msg}`),
-      error: msg => global.kuzzle.log.error(`[${pluginName}] ${msg}`),
-      info: msg => global.kuzzle.log.info(`[${pluginName}] ${msg}`),
-      silly: msg => global.kuzzle.log.silly(`[${pluginName}] ${msg}`),
-      verbose: msg => global.kuzzle.log.verbose(`[${pluginName}] ${msg}`),
-      warn: msg => global.kuzzle.log.warn(`[${pluginName}] ${msg}`)
+      debug: (msg) => global.kuzzle.log.debug(`[${pluginName}] ${msg}`),
+      error: (msg) => global.kuzzle.log.error(`[${pluginName}] ${msg}`),
+      info: (msg) => global.kuzzle.log.info(`[${pluginName}] ${msg}`),
+      silly: (msg) => global.kuzzle.log.silly(`[${pluginName}] ${msg}`),
+      verbose: (msg) => global.kuzzle.log.verbose(`[${pluginName}] ${msg}`),
+      warn: (msg) => global.kuzzle.log.warn(`[${pluginName}] ${msg}`),
     };
 
     Object.freeze(this.log);
@@ -328,45 +345,50 @@ export class PluginContext {
     this.accessors = {
       cluster: new BackendCluster(),
       execute: (request, callback) => execute(request, callback),
+      nodeId: global.kuzzle.id,
       sdk: new EmbeddedSDK(),
       storage: {
-        bootstrap: collections => pluginStore.init(collections),
-        createCollection: (collection, mappings) => (
-          pluginStore.createCollection(collection, { mappings })
-        )
+        bootstrap: (collections) => pluginStore.init(collections),
+        createCollection: (collection, mappings) =>
+          pluginStore.createCollection(collection, { mappings }),
       },
       strategies: {
         add: curryAddStrategy(pluginName),
-        remove: curryRemoveStrategy(pluginName)
+        remove: curryRemoveStrategy(pluginName),
       },
       subscription: {
         register: (connectionId, index, collection, filters) => {
           const request = new KuzzleRequest(
             {
-              action: 'subscribe',
+              action: "subscribe",
               body: filters,
               collection,
-              controller: 'realtime',
+              controller: "realtime",
               index,
             },
             {
               connectionId: connectionId,
-            });
-          return global.kuzzle.ask(
-            'core:realtime:subscribe',
-            request);
+            },
+          );
+          return global.kuzzle.ask("core:realtime:subscribe", request);
         },
         unregister: (connectionId, roomId, notify) =>
           global.kuzzle.ask(
-            'core:realtime:unsubscribe',
-            connectionId, roomId, notify)
+            "core:realtime:unsubscribe",
+            connectionId,
+            roomId,
+            notify,
+          ),
       },
-      trigger: (eventName, payload) => (
-        global.kuzzle.pipe(`plugin-${pluginName}:${eventName}`, payload)
-      ),
+      trigger: (eventName, payload) =>
+        global.kuzzle.pipe(`plugin-${pluginName}:${eventName}`, payload),
       validation: {
-        addType: global.kuzzle.validation.addType.bind(global.kuzzle.validation),
-        validate: global.kuzzle.validation.validate.bind(global.kuzzle.validation)
+        addType: global.kuzzle.validation.addType.bind(
+          global.kuzzle.validation,
+        ),
+        validate: global.kuzzle.validation.validate.bind(
+          global.kuzzle.validation,
+        ),
       },
     };
 
@@ -376,44 +398,47 @@ export class PluginContext {
 }
 
 /**
-  * @param {KuzzleRequest} request
+ * @param {KuzzleRequest} request
  * @param {Function} [callback]
  */
-function execute (request, callback) {
-  if (callback && typeof callback !== 'function') {
-    const error = contextError.get('invalid_callback', typeof callback);
+function execute(request, callback) {
+  if (callback && typeof callback !== "function") {
+    const error = contextError.get("invalid_callback", typeof callback);
     global.kuzzle.log.error(error);
     return Bluebird.reject(error);
   }
 
   const promback = new Promback(callback);
 
-  if (!request || (!(request instanceof KuzzleRequest) && !(request instanceof Request))) {
-    return promback.reject(contextError.get('missing_request'));
+  if (
+    !request ||
+    (!(request instanceof KuzzleRequest) && !(request instanceof Request))
+  ) {
+    return promback.reject(contextError.get("missing_request"));
   }
 
-  if ( request.input.controller === 'realtime'
-    && ['subscribe', 'unsubscribe'].includes(request.input.action)
+  if (
+    request.input.controller === "realtime" &&
+    ["subscribe", "unsubscribe"].includes(request.input.action)
   ) {
     return promback.reject(
-      contextError.get('unavailable_realtime', request.input.action));
+      contextError.get("unavailable_realtime", request.input.action),
+    );
   }
 
   request.clearError();
   request.status = 102;
 
-  global.kuzzle.funnel.executePluginRequest(request)
-    .then(result => {
-      request.setResult(
-        result,
-        {
-          status: request.status === 102 ? 200 : request.status
-        }
-      );
+  global.kuzzle.funnel
+    .executePluginRequest(request)
+    .then((result) => {
+      request.setResult(result, {
+        status: request.status === 102 ? 200 : request.status,
+      });
 
       promback.resolve(request);
     })
-    .catch(err => {
+    .catch((err) => {
       promback.reject(err);
     });
 
@@ -431,13 +456,12 @@ function execute (request, callback) {
  * @returns {Request}
  */
 function instantiateRequest(request, data, options = {}) {
-  let
-    _request = request,
+  let _request = request,
     _data = data,
     _options = options;
 
   if (!_request) {
-    throw contextError.get('missing_request_data');
+    throw contextError.get("missing_request_data");
   }
 
   if (!(_request instanceof KuzzleRequest)) {
@@ -455,7 +479,7 @@ function instantiateRequest(request, data, options = {}) {
 
   // forward informations if a request object was supplied
   if (_request) {
-    for (const resource of ['_id', 'index', 'collection']) {
+    for (const resource of ["_id", "index", "collection"]) {
       if (!target.input.resource[resource]) {
         target.input.resource[resource] = _request.input.resource[resource];
       }
@@ -472,10 +496,10 @@ function instantiateRequest(request, data, options = {}) {
     }
 
     if (_data) {
-      target.input.volatile = Object.assign(
-        {},
-        _request.input.volatile,
-        _data.volatile);
+      target.input.volatile = {
+        ..._request.input.volatile,
+        ..._data.volatile,
+      };
     } else {
       target.input.volatile = _request.input.volatile;
     }
@@ -499,14 +523,15 @@ function curryAddStrategy(pluginName) {
     // be serialized and propagated to other cluster nodes
     // so if a strategy is not defined using an authenticator, we have
     // to reject the call
-    if ( !isPlainObject(strategy)
-      || !isPlainObject(strategy.config)
-      || typeof strategy.config.authenticator !== 'string'
+    if (
+      !isPlainObject(strategy) ||
+      !isPlainObject(strategy.config) ||
+      typeof strategy.config.authenticator !== "string"
     ) {
-      throw contextError.get('missing_authenticator', pluginName, name);
+      throw contextError.get("missing_authenticator", pluginName, name);
     }
 
-    const mutex = new Mutex('auth:strategies:add', { ttl: 30000 });
+    const mutex = new Mutex("auth:strategies:add", { ttl: 30000 });
 
     await mutex.lock();
 
@@ -514,14 +539,13 @@ function curryAddStrategy(pluginName) {
       // @todo use Plugin.checkName to ensure format
       global.kuzzle.pluginsManager.registerStrategy(pluginName, name, strategy);
 
-      return await global.kuzzle.pipe('core:auth:strategyAdded', {
+      return await global.kuzzle.pipe("core:auth:strategyAdded", {
         name,
         pluginName,
         strategy,
       });
-    }
-    finally {
-      mutex.unlock();
+    } finally {
+      await mutex.unlock();
     }
   };
 }
@@ -538,16 +562,18 @@ function curryRemoveStrategy(pluginName) {
   // either async or catch unregisterStrategy exceptions + return a rejected
   // promise
   return async function removeStrategy(name) {
-    const mutex = new Mutex('auth:strategies:remove', { ttl: 30000 });
+    const mutex = new Mutex("auth:strategies:remove", { ttl: 30000 });
 
     await mutex.lock();
 
     try {
       global.kuzzle.pluginsManager.unregisterStrategy(pluginName, name);
-      return await global.kuzzle.pipe('core:auth:strategyRemoved', {name, pluginName});
-    }
-    finally {
-      mutex.unlock();
+      return await global.kuzzle.pipe("core:auth:strategyRemoved", {
+        name,
+        pluginName,
+      });
+    } finally {
+      await mutex.unlock();
     }
   };
 }

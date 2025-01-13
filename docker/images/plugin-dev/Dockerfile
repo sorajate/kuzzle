@@ -1,58 +1,49 @@
 ################################################################################
-# Plugin development build image
-################################################################################
-FROM node:12.18.1-stretch-slim as builder
+ARG NODE_VERSION="20"
+FROM node:${NODE_VERSION}-bookworm-slim AS builder
 
 RUN  set -x \
   && apt-get update && apt-get install -y \
-       curl \
-       make \
-       g++ \
-       python \
-       libzmq3-dev \
-  && npm install -g --unsafe-perm --production \
-    nodemon \
-    kourou \
-    pm2 \
-  && curl -sfL https://install.goreleaser.com/github.com/tj/node-prune.sh | sh -s -- -b /usr/local/bin
-
-ADD ./bin /app/bin
-ADD ./config /app/config
-ADD ./lib /app/lib
-ADD ./package.json /app/package.json
-ADD ./package-lock.json /app/package-lock.json
-ADD ./index.js /app/index.js
-ADD ./.kuzzlerc.sample /app/.kuzzlerc.sample
-
+  curl \
+  make \
+  g++ \
+  python3 \
+  libzmq3-dev \
+  libunwind-dev
 
 WORKDIR /app
 
-# Install dependencies
-RUN  npm install --production
+COPY ./bin bin
+COPY ./config config
+COPY ./lib lib
+COPY ./package.json package.json
+COPY ./package-lock.json package-lock.json
+COPY ./index.ts index.ts
+COPY ./tsconfig.json tsconfig.json
+COPY ./check-node-version.js check-node-version.js
 
-ADD ./docker/scripts/clean-node.sh /usr/bin/clean-node
+RUN npm ci
+RUN npm run build
+RUN npm prune --omit=dev
 
-ADD ./plugins/available/ /app/plugins/available/
+RUN rm -rf tsconfig.json index.ts
 
-RUN  set -x \
-  # Remove useless leftover dependencies
-  && rm -rf node_modules/rxjs/ \
-  # Strip binaries
-  && strip /usr/local/bin/node \
-  && strip node_modules/re2/build/Release/re2.node
+COPY ./plugins/available/ plugins/available/
 
 ################################################################################
-# Plugin development image
-################################################################################
-FROM debian:stretch-slim
+FROM node:${NODE_VERSION}-bookworm-slim
 
 LABEL io.kuzzle.vendor="Kuzzle <support@kuzzle.io>"
 LABEL description="Develop new plugin or protocol for Kuzzle with ease"
 
 WORKDIR /var/app
 
-ADD ./docker/scripts/entrypoint.sh /bin/entrypoint
-ADD ./docker/scripts/run-plugin.sh /bin/run-plugin
+RUN set -x \
+  && apt-get update && apt-get install -y \
+  libunwind-dev
+
+COPY ./docker/scripts/entrypoint.sh /bin/entrypoint
+COPY ./docker/scripts/run-plugin.sh /bin/run-plugin
 
 COPY --from=builder /lib /lib
 COPY --from=builder /usr /usr

@@ -7,6 +7,7 @@ const
     Then
   } = require('cucumber'),
   async = require('async'),
+  _ = require('lodash'),
   stringify = require('json-stable-stringify');
 
 When(/^I get the profile mapping$/, function () {
@@ -16,11 +17,11 @@ When(/^I get the profile mapping$/, function () {
         throw new Error(response.error.message);
       }
 
-      if (!response.result) {
+      if (! response.result) {
         throw new Error('No result provided');
       }
 
-      if (!response.result.mapping) {
+      if (! response.result.mapping) {
         throw new Error('No mapping provided');
       }
 
@@ -37,8 +38,8 @@ Then(/^I change the profile mapping$/, function () {
     });
 });
 
-When(/^I create a new profile "([^"]*)" with id "([^"]*)"$/, {timeout: 20 * 1000}, function (profile, id) {
-  if (!this.profiles[profile]) {
+When(/^I create a new profile "([^"]*)" with id "([^"]*)"$/, { timeout: 20 * 1000 }, function (profile, id) {
+  if (! this.profiles[profile]) {
     throw new Error('Fixture for profile ' + profile + ' does not exists');
   }
 
@@ -52,7 +53,7 @@ When(/^I create a new profile "([^"]*)" with id "([^"]*)"$/, {timeout: 20 * 1000
     });
 });
 
-Then(/^I cannot create an invalid profile$/, {timeout: 20 * 1000}, function (callback) {
+Then(/^I cannot create an invalid profile$/, { timeout: 20 * 1000 }, function (callback) {
   this.api.createOrReplaceProfile('invalid-profile', this.profiles.invalidProfile)
     .then(() => {
       callback(new Error('Creating profile with unexisting role succeeded. Expected to throw.'));
@@ -60,7 +61,7 @@ Then(/^I cannot create an invalid profile$/, {timeout: 20 * 1000}, function (cal
     .catch(() => callback());
 });
 
-Then(/^I cannot create a profile with an empty set of roles$/, {timeout: 20 * 1000}, function (callback) {
+Then(/^I cannot create a profile with an empty set of roles$/, { timeout: 20 * 1000 }, function (callback) {
   this.api.createOrReplaceProfile('invalid-profile', this.profiles.empty)
     .then(() => {
       callback(new Error('Creating profile without roles succeeded. Expected to throw.'));
@@ -76,8 +77,8 @@ Then(/^I cannot get a profile without ID$/, function (callback) {
     .catch(() => callback());
 });
 
-Then(/^I'm ?(not)* able to find the ?(default)* profile with id "([^"]*)"(?: with profile "([^"]*)")?$/, {timeout: 20 * 1000}, function (not, _default, id, profile, callback) {
-  if (profile && !this.profiles[profile]) {
+Then(/^I'm ?(not)* able to find the ?(default)* profile with id "([^"]*)"(?: with profile "([^"]*)")?$/, { timeout: 20 * 1000 }, function (not, _default, id, profile, callback) {
+  if (profile && ! this.profiles[profile]) {
     return callback(new Error('Fixture for profile ' + profile + ' not exists'));
   }
 
@@ -125,19 +126,19 @@ Then(/^I'm ?(not)* able to find the ?(default)* profile with id "([^"]*)"(?: wit
   });
 });
 
-Then(/^I'm ?(not)* able to find rights for profile "([^"]*)"$/, {timeout: 20 * 1000}, function (not, id) {
+Then(/^I'm ?(not)* able to find rights for profile "([^"]*)"$/, { timeout: 20 * 1000 }, function (not, id) {
   return this.api.getProfileRights(this.idPrefix + id)
     .then(body => {
       if (body.error) {
         throw new Error(body.error.message);
       }
 
-      const
-        policies = stringify(body.result.hits),
-        expected = stringify(this.policies[id]);
+      const policies = body.result.hits;
+      const expected = this.policies[id];
+      const diff = _.differenceWith(policies, expected, _.isEqual);
 
-      if (policies !== expected) {
-        throw new Error(`Bad profileRights for ${id}.\nExpected: ${expected}\nGot: ${policies}`);
+      if (diff.length > 0) {
+        throw new Error(`Bad profileRights for ${id}.\nExpected: ${JSON.stringify(expected)}\nGot: ${JSON.stringify(policies)}`);
       }
 
       if (not) {
@@ -145,7 +146,7 @@ Then(/^I'm ?(not)* able to find rights for profile "([^"]*)"$/, {timeout: 20 * 1
       }
     })
     .catch(err => {
-      if (!not || err.statusCode !== 404) {
+      if (! not || err.statusCode !== 404) {
         return Promise.reject(err);
       }
     });
@@ -191,15 +192,15 @@ Then(/^I'm able to find "([\d]*)" profiles(?: containing the role with id "([^"]
             return callbackAsync(new Error(response.error.message));
           }
 
-          if (!response.result) {
+          if (! response.result) {
             return callbackAsync(new Error('Malformed response (no error, no result)'));
           }
 
-          if (!Array.isArray(response.result.hits)) {
+          if (! Array.isArray(response.result.hits)) {
             return callbackAsync(new Error('Malformed response (hits is not an array)'));
           }
 
-          if (!response.result.hits) {
+          if (! response.result.hits) {
             response.result.hits = response.result.hits.filter(doc => doc._id.indexOf(this.idPrefix));
 
             if (response.result.hits.length !== parseInt(profilesCount)) {
@@ -222,22 +223,23 @@ Then(/^I'm able to find "([\d]*)" profiles(?: containing the role with id "([^"]
   });
 });
 
-Given(/^I update the ?(default)* profile with id "([^"]*)" by adding the role "([^"]*)"$/, {timeout: 20 * 1000}, function (_default, profileId, roleId) {
-  if (!this.roles[roleId]) {
+Given(/^I update the ?(default)* profile with id "([^"]*)" by adding the role "([^"]*)"$/, { timeout: 20 * 1000 }, function (_default, profileId, roleId) {
+  if (! this.roles[roleId]) {
     throw new Error('Fixture for role ' + roleId + ' does not exists');
   }
 
-  const policies = [{roleId: this.idPrefix + roleId}];
+  const policies = [{ roleId: this.idPrefix + roleId }];
 
   if (_default) {
     // keep `admin`/`default`/`anonymous` roles for eponymous profiles
     // (to avoid error if we try to update anonymous profile without anonymous role)
-    policies.push({roleId: profileId});
-  } else {
+    policies.push({ roleId: profileId });
+  }
+  else {
     profileId = this.idPrefix + profileId;
   }
 
-  return this.api.createOrReplaceProfile(profileId, {policies})
+  return this.api.createOrReplaceProfile(profileId, { policies })
     .then(response => {
       if (response.error) {
         throw new Error(response.error.message);
@@ -258,7 +260,7 @@ Then(/^I'm able to do a multi get with "([^"]*)" and get "(\d*)" profiles$/, fun
             return callbackAsync(response.error.message);
           }
 
-          if (!response.result.hits || response.result.hits.length !== parseInt(count)) {
+          if (! response.result.hits || response.result.hits.length !== parseInt(count)) {
             return callbackAsync('Expected ' + count + ' profiles, get ' + response.result.hits.length);
           }
 
@@ -280,13 +282,13 @@ Then(/^I'm able to do a multi get with "([^"]*)" and get "(\d*)" profiles$/, fun
 Given(/^A scrolled search on profiles$/, function () {
   this.scrollId = null;
 
-  return this.api.searchProfiles([], {scroll: '2s'})
+  return this.api.searchProfiles([], { scroll: '2s' })
     .then(response => {
       if (response.error) {
         throw new Error(response.error.message);
       }
 
-      if (!response.result.scrollId) {
+      if (! response.result.scrollId) {
         throw new Error('No scrollId returned by the searchProfile query');
       }
 
@@ -295,7 +297,7 @@ Given(/^A scrolled search on profiles$/, function () {
 });
 
 Then(/^I am able to perform a scrollProfiles request$/, function () {
-  if (!this.scrollId) {
+  if (! this.scrollId) {
     throw new Error('No previous scrollId found');
   }
 

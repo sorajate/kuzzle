@@ -2,7 +2,7 @@
  * Kuzzle, a backend software, self-hostable and ready to use
  * to power modern apps
  *
- * Copyright 2015-2020 Kuzzle
+ * Copyright 2015-2022 Kuzzle
  * mailto: support AT kuzzle.io
  * website: http://kuzzle.io
  *
@@ -19,9 +19,9 @@
  * limitations under the License.
  */
 
-import { Backend } from '../core/backend';
-import { ControllerDefinition } from './ControllerDefinition';
-import { EmbeddedSDK } from '../core/shared/sdk/embeddedSdk';
+import { Backend } from "../core/backend";
+import { ControllerDefinition } from "./ControllerDefinition";
+import { EmbeddedSDK } from "../core/shared/sdk/embeddedSdk";
 
 /**
  * Base class to declare a controller class
@@ -56,11 +56,11 @@ export abstract class Controller {
   /**
    * EmbeddedSDK instance
    */
-  get sdk (): EmbeddedSDK {
+  get sdk(): EmbeddedSDK {
     return this.app.sdk;
   }
 
-  constructor (app: Backend) {
+  constructor(app: Backend) {
     this.app = app;
   }
 }

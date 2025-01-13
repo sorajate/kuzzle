@@ -1,11 +1,14 @@
 ---
 code: false
 type: page
-title: Subscribe to Realtime Notifications
-description: Use the Realtime Engine to subscribe to database change
 order: 500
+title: Subscribe to Realtime Notifications | Kuzzle Getting Started | Guide | Core
+meta:
+  - name: description
+    content: Use the Realtime Engine to subscribe to database change
+  - name: keywords
+    content: Kuzzle, Documentation, kuzzle write pluggins, General purpose backend, Write an Application, iot, backend, opensource, realtime 
 ---
-
 # Subscribe to Realtime Notifications
 
 Kuzzle integrates an **advanced realtime engine**. It can work in a classic pub/sub mode but also as a realtime database notification engine.
@@ -32,7 +35,15 @@ Kourou is now waiting for realtime notifications about changes in our collection
 
 We are going to create a new document in the Admin Console to trigger one!
 
-Open the [Admin Console](http://next-console.kuzzle.io/#/data/nyc-open-data/yellow-taxi) and then create a new document. 
+Open the [Admin Console](http://next-console.kuzzle.io/#/data/nyc-open-data/yellow-taxi) and then create a new document : 
+
+```bash
+{
+  "name": "Nerwin",
+  "city": "Montreal",
+  "age": 26
+}
+```
 
 Then you should receive a notification about the created document in your terminal:
 
@@ -74,7 +85,10 @@ This filter must be written using [Koncorde Filter Syntax](/core/2/api/koncorde-
 Koncorde is part of the Realtime Engine and handles subscription filters.
 :::
 
-Now we can subscribe again with a filter:
+We can now subscribe with a filter. 
+
+If you still have the previous subscription active in a terminal, cancel it and subscribe again.
+
 
 ```bash
 kourou realtime:subscribe nyc-open-data yellow-taxi '{

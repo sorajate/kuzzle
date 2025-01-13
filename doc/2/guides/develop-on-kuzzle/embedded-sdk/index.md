@@ -1,11 +1,14 @@
 ---
 code: false
 type: page
-title: Embedded SDK
-description: Execute API action from backend code
 order: 200
+title: Embedded SDK | Develop on Kuzzle | Guide | Core
+meta:
+  - name: description
+    content:  Execute API action from backend code
+  - name: keywords
+    content: Kuzzle, Documentation, kuzzle write pluggins, General purpose backend, iot, backend, opensource,  Embedded SDK
 ---
-
 # Embedded SDK
 
 ::: info
@@ -37,6 +40,10 @@ The following controllers are available in the embedded SDK:
 ::: warning
 The behavior of the [realtime:subscribe](/sdk/js/7/controllers/realtime) method is slightly different when it's used with the Embedded SDK.
 Learn more about [Backend Realtime Subscriptions](/core/2/guides/develop-on-kuzzle/embedded-sdk#backend-realtime-subscriptions)
+:::
+
+::: warning
+The [auth controller](/sdk/js/7/controllers/auth/) is deprecated in the embedded sdk. [User impersonation](/core/2/guides/develop-on-kuzzle/embedded-sdk#user-impersonation) or usage of the [security controller](/sdk/js/7/controllers/security/) is preferred.
 :::
 
 **Example:** _Create a new document by using the [document.create](/sdk/js/7/controllers/document/create) method_

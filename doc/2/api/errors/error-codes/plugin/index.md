@@ -1,7 +1,7 @@
 ---
 code: true
 type: page
-title: "0x04: plugin"
+title: "0x04: plugin | API | Core "
 description: Error codes definitions
 ---
 
@@ -31,6 +31,7 @@ description: Error codes definitions
 | plugin.assert.invalid_application_name<br/><pre>0x0401000d</pre>  | [PluginImplementationError](/core/2/api/errors/error-codes#pluginimplementationerror) <pre>(500)</pre> | Application name "%s" is invalid. Application names must be in kebab-case. | The application name is invalid. Application names can only contain lowercase letters and dashes. |
 | plugin.assert.duplicated_api_definition<br/><pre>0x0401000e</pre>  | [PluginImplementationError](/core/2/api/errors/error-codes#pluginimplementationerror) <pre>(500)</pre> | Cannot define new controllers in the "api" and the "controllers" objects at the same time | You cannot use the "api" and the "controllers" objects at the same time. Use the "api" object to define controllers. |
 | plugin.assert.plugin_not_found<br/><pre>0x0401000f</pre>  | [NotFoundError](/core/2/api/errors/error-codes#notfounderror) <pre>(404)</pre> | Plugin "%s" not found.%s | The request plugin does not exists or have not been loaded yet. |
+| plugin.assert.invalid_openapi_schema<br/><pre>0x04010010</pre>  | [PluginImplementationError](/core/2/api/errors/error-codes#pluginimplementationerror) <pre>(500)</pre> | Invalid OpenAPI specification: "%s" | OpenAPI specification is invalid |
 
 ---
 
@@ -39,7 +40,7 @@ description: Error codes definitions
 
 | id / code | class / status | message | description |
 | --------- | -------------- | --------| ----------- |
-| plugin.runtime.failed_init<br/><pre>0x04020001</pre>  | [PluginImplementationError](/core/2/api/errors/error-codes#pluginimplementationerror) <pre>(500)</pre> | Something went wrong during initialization of "%s" plugin. | An exception was thrown by a plugin's init function |
+| plugin.runtime.failed_init<br/><pre>0x04020001</pre>  | [PluginImplementationError](/core/2/api/errors/error-codes#pluginimplementationerror) <pre>(500)</pre> | Something went wrong during initialization of "%s" plugin. Set "plugins.common.failsafeMode" to true to bypass plugin initialization. | An exception was thrown by a plugin's init function |
 | plugin.runtime.unexpected_error<br/><pre>0x04020002</pre>  | [PluginImplementationError](/core/2/api/errors/error-codes#pluginimplementationerror) <pre>(500)</pre> | Caught an unexpected plugin error: %s | Embeds an unexpected plugin error into a standardized KuzzleError object |
 | plugin.runtime.pipe_timeout<br/><pre>0x04020003</pre> <DeprecatedBadge version="2.2.0"/> | [GatewayTimeoutError](/core/2/api/errors/error-codes#gatewaytimeouterror) <pre>(504)</pre> | Plugin "%s": timeout error. A pipe on the event "%s" exceeded the timeout delay (%sms). Aborting. | A pipe function execution took more than the configured server limit |
 | plugin.runtime.too_many_pipes<br/><pre>0x04020004</pre>  | [ServiceUnavailableError](/core/2/api/errors/error-codes#serviceunavailableerror) <pre>(503)</pre> | Request discarded: maximum number of executing pipe functions reached. | The number of running pipes exceeds the configured capacity (see configuration files). This may be caused by pipes being too slow, or by an insufficient number of Kuzzle nodes. |

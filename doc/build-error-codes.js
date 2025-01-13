@@ -2,7 +2,7 @@
  * Kuzzle, a backend software, self-hostable and ready to use
  * to power modern apps
  *
- * Copyright 2015-2020 Kuzzle
+ * Copyright 2015-2022 Kuzzle
  * mailto: support AT kuzzle.io
  * website: http://kuzzle.io
  *
@@ -60,11 +60,11 @@ const errors = {
   UnauthorizedError,
 };
 
-function getHeader(title) {
+function getHeader (title) {
   return `---
 code: true
 type: page
-title: "${title}"
+title: "${title} | API | Core "
 description: Error codes definitions
 ---
 
@@ -77,7 +77,7 @@ description: Error codes definitions
 }
 
 function rimraf (dir) {
-  for (const entry of fs.readdirSync(dir, {withFileTypes: true})) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const fulldir = path.join(dir, entry.name);
 
     if (entry.isDirectory()) {
@@ -92,7 +92,7 @@ function rimraf (dir) {
 }
 
 function clearCodeDirectories (target) {
-  for (const entry of fs.readdirSync(target, {withFileTypes: true})) {
+  for (const entry of fs.readdirSync(target, { withFileTypes: true })) {
     if (entry.isDirectory()) {
       rimraf(path.join(target, entry.name));
     }
@@ -115,14 +115,14 @@ function buildErrorCodes (name) {
 
   let doc = getHeader(`0x${buffer.toString('hex', 3)}: ${name}`);
 
-  for (const [subname, subdomain] of Object.entries(domain.subdomains)) {
+  for (const [subname, subdomain] of Object.entries(domain.subDomains)) {
 
     buffer.writeUInt16BE(domain.code << 8 | subdomain.code, 2);
 
     doc += `\n\n### Subdomain: 0x${buffer.toString('hex', 2)}: ${subname}\n\n`;
 
     if (subdomain.deprecated) {
-      doc += `<DeprecatedBadge version="${subdomain.deprecated}">\n`;
+      doc += `<DeprecatedBadge version="${subdomain.deprecated}">\n\n`;
     }
 
     doc += '| id / code | class / status | message | description |\n';

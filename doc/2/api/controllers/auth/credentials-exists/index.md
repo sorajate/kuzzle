@@ -1,7 +1,7 @@
 ---
 code: true
 type: page
-title: credentialsExist
+title: credentialsExist | API | Core
 ---
 
 # credentialsExist
@@ -24,6 +24,7 @@ Headers: Authorization: "Bearer <authentication token>"
 ```
 
 <DeprecatedBadge version="2.4.0">
+
 ```http
 URL: http://kuzzle:7512/credentials/<strategy>/_me/_exists
 Method: GET

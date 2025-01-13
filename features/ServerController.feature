@@ -59,12 +59,33 @@ Feature: Server Controller
       | memoryStorage | "green" |
       | storageEngine | "green" |
 
+  # server:metrics ==========================================================================
+  @realtime
+  Scenario: Get Kuzzle node metrics
+    Given I subscribe to "functional-test":"hooks" notifications
+    When I execute the action "server":"metrics"
+    Then The property "api" of the result should match:
+      | concurrentRequests | 1 |
+      | pendingRequests    | 0 |
+    Then The property "realtime" of the result should match:
+      | rooms         | 1 |
+      | subscriptions | 1 |
+
+
   # server:openapi ========================================================================
   @http
-  Scenario: Get our API in OpenApi format as a raw response
+  Scenario: Get Kuzzle Open API definition
     When I successfully execute the action "server":"openapi"
     Then I should receive a response matching:
-      | openapi | "3.0.1" |
+      | swagger                                 | "2.0"      |
+      | paths./users/{_id}/_replace.put.tags[0] | "security" |
+
+  @http
+  Scenario: Get application Open API definition
+    When I successfully execute the action "server":"openapi" with args:
+      | scope | "app" |
+    Then I should receive a response matching:
+      | paths./openapi-test/{company}/{objectType}/{_id}.post.tags[0] | "openapi-test" |
 
   # server:publicApi ========================================================================
   @development @http
@@ -79,3 +100,13 @@ Feature: Server Controller
   Scenario: Http call onto deprecated method should not print a warning when NODE_ENV=production
     When I execute the action "server":"publicApi"
     Then The response should contains a "deprecations" equals to undefined
+
+  # server:capabilities =====================================================================
+  Scenario: Get server capabilities
+    When I successfully execute the action "server":"capabilities"
+    Then I should receive a result matching:
+      | limits   | "_OBJECT_" |
+      | plugins  | "_OBJECT_" |
+      | routes   | "_OBJECT_" |
+      | services | "_OBJECT_" |
+      | version  | "_STRING_" |

@@ -2,7 +2,7 @@
  * Kuzzle, a backend software, self-hostable and ready to use
  * to power modern apps
  *
- * Copyright 2015-2020 Kuzzle
+ * Copyright 2015-2022 Kuzzle
  * mailto: support AT kuzzle.io
  * website: http://kuzzle.io
  *
@@ -19,13 +19,14 @@
  * limitations under the License.
  */
 
-import { Inflector } from '../../util/inflector';
-import kerror from '../../kerror';
-import { ControllerDefinition, Controller } from '../../types';
-import { ApplicationManager } from './index';
+import { Inflector } from "../../util/Inflector";
+import * as kerror from "../../kerror";
+import { ControllerDefinition, Controller } from "../../types";
+import { ApplicationManager } from "./index";
+import Plugin from "../plugin/plugin";
 
-const assertionError = kerror.wrap('plugin', 'assert');
-const runtimeError = kerror.wrap('plugin', 'runtime');
+const assertionError = kerror.wrap("plugin", "assert");
+const runtimeError = kerror.wrap("plugin", "runtime");
 
 export class BackendController extends ApplicationManager {
   /**
@@ -48,12 +49,14 @@ export class BackendController extends ApplicationManager {
    * })
    *
    */
-  register (name: string, definition: ControllerDefinition) {
+  register(name: string, definition: ControllerDefinition) {
     if (this._application.started) {
-      throw runtimeError.get('already_started', 'controller');
+      throw runtimeError.get("already_started", "controller");
     }
 
-    this._add(name, definition);
+    Plugin.checkControllerDefinition(name, definition);
+
+    this.add(name, definition);
   }
 
   /**
@@ -119,45 +122,54 @@ export class BackendController extends ApplicationManager {
    *
    * @param controller Controller class
    */
-  use (controller: Controller) {
+  use(controller: Controller) {
     if (this._application.started) {
-      throw runtimeError.get('already_started', 'controller');
+      throw runtimeError.get("already_started", "controller");
     }
 
-    if (! controller.name) {
-      controller.name = Inflector.kebabCase(controller.constructor.name)
-        .replace('-controller', '');
+    if (!controller.name) {
+      controller.name = Inflector.kebabCase(
+        controller.constructor.name,
+      ).replace("-controller", "");
     }
 
-    for (const [action, definition] of Object.entries(controller.definition.actions)) {
-      if (typeof definition.handler !== 'function') {
+    Plugin.checkControllerDefinition(controller.name, controller.definition);
+
+    for (const [action, definition] of Object.entries(
+      controller.definition.actions,
+    )) {
+      if (typeof definition.handler !== "function") {
         throw assertionError.get(
-          'invalid_controller_definition',
+          "invalid_controller_definition",
           controller.name,
-          `Handler for action "${action}" is not a function.`);
+          `Handler for action "${action}" is not a function.`,
+        );
       }
 
       // if the function handler is an instance method,
       // bind the context to the controller instance
       const handlerName = definition.handler.name;
-      if (handlerName && typeof controller[handlerName] === 'function') {
+      if (handlerName && typeof controller[handlerName] === "function") {
         definition.handler = definition.handler.bind(controller);
       }
     }
 
-    this._add(controller.name, controller.definition);
+    this.add(controller.name, controller.definition);
   }
 
-  private _add (name: string, definition: ControllerDefinition) {
-    // Check definition here to throw error early
-    // with the corresponding line number
-    this._application.PluginObject.checkControllerDefinition(name, definition, { application: true });
-
+  /**
+   * Adds the controller definition to the list of application controllers.
+   *
+   * This method also check if the definition is valid to throw with a stacktrace
+   * beginning on the user code adding the controller.
+   */
+  private add(name: string, definition: ControllerDefinition) {
     if (this._application._controllers[name]) {
       throw assertionError.get(
-        'invalid_controller_definition',
+        "invalid_controller_definition",
         name,
-        'A controller with this name already exists');
+        "A controller with this name already exists",
+      );
     }
 
     this._application._controllers[name] = definition;

@@ -1,12 +1,10 @@
 ---
 code: true
 type: page
-title: validate
+title: validate | API | Core
 ---
 
 # validate
-
-<DeprecatedBadge version="1.5.0" />
 
 This API action is deprecated and should not be used. Instead, use [document:validate](/core/2/api/controllers/document/validate).
 

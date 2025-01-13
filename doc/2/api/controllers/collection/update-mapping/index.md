@@ -1,14 +1,12 @@
 ---
 code: true
 type: page
-title: updateMapping
+title: updateMapping | API | Core
 ---
 
 # updateMapping
 
 Updates a collection mapping.
-
-<SinceBadge version="1.7.1" />
 
 <DeprecatedBadge version="2.1.0" />
 

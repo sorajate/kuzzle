@@ -4,9 +4,6 @@
 <p align="center">
   <img alt="GitHub branch checks state" src="https://img.shields.io/github/checks-status/kuzzleio/kuzzle/master">
   <img alt="Sonarcloud" src="https://sonarcloud.io/api/project_badges/measure?project=kuzzleio_kuzzle&metric=alert_status&branch=master">
-  <a href="https://codecov.io/gh/kuzzleio/kuzzle">
-    <img src="https://codecov.io/gh/kuzzleio/kuzzle/branch/master/graph/badge.svg?token=jOrGhzslSM"/>
-  </a>
   <a href="https://lgtm.com/projects/g/kuzzleio/kuzzle/context:javascript">
     <img src="https://img.shields.io/lgtm/grade/javascript/g/kuzzleio/kuzzle.svg?logo=lgtm&logoWidth=18" />
   </a>
@@ -37,9 +34,9 @@ Learn how Kuzzle will accelerate your developments :point_right: https://docs.ku
 
 ## Kuzzle in production
 
-Kuzzle is production-proof, and can be [deployed anywhere](https://kuzzle.io/products/by-features/on-premises/). 
+Kuzzle is production-proof, and can be [deployed anywhere](https://kuzzle.io/products/by-features/on-premises/).
 
-With Kuzzle, it is possible to deploy applications that can serve tens of thousands of users with very good performances.  
+With Kuzzle, it is possible to deploy applications that can serve tens of thousands of users with very good performances.
 
 Check out our [support plans](https://kuzzle.io/pricing/).
 
@@ -48,19 +45,24 @@ Check out our [support plans](https://kuzzle.io/pricing/).
 The easiest way to start a Kuzzle application is to use [Kourou](https://github.com/kuzzleio/kourou):
 
 ```bash
-npx kourou app:scaffold playground
+kourou app:scaffold playground
 
  🚀 Kourou - Scaffolds a new Kuzzle application
- 
-  ✔ Creating playground/ directory
-  ✔ Creating and rendering application files
-  ✔ Installing latest Kuzzle version via NPM and Docker (this can take some time)
- [✔] Scaffolding complete! Use "npm run dev:docker" to run your application
+
+generic
+  ✔ Checking destination
+  ✔ Prepare temporary folder
+  ✔ Cloning template repository
+  ✔ Copying template files
+  ✔ Cleaning up
+
+ [✔] Scaffolding complete!
+ [✔] Use cd playground && docker compose up -d to start your Kuzzle stack.
 ```
 
 Then you need to run Kuzzle services, Elasticsearch and Redis: `kourou app:start-services`
 
-Finally you can run your application inside Docker with `npm run dev:docker`
+Finally you can run your application inside Docker with `npm run docker:dev`
 
 Kuzzle is now listening for requests on the port `7512`!
 
@@ -78,7 +80,7 @@ const app = new Backend('playground');
 app.controller.register('greeting', {
   actions: {
     sayHello: {
-      handler: async request => `Hello, ${request.input.args.name}` 
+      handler: async request => `Hello, ${request.input.args.name}`
     }
   }
 });
@@ -105,19 +107,15 @@ Learn how to [Write an Application](https://docs.kuzzle.io/core/2/guides/getting
 * [Permissions](https://docs.kuzzle.io/core/2/guides/main-concepts/permissions/)
 * [Authentication](https://docs.kuzzle.io/core/2/guides/main-concepts/authentication/)
 * [Realtime Engine](https://docs.kuzzle.io/core/2/guides/main-concepts/realtime-engine/)
-* [Discover our SDKs](https://docs.kuzzle.io/core/2/sdk/)
+* [Discover our SDKs](https://docs.kuzzle.io/sdk/v2.html)
 * [Release Notes](https://github.com/kuzzleio/kuzzle/releases)
 
 ## Get trained by the creators of Kuzzle :zap:
 
-Train yourself and your teams to use Kuzzle to maximize its potential and accelerate the development of your projects.  
-Our teams will be able to meet your needs in terms of expertise and multi-technology support for IoT, mobile/web, backend/frontend, devops.  
-:point_right: [Get a quote](https://hubs.ly/H0jkfJ_0)
+Train yourself and your teams to use Kuzzle to maximize its potential and accelerate the development of your projects.
+Our teams will be able to meet your needs in terms of expertise and multi-technology support for IoT, mobile/web, backend/frontend, devops.
+:point_right: [Get a quote](https://kuzzle.io/pricing/)
 
-## Public Roadmap
-
-You can consult the public roadmap on Trello. Come and vote for the features you need!  
-:point_right: [Kuzzle Public Roadmap](https://trello.com/b/za9vOgRh/kuzzle-public-roadmap)
 
 ## Contributing to Kuzzle
 
@@ -128,12 +126,11 @@ Check our [contributing documentation](./CONTRIBUTING.md) to know about our codi
 
 ## Join our community
 
-* Follow us on [twitter](https://twitter.com/kuzzleio) to get latest news
+* Follow us on [𝕏 (Twitter)](https://twitter.com/kuzzleio) to get latest news
 * Register to our monthly [newsletter](http://eepurl.com/bxRxpr) to get highlighed news
 * Visit our [blog](https://blog.kuzzle.io/) to be informed about what we are doing
 * Come chat with us on [Discord](http://join.discord.kuzzle.io)
 * Ask technical questions on [stack overflow](https://stackoverflow.com/search?q=kuzzle)
-* Check out our [public roadmap](https://trello.com/b/za9vOgRh/kuzzle-public-roadmap) and vote for the upcoming features
 
 ## License
 

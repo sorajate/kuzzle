@@ -1,15 +1,22 @@
 ---
 code: true
 type: page
-title: getObject
+title: getObject | Framework | Core
+
 description: KuzzleRequest class getObject() method
 ---
 
 # getObject
 
-<SinceBadge version="2.11.0" />
+<SinceBadge version="2.16.9" />
 
 Gets a parameter from the request arguments and checks that it is an object.
+We also support lodash syntax. [(`relations.lebron[0]`)](https://lodash.com/docs/4.17.15#get)
+
+<SinceBadge version="2.18.1" />
+
+If the request has been made with the HTTP protocol and the request argument is not an Object but is a JSON String
+the argument will be parsed and returned if it's an oject, otherwise an error will be thrown.
 
 ### Arguments
 

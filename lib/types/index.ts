@@ -2,7 +2,7 @@
  * Kuzzle, a backend software, self-hostable and ready to use
  * to power modern apps
  *
- * Copyright 2015-2020 Kuzzle
+ * Copyright 2015-2022 Kuzzle
  * mailto: support AT kuzzle.io
  * website: http://kuzzle.io
  *
@@ -19,13 +19,40 @@
  * limitations under the License.
  */
 
-export * from './Plugin';
-export * from './Controller';
-export * from './ControllerDefinition';
-export * from './RequestPayload';
-export * from './ResponsePayload';
-export * from './Deprecation';
-export * from './EventHandler';
-export * from './User';
-export * from './Token';
-export * from './Global';
+export * from "./Controller";
+export * from "./ControllerDefinition";
+export * from "./ControllerRights";
+export * from "./Deprecation";
+export * from "./EventHandler";
+export * from "./Global";
+export * from "./HttpStream";
+export * from "./KuzzleDocument";
+export * from "./OpenApiDefinition";
+export * from "./PasswordPolicy";
+export * from "./Plugin";
+export * from "./Policy";
+export * from "./PolicyRestrictions";
+export * from "./ProfileDefinition";
+export * from "./RoleDefinition";
+export * from "./Target";
+export * from "./Token";
+export * from "./User";
+export * from "./config/DumpConfiguration";
+export * from "./config/HttpConfiguration";
+export * from "./config/KuzzleConfiguration";
+export * from "./config/LimitsConfiguration";
+export * from "./config/PluginsConfiguration";
+export * from "./config/SecurityConfiguration";
+export * from "./config/ServerConfiguration";
+export * from "./config/ServicesConfiguration";
+export * from "./config/internalCache/InternalCacheRedisConfiguration";
+export * from "./config/publicCache/PublicCacheRedisConfiguration";
+export * from "./config/storageEngine/StorageEngineElasticsearchConfiguration";
+export * from "./errors/ErrorDefinition";
+export * from "./errors/ErrorDomains";
+export * from "./events/EventGenericDocument";
+export * from "./events/EventProtocol";
+export * from "./realtime/RealtimeScope";
+export * from "./realtime/RealtimeUsers";
+export * from "./realtime/RoomList";
+export * from "./shared/StoreCollectionsDefinition";

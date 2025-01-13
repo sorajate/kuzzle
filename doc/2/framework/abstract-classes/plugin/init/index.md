@@ -1,7 +1,8 @@
 ---
 code: true
 type: page
-title: init
+title: init | Framework | Core
+
 description: Plugin class init() abstract method
 ---
 
@@ -19,9 +20,9 @@ init(config: JSONObject, context: PluginContext);
 
 <br/>
 
-| Arguments | Type              | Description                                                                                                                                                             |
-|-----------|-------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `config`  | <pre>JSONObject</pre> | Contains the custom plugin configuration                                                                              |
+| Arguments | Type                     | Description                                                                                                                                                             |
+| --------- | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config`  | <pre>JSONObject</pre>    | Contains the custom plugin configuration                                                                                                                                |
 | `context` | <pre>PluginContext</pre> | The plugin context, exposing various accessors, constructors, and helpers. The other sections of this documentation detail the interfaces made available by this object |
 
 ## Return

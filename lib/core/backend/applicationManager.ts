@@ -2,7 +2,7 @@
  * Kuzzle, a backend software, self-hostable and ready to use
  * to power modern apps
  *
- * Copyright 2015-2020 Kuzzle
+ * Copyright 2015-2022 Kuzzle
  * mailto: support AT kuzzle.io
  * website: http://kuzzle.io
  *
@@ -19,18 +19,18 @@
  * limitations under the License.
  */
 
-import { Backend } from './index';
+import { Backend } from "./index";
 
 export class ApplicationManager {
   protected _application: any;
 
-  constructor (application: Backend) {
-    Reflect.defineProperty(this, '_application', {
-      value: application
+  constructor(application: Backend) {
+    Reflect.defineProperty(this, "_application", {
+      value: application,
     });
   }
 
-  protected get _kuzzle () {
+  protected get _kuzzle() {
     return this._application._kuzzle;
   }
 }

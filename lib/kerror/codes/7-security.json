@@ -1,6 +1,6 @@
 {
   "code": 7,
-  "subdomains": {
+  "subDomains": {
     "token": {
       "code": 1,
       "errors": {
@@ -45,6 +45,18 @@
           "code": 7,
           "message": "Error verifying token: %s",
           "class": "InternalError"
+        },
+        "refresh_forbidden": {
+          "description": "The provided token cannot be refreshed",
+          "code": 8,
+          "message": "%s cannot be refreshed.",
+          "class": "UnauthorizedError"
+        },
+        "invalid_expiration": {
+          "description": "The specified expiration time is invalid",
+          "code": 9,
+          "message": "Token can not be created with this expiration time: %s",
+          "class": "BadRequestError"
         }
       }
     },
@@ -84,6 +96,12 @@
           "description": "Insufficient permissions to execute this action",
           "code": 2,
           "message": "Insufficient permissions to execute the action \"%s:%s\" (User \"%s\").",
+          "class": "ForbiddenError"
+        },
+        "failsafe_mode_admin_only": {
+          "description": "Only administrators (\"admin\" profile) can use the API in failsafe mode. Authenticate as admin or reboot without failsafe mode (\"config.plugins.common.failsafeMode\") to access the API.",
+          "code": 3,
+          "message": "Only administrators (\"admin\" profile) can use the API in failsafe mode.",
           "class": "ForbiddenError"
         }
       }

@@ -1,7 +1,7 @@
 ---
 code: true
 type: page
-title: mUpdate
+title: mUpdate | API | Core
 ---
 
 # mUpdate
@@ -26,6 +26,7 @@ Body:
 ```
 
 <DeprecatedBadge version="2.11.0">
+
 ```http
 URL: http://kuzzle:7512/<index>/<collection>/_mUpdate[?refresh=wait_for][&retryOnConflict=<retries>][&silent]
 Method: PUT

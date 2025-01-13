@@ -1,7 +1,8 @@
 ---
 type: page
 code: false
-title: API
+title: API | Framework | Core
+
 description: API events list
 order: 100
 ---
@@ -35,7 +36,7 @@ The `before` event name is built using the following template:
 
 #### Example
 
-| API action                                                                                   | After event name                 |
+| API action                                                                                   | Before event name                 |
 | -------------------------------------------------------------------------------------------- | -------------------------------- |
 | [auth:login](/core/2/api/controllers/auth/login)                               | auth:beforeLogin`               |
 | [document:createOrReplace](/core/2/api/controllers/document/create-or-replace) | `document:beforeCreateOrReplace` |

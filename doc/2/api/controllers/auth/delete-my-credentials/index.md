@@ -1,7 +1,7 @@
 ---
 code: true
 type: page
-title: deleteMyCredentials
+title: deleteMyCredentials | API | Core
 ---
 
 # deleteMyCredentials
@@ -26,6 +26,7 @@ Headers: Authorization: "Bearer <authentication token>"
 ```
 
 <DeprecatedBadge version="2.4.0">
+
 ```http
 URL: http://kuzzle:7512/credentials/<strategy>/_me
 Method: DELETE

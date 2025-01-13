@@ -1,13 +1,14 @@
 ---
 code: true
 type: page
-title: set
+title: set | Framework | Core
+
 description: BackendConfig.set method
 ---
 
 # `set()`
 
-<SinceBadge version="2.8.0" />
+<DeprecatedBadge version="2.17.0"/>
 
 Sets a configuration value.
 

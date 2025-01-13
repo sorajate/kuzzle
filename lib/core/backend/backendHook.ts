@@ -2,7 +2,7 @@
  * Kuzzle, a backend software, self-hostable and ready to use
  * to power modern apps
  *
- * Copyright 2015-2020 Kuzzle
+ * Copyright 2015-2022 Kuzzle
  * mailto: support AT kuzzle.io
  * website: http://kuzzle.io
  *
@@ -19,12 +19,12 @@
  * limitations under the License.
  */
 
-import kerror from '../../kerror';
-import { EventHandler } from '../../types';
-import { ApplicationManager } from './index';
+import * as kerror from "../../kerror";
+import { HookEventHandler, EventDefinition } from "../../types";
+import { ApplicationManager } from "./index";
 
-const assertionError = kerror.wrap('plugin', 'assert');
-const runtimeError = kerror.wrap('plugin', 'runtime');
+const assertionError = kerror.wrap("plugin", "assert");
+const runtimeError = kerror.wrap("plugin", "runtime");
 
 export class BackendHook extends ApplicationManager {
   /**
@@ -34,16 +34,19 @@ export class BackendHook extends ApplicationManager {
    * @param handler - Function to execute when the event is triggered
    *
    */
-  register (event: string, handler: EventHandler) : void {
+  register<TEventDefinition extends EventDefinition = EventDefinition>(
+    event: TEventDefinition["name"],
+    handler: HookEventHandler<TEventDefinition>,
+  ): void {
     if (this._application.started) {
-      throw runtimeError.get('already_started', 'hook');
+      throw runtimeError.get("already_started", "hook");
     }
 
-    if (typeof handler !== 'function') {
-      throw assertionError.get('invalid_hook', event);
+    if (typeof handler !== "function") {
+      throw assertionError.get("invalid_hook", event);
     }
 
-    if (! this._application._hooks[event]) {
+    if (!this._application._hooks[event]) {
       this._application._hooks[event] = [];
     }
 

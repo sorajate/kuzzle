@@ -1,6 +1,6 @@
-'use strict';
+"use strict";
 
-const sinon = require('sinon');
+const sinon = require("sinon");
 
 /**
  * Mocks an elasticsearch client instance
@@ -8,7 +8,7 @@ const sinon = require('sinon');
  * @constructor
  */
 class ElasticsearchClientMock {
-  constructor() {
+  constructor(version = "7.0.0") {
     this.bulk = sinon.stub().resolves();
     this.count = sinon.stub().resolves();
     this.create = sinon.stub().resolves();
@@ -17,11 +17,9 @@ class ElasticsearchClientMock {
     this.get = sinon.stub().resolves();
     this.index = sinon.stub().resolves();
     this.info = sinon.stub().resolves({
-      body: {
-        version: {
-          number: '7.0.0'
-        }
-      }
+      version: {
+        number: version,
+      },
     });
     this.mget = sinon.stub().resolves();
     this.update = sinon.stub().resolves();
@@ -32,33 +30,31 @@ class ElasticsearchClientMock {
 
     this.cat = {
       aliases: sinon.stub().resolves(),
-      indices: sinon.stub().resolves()
+      indices: sinon.stub().resolves(),
     };
 
     this.cluster = {
       health: sinon.stub().resolves({
-        body: {
-          number_of_pending_tasks: 0,
-        },
+        number_of_pending_tasks: 0,
       }),
-      stats: sinon.stub().resolves()
+      stats: sinon.stub().resolves(),
     };
 
     this.indices = {
-      open: sinon.stub().resolves(),
       close: sinon.stub().resolves(),
-      putSettings: sinon.stub().resolves(),
-      getSettings: sinon.stub().resolves(),
       create: sinon.stub().resolves(),
       delete: sinon.stub().resolves(),
       exists: sinon.stub().resolves(),
       existsType: sinon.stub().resolves(),
-      getMapping: sinon.stub().resolves(),
-      putMapping: sinon.stub().resolves(),
-      refresh: sinon.stub().resolves(),
-      stats: sinon.stub().resolves(),
       get: sinon.stub().resolves(),
       getAlias: sinon.stub().resolves(),
+      getMapping: sinon.stub().resolves(),
+      getSettings: sinon.stub().resolves(),
+      open: sinon.stub().resolves(),
+      putMapping: sinon.stub().resolves(),
+      putSettings: sinon.stub().resolves(),
+      refresh: sinon.stub().resolves(),
+      stats: sinon.stub().resolves(),
       updateAliases: sinon.stub().resolves(),
     };
 
@@ -68,6 +64,7 @@ class ElasticsearchClientMock {
     this.mcreateOrReplace = sinon.stub().resolves();
     this.mdelete = sinon.stub().resolves();
     this.clearScroll = sinon.stub().resolves();
+    this._getRandomNumber = sinon.stub().returns(10000);
   }
 }
 

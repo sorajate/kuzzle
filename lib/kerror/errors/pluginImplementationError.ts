@@ -2,7 +2,7 @@
  * Kuzzle, a backend software, self-hostable and ready to use
  * to power modern apps
  *
- * Copyright 2015-2020 Kuzzle
+ * Copyright 2015-2022 Kuzzle
  * mailto: support AT kuzzle.io
  * website: http://kuzzle.io
  *
@@ -19,11 +19,12 @@
  * limitations under the License.
  */
 
-import { KuzzleError } from './kuzzleError';
+import { KuzzleError } from "./kuzzleError";
 
 export class PluginImplementationError extends KuzzleError {
   constructor(message, id?, code?) {
     super(message, 500, id, code);
-    this.message += '\nThis is probably not a Kuzzle error, but a problem with a plugin implementation.';
+    this.message +=
+      "\nThis is probably not a Kuzzle error, but a problem with a plugin implementation.";
   }
 }

@@ -1,12 +1,10 @@
 ---
 code: true
 type: page
-title: mWrite
+title: mWrite | API | Core
 ---
 
 # mWrite
-
-<SinceBadge version="1.8.0" />
 
 Create or replace multiple documents directly into the storage engine.
 

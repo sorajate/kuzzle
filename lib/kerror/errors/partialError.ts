@@ -2,7 +2,7 @@
  * Kuzzle, a backend software, self-hostable and ready to use
  * to power modern apps
  *
- * Copyright 2015-2020 Kuzzle
+ * Copyright 2015-2022 Kuzzle
  * mailto: support AT kuzzle.io
  * website: http://kuzzle.io
  *
@@ -19,19 +19,18 @@
  * limitations under the License.
  */
 
-import { KuzzleError } from './kuzzleError';
+import { KuzzleError } from "./kuzzleError";
 
 export class PartialError extends KuzzleError {
   public errors: Array<KuzzleError>;
   public count: number;
 
   constructor(message, body, id, code) {
-    if (code === undefined && typeof id === 'number') {
+    if (code === undefined && typeof id === "number") {
       code = id;
       id = body;
       body = [];
-    }
-    else if (body === undefined) {
+    } else if (body === undefined) {
       body = [];
     }
 
@@ -41,7 +40,7 @@ export class PartialError extends KuzzleError {
     this.count = body.length;
   }
 
-  toJSON () {
+  toJSON() {
     const serialized = super.toJSON();
 
     serialized.errors = this.errors;

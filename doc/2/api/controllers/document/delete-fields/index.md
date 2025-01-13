@@ -1,7 +1,7 @@
 ---
 code: true
 type: page
-title: deleteFields
+title: deleteFields | API | Core
 description: Deletes fields of an existing document.
 ---
 
@@ -91,7 +91,7 @@ Returns an object containing updated document information, with the following pr
   "index": "<index>",
   "collection": "<collection>",
   "controller": "document",
-  "action": "replace",
+  "action": "deleteFields",
   "requestId": "<unique request identifier>",
   "result": {
     "_id": "<documentId>",

@@ -1,13 +1,14 @@
 ---
 code: true
 type: page
-title: merge
+title: merge | Framework | Core
+
 description: BackendConfig.merge method
 ---
 
 # `merge()`
 
-<SinceBadge version="2.8.0" />
+<DeprecatedBadge version="2.17.0"/>
 
 Sets a configuration value.
 

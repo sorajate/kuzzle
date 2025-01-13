@@ -2,7 +2,7 @@
  * Kuzzle, a backend software, self-hostable and ready to use
  * to power modern apps
  *
- * Copyright 2015-2020 Kuzzle
+ * Copyright 2015-2022 Kuzzle
  * mailto: support AT kuzzle.io
  * website: http://kuzzle.io
  *
@@ -19,14 +19,15 @@
  * limitations under the License.
  */
 
-import { PluginContext } from '../core/plugin/pluginContext';
-import { ControllerDefinition } from './ControllerDefinition';
-import { PluginManifest } from './PluginManifest';
-import { StrategyDefinition } from './StrategyDefinition';
-import { EventHandler } from './EventHandler';
-import { JSONObject} from '../../index';
-import kerror from '../kerror';
-import { has } from '../util/safeObject';
+import { PluginContext } from "../core/plugin/pluginContext";
+import { ControllerDefinition } from "./ControllerDefinition";
+import { PluginManifest } from "./PluginManifest";
+import { StrategyDefinition } from "./StrategyDefinition";
+import { PipeEventHandler, HookEventHandler } from "./EventHandler";
+import { JSONObject } from "../../index";
+import * as kerror from "../kerror";
+import { has } from "../util/safeObject";
+import { ImportConfig } from "./Kuzzle";
 
 /**
  * Allows to define plugins controllers and actions
@@ -35,8 +36,8 @@ export type PluginApiDefinition = {
   /**
    * Name of the API controller.
    */
-  [controller: string]: ControllerDefinition
-}
+  [controller: string]: ControllerDefinition;
+};
 
 /**
  * Allows to define hooks on events
@@ -45,8 +46,8 @@ export type PluginHookDefinition = {
   /**
    * Event name or wildcard event.
    */
-  [event: string]: EventHandler | EventHandler[]
-}
+  [event: string]: HookEventHandler | HookEventHandler[];
+};
 
 /**
  * Allows to define pipes on events
@@ -55,8 +56,8 @@ export type PluginPipeDefinition = {
   /**
    * Event name or wildcard event.
    */
-  [event: string]: EventHandler | EventHandler[]
-}
+  [event: string]: PipeEventHandler | PipeEventHandler[];
+};
 
 /**
  * Plugins must implements this abstract class.
@@ -90,7 +91,7 @@ export abstract class Plugin {
    *   }
    * }
    */
-  public api?: PluginApiDefinition
+  public api?: PluginApiDefinition;
 
   /**
    * Define hooks on Kuzzle events.
@@ -103,7 +104,7 @@ export abstract class Plugin {
    *   'security:afterCreateUser': async (request: Request) => ...
    * }
    */
-  public hooks?: PluginHookDefinition
+  public hooks?: PluginHookDefinition;
 
   /**
    * Define pipes on Kuzzle events.
@@ -116,7 +117,7 @@ export abstract class Plugin {
    *   'document:afterCreate': async (request: Request) => ...
    * }
    */
-  public pipes?: PluginPipeDefinition
+  public pipes?: PluginPipeDefinition;
 
   /**
    * Define authenticator classes used by strategies.
@@ -127,15 +128,20 @@ export abstract class Plugin {
     /**
      * The key is the authenticator name and the value is the class.
      */
-    [name: string]: any
-  }
+    [name: string]: any;
+  };
 
   /**
    * Define authentications strategies.
    *
    * @see https://docs.kuzzle.io/core/2/plugins/guides/strategies/overview
    */
-  public strategies?: StrategyDefinition
+  public strategies?: StrategyDefinition;
+
+  /**
+   * Define default imports
+   */
+  public imports?: ImportConfig;
 
   /**
    * Plugin initialization method.
@@ -145,15 +151,15 @@ export abstract class Plugin {
    *
    * @see https://docs.kuzzle.io/core/2/plugins/guides/manual-setup/init-function/
    */
-  abstract init (config: JSONObject, context: PluginContext): Promise<any> | any
+  abstract init(config: JSONObject, context: PluginContext): Promise<any> | any;
 
   /**
    * @param manifest Manifest containing the required kuzzleVersion number
    */
-  constructor (manifest: PluginManifest) {
-    if (! has(manifest, 'kuzzleVersion')) {
+  constructor(manifest: PluginManifest) {
+    if (!has(manifest, "kuzzleVersion")) {
       // eslint-disable-next-line new-cap
-      throw new kerror.get('plugin', 'manifest', 'missing_version');
+      throw kerror.get("plugin", "manifest", "missing_version");
     }
 
     this._manifest = manifest;

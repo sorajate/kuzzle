@@ -1,28 +1,30 @@
-'use strict';
+"use strict";
 
-const sinon = require('sinon');
-const Bluebird = require('bluebird');
+const sinon = require("sinon");
+const Bluebird = require("bluebird");
 
-const KuzzleEventEmitter = require('../../lib/kuzzle/event/kuzzleEventEmitter');
-const kuzzleStateEnum = require('../../lib/kuzzle/kuzzleStateEnum');
-const configLoader = require('../../lib/config');
+const KuzzleEventEmitter =
+  require("../../lib/kuzzle/event/KuzzleEventEmitter").default;
+const kuzzleStateEnum = require("../../lib/kuzzle/kuzzleStateEnum");
+const configLoader = require("../../lib/config");
 
-const foo = { foo: 'bar' };
+const foo = { foo: "bar" };
 
 class KuzzleMock extends KuzzleEventEmitter {
-  constructor () {
-    const config = configLoader.load();
+  constructor() {
+    const config = configLoader.loadConfig();
 
     super(
       config.plugins.common.maxConcurrentPipes,
-      config.plugins.common.pipesBufferSize);
+      config.plugins.common.pipesBufferSize,
+    );
 
-    Reflect.defineProperty(global, 'kuzzle', {
+    Reflect.defineProperty(global, "kuzzle", {
       value: this,
       writable: true,
     });
 
-    this.id = 'knode-nasty-author-4242';
+    this.id = "knode-nasty-author-4242";
     this.state = kuzzleStateEnum.RUNNING;
 
     // we need a deep copy here
@@ -31,8 +33,21 @@ class KuzzleMock extends KuzzleEventEmitter {
     // ========== EVENTS ==========
 
     // emit + pipe mocks
-    sinon.stub(this, 'pipe').callsFake((...args) => {
-      if (typeof args[args.length - 1] !== 'function') {
+    sinon.stub(this, "pipe").callsFake(async (...args) => {
+      if (typeof args[0] === "string" && this.pluginPipes.get(args[0])) {
+        let pipeArgs = [...args.slice(1)];
+
+        try {
+          for (const handler of this.pluginPipes.get(args[0])) {
+            pipeArgs = [await handler(...pipeArgs)].slice(0, 1);
+          }
+          return pipeArgs[0];
+        } catch (e) {
+          return args[1];
+        }
+      }
+
+      if (typeof args[args.length - 1] !== "function") {
         return Bluebird.resolve(...args.slice(1));
       }
 
@@ -40,15 +55,17 @@ class KuzzleMock extends KuzzleEventEmitter {
       cb(null, ...args.slice(1));
     });
 
-    sinon.stub(this, 'ask').resolves();
-    sinon.stub(this, 'once');
-    sinon.spy(this, 'emit');
-    sinon.spy(this, 'registerPluginHook');
-    sinon.spy(this, 'registerPluginPipe');
+    sinon.stub(this, "ask").resolves();
+    sinon.stub(this, "call");
+    sinon.stub(this, "once");
+    sinon.spy(this, "emit");
+    sinon.spy(this, "registerPluginHook");
+    sinon.spy(this, "registerPluginPipe");
 
-    sinon.spy(this, 'onAsk');
-    sinon.spy(this, 'on');
-    sinon.spy(this, 'onPipe');
+    sinon.spy(this, "onCall");
+    sinon.spy(this, "onAsk");
+    sinon.spy(this, "on");
+    sinon.spy(this, "onPipe");
 
     // ============================
 
@@ -58,17 +75,17 @@ class KuzzleMock extends KuzzleEventEmitter {
       info: sinon.stub(),
       silly: sinon.stub(),
       debug: sinon.stub(),
-      verbose: sinon.stub()
+      verbose: sinon.stub(),
     };
 
     this.koncorde = {
       getFilterIds: sinon.stub().returns([]),
       getIndexes: sinon.stub().returns([]),
       hasFilterId: sinon.stub().returns(false),
-      normalize: sinon.stub().returns({id: 'foobar'}),
-      register: sinon.stub().returns('foobar'),
+      normalize: sinon.stub().returns({ id: "foobar" }),
+      register: sinon.stub().returns("foobar"),
       remove: sinon.stub(),
-      store: sinon.stub().returns('foobar'),
+      store: sinon.stub().returns("foobar"),
       test: sinon.stub().returns([]),
       validate: sinon.stub(),
     };
@@ -78,7 +95,8 @@ class KuzzleMock extends KuzzleEventEmitter {
       init: sinon.stub(),
       startListening: sinon.spy(),
       joinChannel: sinon.spy(),
-      leaveChannel: sinon.spy()
+      leaveChannel: sinon.spy(),
+      protocols: new Map(),
     };
 
     this.funnel = {
@@ -93,23 +111,23 @@ class KuzzleMock extends KuzzleEventEmitter {
       checkRights: sinon.stub(),
       getEventName: sinon.spy(),
       executePluginRequest: sinon.stub().resolves(),
-      isNativeController : sinon.stub()
+      isNativeController: sinon.stub(),
     };
 
     this.dumpGenerator = {
-      dump: sinon.stub().resolves()
+      dump: sinon.stub().resolves(),
     };
 
     this.shutdown = sinon.stub();
 
-    const InternalIndexHandlerMock = require('./internalIndexHandler.mock');
+    const InternalIndexHandlerMock = require("./internalIndexHandler.mock");
     this.internalIndex = new InternalIndexHandlerMock();
 
     this.passport = {
       use: sinon.stub(),
       unuse: sinon.stub(),
       authenticate: sinon.stub().resolves({}),
-      injectAuthenticateOptions: sinon.stub()
+      injectAuthenticateOptions: sinon.stub(),
     };
 
     this.pluginsManager = {
@@ -131,12 +149,14 @@ class KuzzleMock extends KuzzleEventEmitter {
       registerStrategy: sinon.stub(),
       unregisterStrategy: sinon.stub(),
       application: {
-        info: sinon.stub()
+        info: sinon.stub(),
+        name: "my-app",
       },
-      routes: []
+      routes: [],
+      loadedPlugins: [],
     };
 
-    this.rootPath = '/kuzzle';
+    this.rootPath = "/kuzzle";
 
     this.router = {
       connections: new Map(),
@@ -146,8 +166,8 @@ class KuzzleMock extends KuzzleEventEmitter {
       newConnection: sinon.stub().resolves(foo),
       removeConnection: sinon.spy(),
       http: {
-        route: sinon.stub()
-      }
+        route: sinon.stub(),
+      },
     };
 
     this.start = sinon.stub().resolves();
@@ -161,7 +181,7 @@ class KuzzleMock extends KuzzleEventEmitter {
       getStats: sinon.stub().resolves(foo),
       init: sinon.spy(),
       dropConnection: sinon.stub(),
-      startRequest: sinon.spy()
+      startRequest: sinon.spy(),
     };
 
     this.tokenManager = {
@@ -171,15 +191,16 @@ class KuzzleMock extends KuzzleEventEmitter {
       link: sinon.stub(),
       refresh: sinon.stub(),
       unlink: sinon.stub(),
-      getToken: sinon.stub(),
+      getKuidFromConnection: sinon.stub(),
+      removeConnection: sinon.stub().resolves(),
     };
 
     this.validation = {
       addType: sinon.spy(),
       curateSpecification: sinon.stub().resolves(),
       init: sinon.spy(),
-      validateFormat: sinon.stub().resolves({isValid: false}),
-      validate: sinon.stub().callsFake((...args) => Bluebird.resolve(args[0]))
+      validateFormat: sinon.stub().resolves({ isValid: false }),
+      validate: sinon.stub().callsFake((...args) => Bluebird.resolve(args[0])),
     };
 
     this.vault = {
@@ -187,10 +208,10 @@ class KuzzleMock extends KuzzleEventEmitter {
       prepareCrypto: sinon.stub(),
       secrets: {
         aws: {
-          secretKeyId: 'the cake is a lie'
+          secretKeyId: "the cake is a lie",
         },
-        kuzzleApi: 'the spoon does not exist'
-      }
+        kuzzleApi: "the spoon does not exist",
+      },
     };
 
     this.adminExists = sinon.stub().resolves();
@@ -206,7 +227,7 @@ class KuzzleMock extends KuzzleEventEmitter {
     };
 
     this.start = sinon.stub().resolves();
-    this.hash = sinon.stub().callsFake(obj => JSON.stringify(obj));
+    this.hash = sinon.stub().callsFake((obj) => JSON.stringify(obj));
     this.running = sinon.stub().returns(false);
   }
 }

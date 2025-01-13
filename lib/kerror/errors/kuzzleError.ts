@@ -2,7 +2,7 @@
  * Kuzzle, a backend software, self-hostable and ready to use
  * to power modern apps
  *
- * Copyright 2015-2020 Kuzzle
+ * Copyright 2015-2022 Kuzzle
  * mailto: support AT kuzzle.io
  * website: http://kuzzle.io
  *
@@ -19,9 +19,9 @@
  * limitations under the License.
  */
 
-import * as util from 'util';
+import * as util from "util";
 
-import { JSONObject } from 'kuzzle-sdk';
+import { JSONObject } from "kuzzle-sdk";
 
 /**
  * API error are instances of this class.
@@ -35,7 +35,7 @@ export class KuzzleError extends Error {
 
   /**
    * Error unique code
-   * @see https://docs.kuzzle.io/core/2/core/2/api/essentials/error-codes/
+   * @see https://docs.kuzzle.io/core/2/api/errors/error-codes/
    */
   public code: number;
 
@@ -44,18 +44,24 @@ export class KuzzleError extends Error {
    */
   public id: string;
 
+  /**
+   * Placeholders used to construct the error message.
+   */
+  public props: string[];
+
   constructor(message: string, status: number, id?: string, code?: number) {
     super(message);
 
     this.status = status;
     this.code = code;
     this.id = id;
+    this.props = undefined;
+    this.stack = undefined;
 
-    if (util.isError(message)) {
+    if (util.types.isNativeError(message)) {
       this.message = message.message;
       this.stack = message.stack;
-    }
-    else {
+    } else {
       this.message = message;
       Error.captureStackTrace(this, KuzzleError);
     }
@@ -64,15 +70,16 @@ export class KuzzleError extends Error {
   /**
    * Error class name (e.g: 'NotFoundError')
    */
-  get name (): string {
+  get name(): string {
     return this.constructor.name;
   }
 
-  toJSON (): JSONObject {
+  toJSON(): JSONObject {
     return {
       code: this.code,
       id: this.id,
       message: this.message,
+      props: this.props,
       stack: this.stack,
       status: this.status,
     };

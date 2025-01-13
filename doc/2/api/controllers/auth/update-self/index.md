@@ -1,7 +1,7 @@
 ---
 code: true
 type: page
-title: updateSelf
+title: updateSelf | API | Core
 ---
 
 # updateSelf
@@ -25,6 +25,7 @@ Body:
 ```
 
 <DeprecatedBadge version="2.4.0">
+
 ```http
 URL: http://kuzzle:7512/_updateSelf[?refresh=wait_for][?retryOnConflict=10]
 Method: PUT

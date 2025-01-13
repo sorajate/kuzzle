@@ -1,15 +1,17 @@
 ---
 code: true
 type: page
-title: getString
+title: getString | Framework | Core
+
 description: KuzzleRequest class getString() method
 ---
 
 # getString
 
-<SinceBadge version="2.11.0" />
+<SinceBadge version="2.16.9" />
 
 Gets a parameter from the request arguments and checks that it is a string.
+We also support lodash syntax. [(`relations.lebron[0]`)](https://lodash.com/docs/4.17.15#get)
 
 ### Arguments
 

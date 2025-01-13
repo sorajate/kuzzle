@@ -1,7 +1,7 @@
 ---
 code: true
 type: page
-title: getCurrentUser
+title: getCurrentUser | API | Core
 ---
 
 # getCurrentUser
@@ -24,6 +24,7 @@ Headers: Authorization: "Bearer <authentication token>"
 ```
 
 <DeprecatedBadge version="2.4.0">
+
 ```http
 URL: http://kuzzle:7512/users/_me
 Method: GET
