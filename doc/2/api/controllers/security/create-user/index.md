@@ -1,7 +1,7 @@
 ---
 code: true
 type: page
-title: createUser
+title: createUser | API | Core
 ---
 
 # createUser
@@ -9,6 +9,12 @@ title: createUser
 Creates a new user.
 
 The body contains the user data and must have the following properties:
+
+::: warning
+This method is not intended to be exposed to the anonymous user because it allows the user to assign the profile of their choice.
+
+Expose the [security:createRestrictedUser](/core/2/api/controllers/security/create-restricted-user) method instead.
+:::
 
 ---
 
@@ -63,7 +69,8 @@ Body:
 
   // optional arguments
   "_id": "<kuid>",
-  "refresh": "wait_for"
+  "refresh": "wait_for",
+  "kuid": "human"
 }
 ```
 
@@ -73,9 +80,9 @@ Body:
 
 ### Optional:
 
-- `_id`: user [kuid](/core/2/guides/kuzzle-depth/authentication#the-kuzzle-user-identifier). An error is returned if the provided identifier already exists. If not provided, a random kuid is automatically generated.
-- `refresh`: if set to `wait_for`, Kuzzle will not respond until the newly created user is indexed
-
+- `_id`: user [kuid](/core/2/guides/main-concepts/authentication#kuzzle-user-identifier-kuid). An error is returned if the provided identifier already exists. If not provided, a random kuid is automatically generated.
+- `refresh`: if set to `wait_for`, Kuzzle will not respond until the newly created user is indexed (default: `"wait_for"`)
+- `kuid`: if set to `human`, Kuzzle will generate a human readable id, otherwise if set to `uuid` Kuzzle will generate a standard uuid (default: `"human"`)
 ---
 
 ## Body properties
@@ -93,8 +100,6 @@ Returns the user creation status:
 
 - `_id`: new user kuid
 - `_source`: new user content and attributed profiles
-- `created`: always true
-- `version`: always 1
 
 ```js
 {
@@ -108,9 +113,7 @@ Returns the user creation status:
     "_source": {
       "profileIds": ["<profileId>"],
       "fullname": "John Doe"
-    },
-    "_version": 1,
-    "created": true
+    }
   }
 }
 ```

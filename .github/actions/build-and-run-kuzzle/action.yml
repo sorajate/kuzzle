@@ -1,0 +1,75 @@
+name: Build and Run Kuzzle image
+description: Build and Run Kuzzle image
+
+inputs:
+  kuzzle-image:
+    description: Kuzzle image target
+    required: true
+  es-version:
+    description: Elasticsearch version to use
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - run: npm ci
+      shell: bash
+
+    - run: npm run build
+      shell: bash
+
+    - run: npm prune --omit=dev
+      shell: bash
+
+    - run: |
+        export KUZZLE_IMAGE=${{ inputs.kuzzle-image }}
+        export ES_VERSION=${{ inputs.es-version }}
+
+        if [ "$ES_VERSION" == "7" ]; then
+            YML_FILE='./.ci/services-7.yml'
+        elif [ "$ES_VERSION" == "8" ]; then
+            YML_FILE='./.ci/services-8.yml'
+        else
+            echo "Invalid ES_VERSION. It should be either '7' or '8'."
+            exit 1 
+        fi
+
+        docker compose -f $YML_FILE up -d
+      shell: bash
+
+    - run: |
+        export KUZZLE_IMAGE=${{ inputs.kuzzle-image }}
+        export ES_VERSION=${{ inputs.es-version }}
+
+        if [ "$ES_VERSION" == "7" ]; then
+            YML_FILE='./.ci/services-7.yml'
+        elif [ "$ES_VERSION" == "8" ]; then
+            YML_FILE='./.ci/services-8.yml'
+        else
+            echo "Invalid ES_VERSION. It should be either '7' or '8'."
+            exit 1 
+        fi
+
+        trap 'docker compose -f $YML_FILE logs' err
+
+        export MAX_TRIES=60
+        ./bin/wait-kuzzle
+
+        trap - err
+      shell: bash
+
+    - run: |
+        export KUZZLE_IMAGE=${{ inputs.kuzzle-image }}
+        export ES_VERSION=${{ inputs.es-version }}
+
+        if [ "$ES_VERSION" == "7" ]; then
+            YML_FILE='./.ci/services-7.yml'
+        elif [ "$ES_VERSION" == "8" ]; then
+            YML_FILE='./.ci/services-8.yml'
+        else
+            echo "Invalid ES_VERSION. It should be either '7' or '8'."
+            exit 1 
+        fi
+
+        docker compose -f $YML_FILE down -v
+      shell: bash

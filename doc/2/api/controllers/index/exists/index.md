@@ -1,7 +1,7 @@
 ---
 code: true
 type: page
-title: exists
+title: exists | API | Core
 ---
 
 # exists
@@ -59,5 +59,5 @@ Returns a boolean telling whether the requested index exists.
 
 ## Possible errors
 
-- [Common errors](/core/2/api/essentials/errors/handling#common-errors)
+- [Common errors](/core/2/api/errors/types#common-errors)
 
