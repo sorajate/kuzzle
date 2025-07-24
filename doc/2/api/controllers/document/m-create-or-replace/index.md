@@ -1,14 +1,16 @@
 ---
 code: true
 type: page
-title: mCreateOrReplace
+title: mCreateOrReplace | API | Core
 ---
 
 # mCreateOrReplace
 
-
-
 Creates or replaces multiple documents.
+
+::: info
+The number of documents that can be created or replaced by a single request is limited by the `documentsWriteCount` server configuration (see the [Configuring Kuzzle](/core/2/guides/advanced/configuration) guide).
+:::
 
 ---
 
@@ -17,7 +19,7 @@ Creates or replaces multiple documents.
 ### HTTP
 
 ```http
-URL: http://kuzzle:7512/<index>/<collection>/_mCreateOrReplace[?refresh=wait_for]
+URL: http://kuzzle:7512/<index>/<collection>/_mCreateOrReplace[?refresh=wait_for][&silent][&source]
 Method: PUT
 Body:
 ```
@@ -68,6 +70,13 @@ Body:
 }
 ```
 
+### Kourou
+
+```bash
+kourou document:mCreateOrReplace <index> <collection> <body>
+kourou document:mCreateOrReplace <index> <collection> <body> -a silent=true
+```
+
 ---
 
 ## Arguments
@@ -78,6 +87,9 @@ Body:
 ### Optional:
 
 - `refresh`: if set to `wait_for`, Kuzzle will not respond until the created/replaced documents are indexed
+- `silent`: if set, then Kuzzle will not generate notifications <SinceBadge version="2.9.2" />
+- `strict`: if set, an error will occur if at least one document has not been created/replaced <SinceBadge version="2.11.0" />
+- `source`: if set, at true, the response will contain the _source field of the created/replaced documents (default true) <SinceBadge version="2.17.8"/>
 
 ---
 
@@ -91,16 +103,22 @@ Body:
 
 ## Response
 
-Returns a `hits` array, containing the list of created documents, in the same order than the one provided in the query.
+Returns an object containing 2 arrays: `successes` and `errors`
 
-Each created document is an object with the following properties:
+Each created or replaced document is an object of the `successes` array with the following properties:
 
-- `_id`: created document unique identifier
+- `_id`: document unique identifier
 - `_source`: document content
-- `_version`: version number of the document
-- `created`: a boolean telling whether a document is created
+- `_version`: version of the document (should be `1`)
+- `created`: a boolean telling whether a document is created (should be `true`)
 
-If one or more document creations fail, the response status is set to `206`, and the `error` object contain a [partial error](/core/2/api/essentials/errors/handling#partialerror) error.
+Each errored document is an object of the `errors` array with the following properties:
+
+- `document`: original document that caused the error
+- `status`: HTTP error status code
+- `reason`: human readable reason
+
+If `strict` mode is enabled, will rather return an error if at least one document has not been created/replaced.
 
 ### Example
 
@@ -114,14 +132,14 @@ If one or more document creations fail, the response status is set to `206`, and
   "controller": "document",
   "requestId": "<unique request identifier>",
   "result": {
-    "hits": [
+    "successes": [
       {
         "_id": "<documentId>",
         "_source": {
           // document content
         },
         "_version": 2,
-        "created": false
+        "created": true
       },
       {
         "_id": "<anotherDocumentId>",
@@ -129,10 +147,19 @@ If one or more document creations fail, the response status is set to `206`, and
           // document content
         },
         "_version": 1,
-        "created": true
+        "created": false
       }
     ],
-    "total": 2
+    "errors": [
+      {
+        "document": {
+          // document content
+        },
+        "status": 400,
+        "reason": "Missing document body"
+      }
+    ]
+
   }
 }
 ```

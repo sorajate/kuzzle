@@ -1,202 +1,205 @@
-'use strict';
+"use strict";
 
-const
-  _ = require('lodash'),
-  minimist = require('minimist'),
-  {
-    After,
-    AfterAll,
-    Before,
-    BeforeAll
-  } = require('cucumber'),
-  Bluebird = require('bluebird'),
-  Http = require('./api/http'),
-  World = require('./world');
+const { After, Before, BeforeAll } = require("cucumber"),
+  testMappings = require("../fixtures/mappings"),
+  testPermissions = require("../fixtures/permissions"),
+  testFixtures = require("../fixtures/fixtures"),
+  World = require("./world");
 
-// before first
-BeforeAll(function () {
-  const
-    fixtures = require('../fixtures/functionalTestsFixtures.json'),
-    promises = [],
-    world = new World({parameters: parseWorldParameters()}),
-    http = new Http(world);
+async function resetSecurityDefault(sdk) {
+  await sdk.query({
+    action: "resetSecurity",
+    controller: "admin",
+    refresh: "wait_for",
+  });
 
-  for (const index of Object.keys(fixtures)) {
-    promises.push(() => http.deleteIndex(index)
-      .catch(() => true));
+  sdk.jwt = null;
+
+  await sdk.query({
+    action: "loadSecurities",
+    body: testPermissions,
+    controller: "admin",
+    refresh: "wait_for",
+  });
+
+  await sdk.auth.login("local", {
+    password: "password",
+    username: "test-admin",
+  });
+}
+
+// Common hooks ================================================================
+
+BeforeAll({ timeout: 10 * 1000 }, async function () {
+  const world = new World({});
+
+  console.log(
+    `Start tests with ${world.protocol.toLocaleUpperCase()} protocol.`,
+  );
+
+  await world.sdk.connect();
+
+  console.log("Loading default permissions..");
+
+  await world.sdk.query({
+    action: "loadSecurities",
+    body: testPermissions,
+    controller: "admin",
+    onExistingUsers: "overwrite",
+    refresh: "wait_for",
+  });
+
+  world.sdk.disconnect();
+});
+
+Before({ timeout: 10 * 1000 }, async function () {
+  await this.sdk.connect();
+
+  await this.sdk.auth.login("local", {
+    password: "password",
+    username: "test-admin",
+  });
+});
+
+Before({ tags: "not @preserveDatabase" }, async function () {
+  await this.sdk.query({
+    action: "resetDatabase",
+    controller: "admin",
+    refresh: "wait_for",
+  });
+});
+
+After(async function () {
+  // Clean values stored by the scenario
+  this.props = {};
+
+  if (this.sdk && typeof this.sdk.disconnect === "function") {
+    this.sdk.disconnect();
   }
-  const mappings = { dynamic: 'true', properties: { foo: { type: 'keyword' } } };
-
-  promises.push(() => http.createIndex(world.fakeIndex));
-  promises.push(() => http.createCollection(world.fakeIndex, world.fakeCollection, mappings));
-  promises.push(() => http.createCollection(world.fakeIndex, world.fakeAltCollection, mappings));
-
-  promises.push(() => http.createIndex(world.fakeAltIndex));
-  promises.push(() => http.createCollection(world.fakeAltIndex, world.fakeCollection, mappings));
-  promises.push(() => http.createCollection(world.fakeAltIndex, world.fakeAltCollection, mappings));
-
-  return Bluebird.each(promises, promise => promise());
 });
 
-// after last
-AfterAll(function () {
-  const
-    promises = [],
-    world = new World({parameters: parseWorldParameters()}),
-    http = new Http(world);
-
-  for (const index of [
-    world.fakeIndex,
-    world.fakeAltIndex,
-    world.fakeNewIndex,
-    'tolkien'
-  ]) {
-    promises.push(http.deleteIndex(index)
-      .catch(() => true));
+Before({ tags: "@production" }, async function () {
+  if (process.env.NODE_ENV !== "production") {
+    return "skipped";
   }
-
-  return Bluebird.all(promises);
 });
 
-Before(function () {
-  return this.api.truncateCollection()
-    .then(() => this.api.truncateCollection(this.fakeAltIndex));
-});
-
-After(function () {
-  return this.api.disconnect();
-});
-
-After({tags: '@realtime'}, function () {
-  return this.api.unsubscribeAll()
-    .catch(() => true);
-});
-
-Before({tags: '@security'}, function () {
-  return cleanSecurity.call(this);
-});
-
-Before({tags: '@firstAdmin'}, function () {
-  return cleanSecurity.call(this);
-});
-
-After({tags: '@firstAdmin'}, function () {
-  return grantDefaultRoles.call(this).then(() => cleanSecurity.call(this));
-});
-
-Before({tags: '@redis'}, function () {
-  return cleanRedis.call(this);
-});
-
-After({tags: '@redis'}, function () {
-  return cleanRedis.call(this);
-});
-
-Before({tags: '@validation'}, function () {
-  return cleanValidations.call(this);
-});
-
-After({tags: '@validation'}, function () {
-  return cleanValidations.call(this);
-});
-
-After({tags: '@http'}, function () {
-  this.api.encode('identity');
-  this.api.decode('identity');
-});
-
-function cleanSecurity () {
-  if (this.currentUser) {
-    delete this.currentUser;
+Before({ tags: "@development" }, async function () {
+  if (process.env.NODE_ENV !== "development") {
+    return "skipped";
   }
+});
 
-  return this.api.searchUsers({match_all: {}}, {from: 0, size: 999})
-    .then(results => {
-      const regex = new RegExp('^' + this.idPrefix);
-      results = results.result.hits
-        .filter(r => r._id.match(regex))
-        .map(r => r._id);
+Before({ tags: "@http" }, async function () {
+  if (process.env.KUZZLE_PROTOCOL !== "http") {
+    return "skipped";
+  }
+});
 
-      return results.length > 0
-        ? this.api.deleteUsers(results, true)
-        : Bluebird.resolve();
-    })
-    .then(() => this.api.searchProfiles({match_all: {}}, {from: 0, size: 999}))
-    .then(results => {
-      const regex = new RegExp('^' + this.idPrefix);
-      results = results.result.hits.filter(r => r._id.match(regex)).map(r => r._id);
+Before({ tags: "@not-http" }, async function () {
+  if (process.env.KUZZLE_PROTOCOL === "http") {
+    return "skipped";
+  }
+});
 
-      return results.length > 0 ? this.api.deleteProfiles(results, true) : Bluebird.resolve();
-    })
-    .then(() => this.api.searchRoles({match_all: {}}, {from: 0, size: 999}))
-    .then(results => {
-      const regex = new RegExp('^' + this.idPrefix);
-      results = results.result.hits.filter(r => r._id.match(regex)).map(r => r._id);
+// firstAdmin hooks ============================================================
 
-      return results.length > 0 ? this.api.deleteRoles(results, true) : Bluebird.resolve();
-    });
-}
+Before({ tags: "@firstAdmin" }, async function () {
+  await this.sdk.query({
+    action: "resetSecurity",
+    controller: "admin",
+    refresh: "wait_for",
+  });
 
-function grantDefaultRoles () {
-  return this.api.login('local', this.users.useradmin.credentials.local)
-    .then(body => {
-      if (body.error) {
-        return Promise.reject(new Error(body.error.message));
-      }
+  this.sdk.jwt = null;
+});
 
-      if (!body.result) {
-        return Promise.reject(new Error('No result provided'));
-      }
+After({ tags: "@firstAdmin", timeout: 60 * 1000 }, async function () {
+  await resetSecurityDefault(this.sdk);
+});
 
-      if (!body.result.jwt) {
-        return Promise.reject(new Error('No token received'));
-      }
+// security hooks ==============================================================
 
-      if (this.currentUser === null || this.currentUser === undefined) {
-        this.currentUser = {};
-      }
+After({ tags: "@security", timeout: 60 * 1000 }, async function () {
+  await resetSecurityDefault(this.sdk);
+});
 
-      this.currentToken = {jwt: body.result.jwt};
-      this.currentUser.token = body.result.jwt;
+// mappings hooks ==============================================================
 
-      return this.api.createOrReplaceRole('anonymous', {controllers: {'*': {actions: {'*': true}}}});
-    })
-    .then(() => this.api.createOrReplaceRole('default', {controllers: {'*': {actions: {'*': true}}}}))
-    .then(() => this.api.createOrReplaceRole('admin', {controllers: {'*': {actions: {'*': true}}}}));
-}
+Before({ tags: "@mappings" }, async function () {
+  await this.sdk.query({
+    action: "loadMappings",
+    body: testMappings,
+    controller: "admin",
+    refresh: "wait_for",
+  });
 
-function cleanRedis() {
-  return this.api.callMemoryStorage('keys', { args: { pattern: this.idPrefix + '*' } })
-    .then(response => {
-      if (_.isArray(response.result) && response.result.length) {
-        return this.api.callMemoryStorage('del', { body: { keys: response.result } });
-      }
+  await this.sdk.query({
+    action: "loadFixtures",
+    body: testFixtures,
+    controller: "admin",
+    refresh: "wait_for",
+  });
+});
 
-      return null;
-    });
-}
+// events hooks ================================================================
 
-function cleanValidations() {
-  return this.api.searchSpecifications({
-    query: {
-      match_all: { boost: 1 }
-    }
-  })
-    .then(body => Bluebird.all(body.result.hits
-      .filter(r => r._id.match(/^kuzzle-test-/))
-      .map(r => this.api.deleteSpecifications(r._id.split('#')[0], r._id.split('#')[1]))
-    ));
-}
+After({ tags: "@events" }, async function () {
+  await this.sdk.query({
+    action: "deactivateAll",
+    controller: "functional-test-plugin/pipes",
+  });
 
-function parseWorldParameters() {
-  const
-    argv = minimist(process.argv.slice(2)),
-    parameters = Object.assign({
-      protocol: 'websocket',
-      host: 'localhost',
-      port: 7512,
-      silent: true
-    }, JSON.parse(argv['world-parameters'] || '{}'));
+  await this.sdk.query({
+    action: "deactivateAll",
+    controller: "pipes",
+  });
+});
 
-  return parameters;
-}
+// login hooks =================================================================
+
+After({ tags: "@login" }, async function () {
+  await this.sdk.auth.login("local", {
+    password: "password",
+    username: "test-admin",
+  });
+});
+
+// realtime hooks ==============================================================
+
+After({ tags: "@realtime" }, function () {
+  if (!this.props.subscriptions) {
+    return;
+  }
+  const promises = Object.values(this.props.subscriptions).map(
+    ({ unsubscribe }) => unsubscribe(),
+  );
+
+  return Promise.all(promises);
+});
+
+After({ tags: "@websocket" }, function () {
+  this.props.client.terminate();
+});
+
+// cluster hooks ===============================================================
+
+Before({ tags: "@cluster" }, async function () {
+  this.sdk.disconnect();
+
+  this.node1 = this.getSDK({ port: 17510 });
+  this.node2 = this.getSDK({ port: 17511 });
+  this.node3 = this.getSDK({ port: 17512 });
+
+  await Promise.all([
+    this.node1.connect(),
+    this.node2.connect(),
+    this.node3.connect(),
+  ]);
+});
+
+After({ tags: "@cluster" }, async function () {
+  this.node1.disconnect();
+  this.node2.disconnect();
+  this.node3.disconnect();
+});

@@ -1,7 +1,7 @@
 ---
 code: true
 type: page
-title: mDelete
+title: mDelete | API | Core
 ---
 
 # mDelete
@@ -80,5 +80,5 @@ Returns an array of indexes that were actually deleted.
 
 ## Possible errors
 
-- [Common errors](/core/2/api/essentials/errors/handling#common-errors)
+- [Common errors](/core/2/api/errors/types#common-errors)
 

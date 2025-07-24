@@ -4,7 +4,7 @@
  * Kuzzle, a backend software, self-hostable and ready to use
  * to power modern apps
  *
- * Copyright 2015-2018 Kuzzle
+ * Copyright 2015-2022 Kuzzle
  * mailto: support AT kuzzle.io
  * website: http://kuzzle.io
  *
@@ -21,76 +21,106 @@
  * limitations under the License.
  */
 
-const
-  fs = require('fs'),
-  Kuzzle = require('../lib/api/kuzzle'),
-  ColorOutput = require('./colorOutput'),
-  yargs = require('yargs');
+"use strict";
 
-function loadJson (filePath) {
-  const rawData = fs.readFileSync(filePath, 'utf8');
+/* eslint-disable no-console */
 
-  return JSON.parse(rawData);
+const fs = require("fs");
+
+const yargs = require("yargs");
+
+const { Backend } = require("../index");
+
+function loadJson(path) {
+  if (!path) {
+    return {};
+  }
+
+  return JSON.parse(fs.readFileSync(path, "utf8"));
 }
 
-function startKuzzle (options = {}) {
-  const
-    kuzzle = new Kuzzle(),
-    cout = new ColorOutput(options),
-    kuzzleParams = {};
-
-  cout.notice('[ℹ] Starting Kuzzle server');
-
-  if (options.mappings) {
-    kuzzleParams.mappings = loadJson(options.mappings);
-  }
-
-  if (options.fixtures) {
-    kuzzleParams.fixtures = loadJson(options.fixtures);
-  }
-
-  if (options.securities) {
-    kuzzleParams.securities = loadJson(options.securities);
-  }
+async function startKuzzle(options = {}) {
+  const app = new Backend("kuzzle");
 
   if (options.enablePlugins) {
-    kuzzleParams.additionalPlugins = options.enablePlugins
+    const additionalPlugins = options.enablePlugins
       .trim()
-      .split(',')
-      .map(x => x.trim().replace(/(^")|("$)/g, ''));
+      .split(",")
+      .map((x) => x.trim().replace(/(^")|("$)/g, ""));
+
+    for (const additionalPlugin of additionalPlugins) {
+      const PluginClass = require(`../plugins/available/${additionalPlugin}`);
+      const manifest = require(
+        `../plugins/available/${additionalPlugin}/manifest.json`,
+      );
+      const plugin = new PluginClass();
+
+      try {
+        plugin.version = require(
+          `../plugins/available/${additionalPlugin}/package.json`,
+        ).version;
+      } catch (e) {
+        // ignore
+      }
+
+      app.plugin.use(plugin, { manifest, name: manifest.name });
+    }
   }
 
-  return kuzzle.start(kuzzleParams)
-    .then(() => {
-      cout.ok('[✔] Kuzzle server ready');
+  app._support.mappings = loadJson(options.mappings);
 
-      return kuzzle.adminExists();
-    })
-    .then(adminExists => {
-      if (! adminExists) {
-        cout.warn('[!] [WARNING] There is no administrator user yet: everyone has administrator rights.');
-        cout.notice('[ℹ] You can use the CLI or the admin console to create the first administrator user.');
-        cout.notice('    For more information: https://docs.kuzzle.io/core/1/guides/essentials/security/');
-      }
-    })
-    .catch(err => {
-      cout.error(`[x] [ERROR] ${err.stack}`);
-      process.exit(1);
-    });
+  app._support.fixtures = loadJson(options.fixtures);
+
+  app._support.securities = loadJson(options.securities);
+
+  app.vault.key = options.vaultKey;
+
+  app.vault.file = options.secretsFile;
+
+  app.version = "1.0.0";
+
+  await app.start();
+
+  const { total: admins } = await app.sdk.security.searchUsers({
+    query: { term: { profileIds: "admin" } },
+  });
+
+  if (admins.length === 0) {
+    console.log(
+      "[!] [WARNING] There is no administrator user yet: everyone has administrator rights.",
+    );
+    console.log(
+      "[ℹ]  You can use the CLI or the admin console to create the first administrator user.",
+    );
+    console.log(
+      "    For more information: https://docs.kuzzle.io/core/2/guides/essentials/security/",
+    );
+  }
 }
 
-const options = yargs
-  .usage('start-kuzzle-server [options]')
-  .describe('fixtures', 'Import data from file')
-  .describe('mappings', 'Apply mappings from file')
-  .describe('securities', 'Import roles, profiles and users from file')
-  .describe('vault-key', 'Vault key used to decrypt secrets')
-  .describe('secrets-file', 'Output file to write decrypted secrets')
-  .describe('enable-plugins', 'Enable plugins from "plugins/available" directory')
-  .describe('no-colors', 'do not use ANSI coloring')
-  .argv
+const options = yargs()
+  .scriptName("kuzzle")
+  .usage("start-kuzzle-server [options]")
+  .describe("fixtures", "Import data from file")
+  .describe("mappings", "Apply mappings from file")
+  .describe("securities", "Import roles, profiles and users from file")
+  .describe("vault-key", "Vault key used to decrypt secrets")
+  .describe("secrets-file", "Output file to write decrypted secrets")
+  .describe(
+    "enable-plugins",
+    'Enable plugins from "plugins/available" directory',
+  ).argv;
 
-startKuzzle(options);
+const run = async () => {
+  try {
+    await startKuzzle(options);
+  } catch (error) {
+    console.error(`[x] [ERROR] ${error.stack}`);
+    process.exit(1);
+  }
+};
+
+run();
 
 // Used for tests only
 module.exports = startKuzzle;
