@@ -1,7 +1,7 @@
 ---
 code: true
 type: page
-title: createOrReplaceRole
+title: createOrReplaceRole | API | Core
 ---
 
 # createOrReplaceRole
@@ -24,6 +24,7 @@ Body:
 
 ```js
 {
+  "tags": ["moderators"],
   "controllers": {
     "*": {
       "actions": {
@@ -42,6 +43,7 @@ Body:
   "action": "createOrReplaceRole",
   "_id": "<roleId>",
   "body": {
+    "tags": ["moderators"],
     "controllers": {
       "*": {
         "actions": {
@@ -61,13 +63,15 @@ Body:
 
 ### Optional:
 
-- `refresh`: if set to `wait_for`, Kuzzle will not respond until the created/replaced role is indexed
+- `refresh`: if set to `wait_for`, Kuzzle will not respond until the created/replaced role is indexed (default: `"wait_for"`)
+
+- `force`: if set to `true`, creates or replaces the role even if it gives access to non-existent plugins API actions.
 
 ---
 
 ## Body properties
 
-- `controllers`: [role definition](/core/2/guides/essentials/security#defining-roles)
+- `controllers`: [role definition](/core/2/guides/main-concepts/permissions#roles)
 
 ---
 

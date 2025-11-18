@@ -1,20 +1,18 @@
 ---
 code: true
 type: page
-title: mWrite
+title: mWrite | API | Core
 ---
 
 # mWrite
 
-<SinceBadge version="1.8.0" />
-
-
 Create or replace multiple documents directly into the storage engine.
 
 This is a low level route intended to bypass Kuzzle actions on document creation, notably:
-  - check [document validity](/core/2/guides/essentials/data-validation),
-  - add [kuzzle metadata](/core/2/guides/essentials/document-metadata),
-  - trigger [realtime notifications](/core/2/guides/essentials/real-time) (unless asked otherwise)
+  - check document write limit <SinceBadge version="2.3.3" />
+  - check [document validity](/core/2/guides/advanced/data-validation),
+  - add [kuzzle metadata](/core/2/guides/main-concepts/data-storage#kuzzle-metadata),
+  - trigger [realtime notifications](/core/2/guides/main-concepts/realtime-engine) (unless asked otherwise)
 
 ---
 
@@ -87,6 +85,7 @@ Body:
 
 - `notify`: if set to true, Kuzzle will trigger realtime notifications
 - `refresh`: if set to `wait_for`, Kuzzle will not respond until the created/replaced documents are indexed
+- `strict`: if set, an error will occur if at least one document has not been created/replaced <SinceBadge version="2.11.0" />
 
 ---
 
@@ -100,15 +99,21 @@ Body:
 
 ## Response
 
-Returns a `hits` array, containing the list of created documents, in the same order than the one provided in the query.
+Returns an object containing 2 arrays: `successes` and `errors`
 
-Each created document is an object with the following properties:
+Each created or replaced document is an object of the `successes` array with the following properties:
 
-- `_id`: created document unique identifier
+- `_id`: document unique identifier
 - `_source`: document content
-- `_version`: version number of the document
+- `_version`: version of the document (should be `1`)
 
-If one or more document creations fail, the response status is set to `206`, and the `error` object contains a [partial error](/core/2/api/essentials/errors/handling#partialerror) error.
+Each errored document is an object of the `errors` array with the following properties:
+
+- `document`: original document that caused the error
+- `status`: HTTP error status code
+- `reason`: human readable reason
+
+If `strict` mode is enabled, will rather return an error if at least one document has not been created/replaced.
 
 ### Example
 
@@ -122,25 +127,23 @@ If one or more document creations fail, the response status is set to `206`, and
   "controller": "bulk",
   "requestId": "<unique request identifier>",
   "result": {
-    "hits": [
+    "successes": [
       {
         "_id": "<documentId>",
         "_source": {
           // document content
         },
-        "_version": 2,
-        "created": false
+        "_version": 2
       },
       {
         "_id": "<anotherDocumentId>",
         "_source": {
           // document content
         },
-        "_version": 1,
-        "created": true
+        "_version": 1
       }
     ],
-    "total": 2
+    "errors": []
   }
 }
 ```

@@ -1,200 +1,253 @@
-const
-  should = require('should'),
-  sinon = require('sinon'),
-  KuzzleMock = require('../../mocks/kuzzle.mock'),
-  RealtimeController = require('../../../lib/api/controllers/realtimeController'),
-  {
-    Request,
-    errors: { BadRequestError }
-  } = require('kuzzle-common-objects'),
-  BaseController = require('../../../lib/api/controllers/baseController');
+"use strict";
 
-describe('RealtimeController', () => {
-  let
-    kuzzle,
-    request,
-    realtimeController,
-    foo = {foo: 'bar'};
+const should = require("should");
+const RealtimeController = require("../../../lib/api/controllers/realtimeController");
+
+const { Request, BadRequestError } = require("../../../index");
+const KuzzleMock = require("../../mocks/kuzzle.mock");
+
+const {
+  NativeController,
+} = require("../../../lib/api/controllers/baseController");
+
+describe("RealtimeController", () => {
+  let kuzzle;
+  let request;
+  let realtimeController;
 
   beforeEach(() => {
     kuzzle = new KuzzleMock();
-    realtimeController = new RealtimeController(kuzzle);
-    request = new Request({
-      index: 'test',
-      collection: 'collection',
-      controller: 'realtime',
-      body: {}
-    }, {user: {_id: '42'}});
-
-    kuzzle.repositories.user.anonymous = sinon.stub();
+    realtimeController = new RealtimeController();
+    request = new Request(
+      {
+        index: "test",
+        collection: "collection",
+        controller: "realtime",
+        body: {},
+      },
+      {
+        connection: { id: "connectionId" },
+        user: { _id: "42" },
+      },
+    );
   });
 
-  describe('#constructor', () => {
-    it('should inherit the base constructor', () => {
-      should(realtimeController).instanceOf(BaseController);
+  describe("#constructor", () => {
+    it("should inherit the base constructor", () => {
+      should(realtimeController).instanceOf(NativeController);
     });
   });
 
-  describe('#subscribe', () => {
-    it('should throw an error if index is not provided',() => {
-      request.input.resource.index = null;
+  describe("#subscribe", () => {
+    it("should reject if no index is provided", () => {
+      request.input.args.index = null;
 
-      should(() => realtimeController.subscribe(request))
-        .throw(BadRequestError, { id: 'api.assert.missing_argument' });
+      should(realtimeController.subscribe(request)).rejectedWith(
+        BadRequestError,
+        { id: "api.assert.missing_argument" },
+      );
     });
 
-    it('should throw an error if collection is not provided',() => {
-      request.input.resource.collection = null;
+    it("should reject if no collection is provided", () => {
+      request.input.args.collection = null;
 
-      should(() => realtimeController.subscribe(request))
-        .throw(BadRequestError, { id: 'api.assert.missing_argument' });
+      should(realtimeController.subscribe(request)).rejectedWith(
+        BadRequestError,
+        { id: "api.assert.missing_argument" },
+      );
     });
 
-    it('should throw an error if body is not provided',() => {
+    it("should reject if no body is provided", () => {
       request.input.body = null;
 
-      should(() => realtimeController.subscribe(request))
-        .throw(BadRequestError, { id: 'api.assert.body_required' });
+      should(realtimeController.subscribe(request)).rejectedWith(
+        BadRequestError,
+        { id: "api.assert.body_required" },
+      );
     });
 
-    it('should call the proper hotelClerk method',() => {
-      return realtimeController.subscribe(request)
-        .then(result => {
-          should(result).be.match(foo);
-          should(kuzzle.hotelClerk.addSubscription).be.calledOnce();
-          should(kuzzle.hotelClerk.addSubscription).be.calledWith(request);
-        });
+    it("should ask for the proper realtime event", async () => {
+      const subscribeResult = { roomId: "foo", channel: "bar" };
+      const stub = kuzzle.ask
+        .withArgs("core:realtime:subscribe", request)
+        .resolves(subscribeResult);
+      const result = await realtimeController.subscribe(request);
+
+      should(result).be.match(subscribeResult);
+      should(stub).calledOnce();
+      should(request.input.args.propagate).be.true();
+    });
+
+    it("should handle propagate flag only with funnel protocol", async () => {
+      const stub = kuzzle.ask.withArgs("core:realtime:subscribe", request);
+
+      request.context.connection.protocol = "funnel";
+      request.input.args.propagate = false;
+
+      await realtimeController.subscribe(request);
+
+      let req = stub.getCall(0).args[1];
+      should(req.input.args.propagate).be.false();
+
+      request.context.connection.protocol = "http";
+      request.input.args.propagate = false;
+
+      await realtimeController.subscribe(request);
+
+      req = stub.getCall(1).args[1];
+      should(req.input.args.propagate).be.true();
+    });
+
+    it("should return nothing if the subscription is not performed", async () => {
+      kuzzle.ask.withArgs("core:realtime:subscribe").resolves(null);
+
+      const result = await realtimeController.subscribe(request);
+
+      should(result).be.null();
     });
   });
 
-  describe('#join', () => {
-    it('should throw an error if body is not provided',() => {
+  describe("#join", () => {
+    it("should reject an error if body is not provided", () => {
       request.input.body = null;
 
-      return should(() => realtimeController.join(request))
-        .throw(BadRequestError, { id: 'api.assert.body_required' });
+      return should(realtimeController.join(request)).rejectedWith(
+        BadRequestError,
+        { id: "api.assert.body_required" },
+      );
     });
 
-    it('should throw an error if roomId is not provided',() => {
-      return should(() => realtimeController.join(request))
-        .throw(BadRequestError, { id: 'api.assert.missing_argument' });
+    it("should throw an error if roomId is not provided", () => {
+      return should(realtimeController.join(request)).rejectedWith(
+        BadRequestError,
+        { id: "api.assert.missing_argument" },
+      );
     });
 
-    it('should call the proper hotelClerk method',() => {
-      request.input.body.roomId = 'foo';
+    it("should ask for the correct ask event", async () => {
+      const expected = { roomId: "foo", channel: "bar" };
+      request.input.body.roomId = "foo";
 
-      return realtimeController.join(request)
-        .then(result => {
-          should(result).be.match(foo);
-          should(kuzzle.hotelClerk.join).be.calledOnce();
-          should(kuzzle.hotelClerk.join).be.calledWith(request);
-        });
+      kuzzle.ask.withArgs("core:realtime:join", request).resolves(expected);
+
+      const result = await realtimeController.join(request);
+
+      should(kuzzle.ask).calledWithMatch("core:realtime:join", request);
+      should(result).match(expected);
     });
   });
 
-  describe('#unsubscribe', () => {
-    it('should throw an error if body is not provided',() => {
+  describe("#unsubscribe", () => {
+    it("should throw an error if body is not provided", () => {
       request.input.body = null;
 
-      should(() => {
-        realtimeController.unsubscribe(request);
-      }).throw(BadRequestError, { id: 'api.assert.body_required' });
+      return should(realtimeController.unsubscribe(request)).rejectedWith(
+        BadRequestError,
+        { id: "api.assert.body_required" },
+      );
     });
 
-    it('should throw an error if roomId is not provided',() => {
-      should(() => {
-        realtimeController.unsubscribe(request);
-      }).throw(BadRequestError, { id: 'api.assert.missing_argument' });
+    it("should throw an error if roomId is not provided", () => {
+      return should(realtimeController.unsubscribe(request)).rejectedWith(
+        BadRequestError,
+        { id: "api.assert.missing_argument" },
+      );
     });
 
-    it('should call the proper hotelClerk method',() => {
-      request.input.body.roomId = 'foo';
+    it("should send the correct ask event", async () => {
+      request.input.body.roomId = "foo";
 
-      return realtimeController.unsubscribe(request)
-        .then(result => {
-          should(result).be.match(foo);
-          should(kuzzle.hotelClerk.removeSubscription).be.calledOnce();
-          should(kuzzle.hotelClerk.removeSubscription).be.calledWith(request);
-        });
+      const result = await realtimeController.unsubscribe(request);
+
+      should(result).be.match({ roomId: "foo" });
+      should(kuzzle.ask).calledWithMatch(
+        "core:realtime:unsubscribe",
+        "connectionId",
+        "foo",
+      );
     });
   });
 
-  describe('#count', () => {
-    it('should throw an error if body is not provided',() => {
+  describe("#count", () => {
+    it("should throw an error if body is not provided", () => {
       request.input.body = null;
 
-      should(() => {
-        realtimeController.count(request);
-      }).throw(BadRequestError, { id: 'api.assert.body_required' });
+      return should(realtimeController.count(request)).rejectedWith(
+        BadRequestError,
+        { id: "api.assert.body_required" },
+      );
     });
 
-    it('should throw an error if roomId is not provided',() => {
-      should(() => {
-        realtimeController.count(request);
-      }).throw(BadRequestError, { id: 'api.assert.missing_argument' });
+    it("should throw an error if roomId is not provided", () => {
+      return should(realtimeController.count(request)).rejectedWith(
+        BadRequestError,
+        { id: "api.assert.missing_argument" },
+      );
     });
 
-    it('should call the proper hotelClerk method',() => {
-      request.input.body.roomId = 'foo';
+    it("should send the correct ask event", async () => {
+      const stub = kuzzle.ask
+        .withArgs("cluster:realtime:room:count", "foo")
+        .resolves(42);
 
-      return realtimeController.count(request)
-        .then(result => {
-          should(result).be.match(foo);
-          should(kuzzle.hotelClerk.countSubscription).be.calledOnce();
-          should(kuzzle.hotelClerk.countSubscription).be.calledWith(request);
-        });
-    });
-  });
+      request.input.body.roomId = "foo";
 
-  describe('#list', () => {
-    it('should call the proper hotelClerk method',() => {
-      kuzzle.repositories.user.anonymous.returns({_id: '-1'});
+      const result = await realtimeController.count(request);
 
-      return realtimeController.list(request)
-        .then(result => {
-          should(result).be.match(foo);
-          should(kuzzle.hotelClerk.listSubscriptions).be.calledOnce();
-          should(kuzzle.hotelClerk.listSubscriptions).be.calledWith(request);
-        });
+      should(result).match({ count: 42 });
+      should(stub).calledOnce();
     });
   });
 
-  describe('#publish', () => {
-    it('should resolve to a valid response', () => {
-      request.input.resource.index = '%test';
-      request.input.resource.collection = 'test-collection';
+  describe("#list", () => {
+    it("should ask for the proper realtime event", async () => {
+      await realtimeController.list(request);
+      should(kuzzle.ask).calledWith("core:realtime:list", request.context.user);
+    });
+  });
 
-      return realtimeController.publish(request)
-        .then(response => {
-          try {
-            should(kuzzle.validation.validate).be.calledOnce();
-
-            should(kuzzle.notifier.publish).be.calledOnce();
-            should(kuzzle.notifier.publish).be.calledWith(request);
-
-            should(response).match({published: true});
-
-            return Promise.resolve();
-          }
-          catch(error) {
-            return Promise.reject(error);
-          }
-        });
+  describe("#publish", () => {
+    beforeEach(() => {
+      request.input.args.index = "%test";
+      request.input.args.collection = "test-collection";
     });
 
-    it('should add basic metadata to body', () => {
-      request.input.resource.index = '%test';
-      request.input.resource.collection = 'test-collection';
+    it("should resolve to a valid response", async () => {
+      const response = await realtimeController.publish(request);
 
-      return realtimeController.publish(request)
-        .then(() => {
-          should(kuzzle.notifier.publish).be.calledOnce();
+      should(kuzzle.validation.validate).be.calledOnce();
 
-          const req = kuzzle.notifier.publish.getCall(0).args[0];
-          should(req.input.body._kuzzle_info).be.instanceof(Object);
-          should(req.input.body._kuzzle_info.author).be.eql('42');
-          should(req.input.body._kuzzle_info.createdAt).be.approximately(Date.now(), 100);
-        });
+      should(kuzzle.ask).be.calledWithMatch("core:realtime:publish", request);
+
+      should(response).match({ published: true });
+    });
+
+    it("should add basic metadata to body", async () => {
+      await realtimeController.publish(request);
+
+      should(kuzzle.ask).calledWithMatch("core:realtime:publish", request);
+
+      const req = kuzzle.ask.withArgs("core:realtime:publish").getCall(0)
+        .args[1];
+
+      should(req.input.body._kuzzle_info).be.instanceof(Object);
+      should(req.input.body._kuzzle_info.author).be.eql("42");
+      should(req.input.body._kuzzle_info.createdAt).be.approximately(
+        Date.now(),
+        100,
+      );
+    });
+
+    it("should allow to publish without user in context", async () => {
+      request.context.user = undefined;
+
+      const response = await realtimeController.publish(request);
+
+      should(kuzzle.validation.validate).be.calledOnce();
+
+      should(kuzzle.ask).calledWithMatch("core:realtime:publish", request);
+
+      should(response).match({ published: true });
     });
   });
 });
