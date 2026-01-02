@@ -1,7 +1,7 @@
 ---
 code: true
 type: page
-title: scrollProfiles
+title: scrollProfiles | API | Core
 ---
 
 # scrollProfiles
@@ -42,7 +42,7 @@ Method: GET
 
 ### Optional:
 
-- `scroll`: refresh the cursor duration, using the [time to live](https://www.elastic.co/guide/en/elasticsearch/reference/5.6/common-options.html#time-units) syntax.
+- `scroll`: refresh the cursor duration, using the [time to live](https://www.elastic.co/guide/en/elasticsearch/reference/7.4/common-options.html#time-units) syntax.
 
 ---
 
@@ -69,6 +69,7 @@ Returns a paginated search result set, with the following properties:
       {
         "_id": "profile1",
         "_source": {
+          "rateLimit": 0,
           "policies": [
             // list of policies
           ]
@@ -77,6 +78,7 @@ Returns a paginated search result set, with the following properties:
       {
         "_id": "profile2",
         "_source": {
+          "rateLimit": 50,
           "policies": [
             // list of policies
           ]

@@ -1,12 +1,10 @@
 ---
 code: true
 type: page
-title: join
+title: join | API | Core
 ---
 
 # join
-
-<DeprecatedBadge version="1.8.0" />
 
 Joins a previously created subscription.
 
@@ -38,7 +36,7 @@ Due to the synchronous nature of the HTTP protocol, real-time messaging is not s
 
 ### Optional:
 
-- `volatile`: subscription information, used in [user join/leave notifications](/core/2/api/essentials/volatile-data).
+- `volatile`: subscription information, used in [user join/leave notifications](/core/2/guides/main-concepts/api#volatile-data).
 
 ---
 
@@ -63,6 +61,7 @@ Returns a `roomId` property containing the subscription identifier.
   "volatile": {},
   "requestId": "<unique request identifier>",
   "result": {
+    "channel": "<unique channel identifier>",
     "roomId": "<unique Kuzzle room identifier>"
   }
 }

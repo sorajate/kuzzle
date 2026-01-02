@@ -1,7 +1,7 @@
 ---
 code: true
 type: page
-title: mGetProfiles
+title: mGetProfiles | API | Core
 ---
 
 # mGetProfiles
@@ -67,12 +67,14 @@ Returns a `hits` array of objects. Each object is a profile description, with th
       {
         "_id": "profile1",
         "_source": {
+          "rateLimit": 0,
           "policies": [{"roleId": "admin"}]
         }
       },
       {
         "_id": "profile2",
         "_source": {
+          "rateLimit": 50,
           "policies": [{"roleId": "default"}]
         }
       }

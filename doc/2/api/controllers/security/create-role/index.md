@@ -1,7 +1,7 @@
 ---
 code: true
 type: page
-title: createRole
+title: createRole | API | Core
 ---
 
 # createRole
@@ -17,13 +17,14 @@ Creates a new role.
 ### HTTP
 
 ```http
-URL: http://kuzzle:7512/roles/<_id>/_create[?refresh=wait_for]
+URL: http://kuzzle:7512/roles/<_id>/_create[?refresh=wait_for][&force]
 Method: POST
 Body:
 ```
 
 ```js
 {
+  "tags": ["moderators"],
   "controllers": {
     "*": {
       "actions": {
@@ -42,6 +43,7 @@ Body:
   "action": "createRole",
   "_id": "<roleId>",
   "body": {
+    "tags": ["moderators"],
     "controllers": {
       "*": {
         "actions": {
@@ -61,13 +63,15 @@ Body:
 
 ### Optional:
 
-- `refresh`: if set to `wait_for`, Kuzzle will not respond until the created role is indexed
+- `refresh`: if set to `wait_for`, Kuzzle will not respond until the created role is indexed (default: `"wait_for"`)
+
+- `force`: if set to `true`, creates the role even if it gives access to non-existent plugins API actions.
 
 ---
 
 ## Body properties
 
-- `controllers`: [role definition](/core/2/guides/essentials/security#defining-roles)
+- `controllers`: [role definition](/core/2/guides/main-concepts/permissions#roles)
 
 ---
 

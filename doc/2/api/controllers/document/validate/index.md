@@ -1,7 +1,7 @@
 ---
 code: true
 type: page
-title: validate
+title: validate | API | Core
 ---
 
 # validate
@@ -44,6 +44,12 @@ Body:
     // document content to check
   }
 }
+```
+
+### Kourou
+
+```bash
+kourou document:validate <index> <collection> <body>
 ```
 
 ---
