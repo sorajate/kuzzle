@@ -1,7 +1,7 @@
 ---
 code: true
 type: page
-title: getMyRights
+title: getMyRights | API | Core
 ---
 
 # getMyRights
@@ -16,11 +16,21 @@ Returns the exhaustive list of granted or denied rights for the currently logged
 
 ### HTTP
 
+<SinceBadge version="2.4.0"/>
+```http
+URL: http://kuzzle:7512/_me/_rights
+Method: GET
+Headers: Authorization: "Bearer <authentication token>"
+```
+
+<DeprecatedBadge version="2.4.0">
+
 ```http
 URL: http://kuzzle:7512/users/_me/_rights
 Method: GET
 Headers: Authorization: "Bearer <authentication token>"
 ```
+</DeprecatedBadge>
 
 ### Other protocols
 

@@ -1,46 +1,57 @@
-'use strict';
+"use strict";
 
-const
-  sinon = require('sinon'),
-  Elasticsearch = require('../../lib/services/elasticsearch');
+const sinon = require("sinon");
+const { Elasticsearch } = require("../../lib/service/storage/Elasticsearch");
 
 class ElasticsearchMock extends Elasticsearch {
-  constructor (kuzzle, config, scope) {
-    super(kuzzle, config, scope);
+  constructor(config, scope) {
+    super(config, scope);
 
-    this.init = sinon.stub().resolves();
-    this.info = sinon.stub().resolves();
-    this.scroll = sinon.stub().resolves();
-    this.search = sinon.stub().resolves();
-    this.get = sinon.stub().resolves();
-    this.mGet = sinon.stub().resolves();
-    this.count = sinon.stub().resolves();
-    this.create = sinon.stub().resolves();
-    this.createOrReplace = sinon.stub().resolves();
-    this.update = sinon.stub().resolves();
-    this.replace = sinon.stub().resolves();
-    this.delete = sinon.stub().resolves();
-    this.deleteByQuery = sinon.stub().resolves();
-    this.createIndex = sinon.stub().resolves();
-    this.createCollection = sinon.stub().resolves();
-    this.getMapping = sinon.stub().resolves();
-    this.truncateCollection = sinon.stub().resolves();
-    this.import = sinon.stub().resolves();
-    this.listCollections = sinon.stub().resolves();
-    this.listIndexes = sinon.stub().resolves();
-    this.listAliases = sinon.stub().resolves();
-    this.deleteIndexes = sinon.stub().resolves();
-    this.deleteIndex = sinon.stub().resolves();
-    this.refreshCollection = sinon.stub().resolves();
-    this.exists = sinon.stub().resolves();
-    this.indexExists = sinon.stub().resolves();
-    this.collectionExists = sinon.stub().resolves();
-    this.mCreate = sinon.stub().resolves();
-    this.mCreateOrReplace = sinon.stub().resolves();
-    this.mUpdate = sinon.stub().resolves();
-    this.mReplace = sinon.stub().resolves();
-    this.mDelete = sinon.stub().resolves();
+    sinon.stub(this, "init").resolves();
+    sinon.stub(this.client, "info").resolves();
+    sinon.stub(this.client, "stats").resolves();
+    sinon.stub(this.client, "scroll").resolves();
+    sinon.stub(this.client, "search").resolves();
+    sinon.stub(this.client, "get").resolves();
+    sinon.stub(this.client, "mGet").resolves();
+    sinon.stub(this.client, "count").resolves();
+    sinon.stub(this.client, "create").resolves();
+    sinon.stub(this.client, "createOrReplace").resolves();
+    sinon.stub(this.client, "update").resolves();
+    sinon.stub(this.client, "replace").resolves();
+    sinon.stub(this.client, "delete").resolves();
+    sinon.stub(this.client, "deleteByQuery").resolves();
+    sinon.stub(this.client, "deleteFields").resolves();
+    sinon.stub(this.client, "updateByQuery").resolves();
+    sinon.stub(this.client, "bulkUpdateByQuery").resolves();
+    sinon.stub(this.client, "createIndex").resolves();
+    sinon.stub(this.client, "createCollection").resolves();
+    sinon.stub(this.client, "getMapping").resolves();
+    sinon.stub(this.client, "truncateCollection").resolves();
+    sinon.stub(this.client, "import").resolves();
+    sinon.stub(this.client, "getSchema").resolves({});
+    sinon.stub(this.client, "listCollections").resolves([]);
+    sinon.stub(this.client, "listIndexes").resolves([]);
+    sinon.stub(this.client, "listAliases").resolves([]);
+    sinon.stub(this.client, "deleteIndexes").resolves();
+    sinon.stub(this.client, "deleteIndex").resolves();
+    sinon.stub(this.client, "refreshCollection").resolves();
+    sinon.stub(this.client, "exists").resolves();
+    sinon.stub(this.client, "hasIndex").resolves();
+    sinon.stub(this.client, "hasCollection").resolves();
+    sinon.stub(this.client, "mCreate").resolves();
+    sinon.stub(this.client, "mCreateOrReplace").resolves();
+    sinon.stub(this.client, "mUpdate").resolves();
+    sinon.stub(this.client, "mUpsert").resolves();
+    sinon.stub(this.client, "mReplace").resolves();
+    sinon.stub(this.client, "mDelete").resolves();
+    sinon.stub(this.client, "deleteCollection").resolves();
+    sinon.stub(this.client, "clearScroll").resolves();
+    sinon.stub(this.client, "updateCollection").resolves();
+    sinon.stub(this.client, "updateMapping").resolves();
+    sinon.stub(this.client, "mExecute").resolves();
+    sinon.stub(this.client, "upsert").resolves();
   }
 }
 
-module.exports = ElasticsearchMock;
+module.exports = { Elasticsearch: ElasticsearchMock };

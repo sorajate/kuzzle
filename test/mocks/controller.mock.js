@@ -1,30 +1,47 @@
-const
-  BaseController = require('../../lib/api/controllers/baseController'),
-  {
-    errors: {
-      InternalError: KuzzleInternalError
-    }
-  } = require('kuzzle-common-objects'),
-  sinon = require('sinon');
+"use strict";
 
-class MockController extends BaseController {
+const sinon = require("sinon");
+
+const {
+  BaseController,
+  NativeController,
+} = require("../../lib/api/controllers/baseController");
+const { InternalError: KuzzleInternalError } = require("../../index");
+
+function injectStubs(controller) {
+  controller.failResult = new KuzzleInternalError("rejected action");
+  controller.fail = sinon.stub().rejects(controller.failResult);
+
+  // we need to use "callsFake" instead of "resolvesArg" because, for some
+  // reason, .resolves and .resolvesArg behaviors are not overwritten
+  // when we do "controller.succeed.returns('another value')": in that case,
+  // "another value" is resolved as a promise result, which is not the
+  // desired result
+  controller.succeed = sinon.stub().callsFake((foo) => Promise.resolve(foo));
+}
+
+class MockNativeController extends NativeController {
   constructor(kuzzle) {
     super(kuzzle);
 
-    this.failResult = new KuzzleInternalError('rejected action');
-    this.fail = sinon.stub().rejects(this.failResult);
-
-    // we need to use "callsFake" instead of "resolvesArg" because, for some
-    // reason, .resolves and .resolvesArg behaviors are not overwritten
-    // when we do "this.succeed.returns('another value')": in that case,
-    // "another value" is resolved as a promise result, which is not the
-    // desired result
-    this.succeed = sinon.stub().callsFake(foo => Promise.resolve(foo));
+    injectStubs(this);
   }
 
-  isAction(name) {
-    return name === 'succeed' || name === 'fail';
+  _isAction(name) {
+    return name === "succeed" || name === "fail";
   }
 }
 
-module.exports = MockController;
+class MockBaseController extends BaseController {
+  constructor() {
+    super();
+
+    injectStubs(this);
+  }
+
+  _isAction(name) {
+    return name === "succeed" || name === "fail";
+  }
+}
+
+module.exports = { MockBaseController, MockNativeController };

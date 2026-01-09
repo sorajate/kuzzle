@@ -1,7 +1,7 @@
 ---
 code: true
 type: page
-title: getProfile
+title: getProfile | API | Core
 ---
 
 # getProfile
@@ -53,6 +53,7 @@ Returns the queried profile information:
   "result": {
     "_id": "<profileId>",
     "_source": {
+      "rateLimit": 50,
       "policies": [
         {
           "roleId": "<roleId>"

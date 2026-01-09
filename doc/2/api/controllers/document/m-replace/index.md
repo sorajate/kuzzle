@@ -1,14 +1,16 @@
 ---
 code: true
 type: page
-title: mReplace
+title: mReplace | API | Core
 ---
 
 # mReplace
 
-
-
 Replaces multiple documents.
+
+::: info
+The number of documents that can be replaced by a single request is limited by the `documentsWriteCount` server configuration (see the [Configuring Kuzzle](/core/2/guides/advanced/configuration) guide).
+:::
 
 ---
 
@@ -17,7 +19,7 @@ Replaces multiple documents.
 ### HTTP
 
 ```http
-URL: http://kuzzle:7512/<index>/<collection>/_mReplace[?refresh=wait_for]
+URL: http://kuzzle:7512/<index>/<collection>/_mReplace[?refresh=wait_for][&silent]
 Method: PUT
 Body:
 ```
@@ -68,6 +70,13 @@ Body:
 }
 ```
 
+### Kourou
+
+```bash
+kourou document:mReplace <index> <collection> <body>
+kourou document:mReplace <index> <collection> <body> -a silent=true
+```
+
 ---
 
 ## Arguments
@@ -78,6 +87,8 @@ Body:
 ### Optional:
 
 - `refresh`: if set to `wait_for`, Kuzzle will not respond until the replacements are indexed
+- `strict`: if set, an error will occur if at least one document has not been replaced <SinceBadge version="2.11.0" />
+- `silent`: if set, then Kuzzle will not generate notifications <SinceBadge version="2.9.2" />
 
 ---
 
@@ -91,15 +102,25 @@ Body:
 
 ## Response
 
-Returns a `hits` array containing the list of replaced documents.
+Returns an object containing 2 arrays: `successes` and `errors`
 
-Each document has the following properties:
+Each replaced document is an object of the `successes` array with the following properties:
 
 - `_id`: document unique identifier
 - `_source`: document content
-- `_version`: version number of the document
+- `_version`: version of the document (should be `1`)
 
-If one or more document cannot be replaced, the response status is set to `206`, and the `error` object contain a [partial error](/core/2/api/essentials/errors/handling#partialerror) error.
+Each errored document is an object of the `errors` array with the following properties:
+
+- `document`: original document that caused the error
+- `status`: HTTP error status code
+- `reason`: human readable reason
+
+::: warning
+Errored documents are not guaranteed to be in the same orded as in the initial request.
+:::
+
+If `strict` mode is enabled, will rather return an error if at least one document has not been replaced.
 
 ```js
 {
@@ -111,7 +132,7 @@ If one or more document cannot be replaced, the response status is set to `206`,
   "controller": "document",
   "requestId": "<unique request identifier>",
   "result": {
-    "hits": [
+    "successes": [
       {
         "_id": "<documentId>",
         "_source": {
@@ -127,7 +148,16 @@ If one or more document cannot be replaced, the response status is set to `206`,
         "_version": 4
       }
     ],
-    "total": 2
+    "errors": [
+      {
+        "document": {
+          // new document content
+        },
+        "status": 404,
+        "reason": "Document 'foobar' not found"
+      }
+    ]
+
   }
 }
 ```

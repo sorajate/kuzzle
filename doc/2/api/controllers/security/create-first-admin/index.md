@@ -1,12 +1,10 @@
 ---
 code: true
 type: page
-title: createFirstAdmin
+title: createFirstAdmin | API | Core
 ---
 
 # createFirstAdmin
-
-
 
 Creates a Kuzzle administrator account, only if none exist.
 
@@ -17,7 +15,7 @@ Creates a Kuzzle administrator account, only if none exist.
 ### HTTP
 
 ```http
-URL: http://kuzzle:7512/<kuid>/_createFirstAdmin[?reset]
+URL: http://kuzzle:7512/_createFirstAdmin/<kuid>[?reset]
 URL(2): http://kuzzle:7512/_createFirstAdmin[?reset]
 Method: POST
 Body:
@@ -25,8 +23,8 @@ Body:
 
 ```js
 {
+  // administrator additional information (optional)
   "content": {
-    // administrator information (optional)
   },
   "credentials": {
     // for example, with the "local" authentication strategy:
@@ -58,7 +56,8 @@ Body:
   },
   // optional
   "reset": <boolean>,
-  "_id": "<kuid>"
+  "_id": "<kuid>",
+  "kuid": "human"
 }
 ```
 
@@ -68,14 +67,14 @@ Body:
 
 ### Optional:
 
-- `_id`: specify the administror [kuid](/core/2/guides/essentials/user-authentication#kuzzle-user-identifier-kuid), instead of letting Kuzzle generate a random identifier.
+- `_id`: specify the administror [kuid](/core/2/guides/main-concepts/authentication#kuzzle-user-identifier-kuid), instead of letting Kuzzle generate a random identifier.
 - `reset` (boolean): if true, restricted rights are applied to the `anonymous` and `default` roles (by default, these roles don't have any restriction).
-
+- `kuid`: if set to `human`, Kuzzle will generate a human readable id, otherwise if set to `uuid` Kuzzle will generate a standard uuid (default: `"human"`)
 ---
 
 ## Body properties
 
-- `content`: administrator additional information. Can be left empty.
+- `content`: optional additional information
 - `credentials`: describe how the new administrator can be authenticated. This object must contain one or multiple properties, named after the target authentication strategy to use. Each one of these properties are objects containing the credentials information, corresponding to that authentication strategy
 
 ---

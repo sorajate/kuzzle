@@ -1,12 +1,10 @@
 ---
 code: true
 type: page
-title: createOrReplace
+title: createOrReplace | API | Core
 ---
 
 # createOrReplace
-
-
 
 Creates a new document in the persistent data storage, or replaces its content if it already exists.
 
@@ -17,7 +15,7 @@ Creates a new document in the persistent data storage, or replaces its content i
 ### HTTP
 
 ```http
-URL: http://kuzzle:7512/<index>/<collection>/<documentId>[?refresh=wait_for]
+URL: http://kuzzle:7512/<index>/<collection>/<documentId>[?refresh=wait_for][&silent]
 Method: PUT
 Body:
 ```
@@ -43,17 +41,25 @@ Body:
 }
 ```
 
+### Kourou
+
+```bash
+kourou document:createOrReplace <index> <collection> <id> <body>
+kourou document:createOrReplace <index> <collection> <body> -a silent=true
+```
+
 ---
 
 ## Arguments
 
 - `collection`: collection name
-- `documentId`: unique identifier of the document to create or replace
+- `_id`: unique identifier of the document to create or replace
 - `index`: index name
 
 ### Optional:
 
 - `refresh`: if set to `wait_for`, Kuzzle will not respond until the created/replaced document is indexed
+- `silent`: if set, then Kuzzle will not generate notifications <SinceBadge version="2.9.2" />
 
 ---
 

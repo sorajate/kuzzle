@@ -2,12 +2,10 @@
 type: page
 
 code: true
-title: resetDatabase
+title: resetDatabase | API | Core
 ---
 
 # resetDatabase
-
-<SinceBadge version="1.4.0" />
 
 Asynchronously deletes all indexes created by users.
 

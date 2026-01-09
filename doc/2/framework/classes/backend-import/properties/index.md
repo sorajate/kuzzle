@@ -1,0 +1,17 @@
+---
+code: false
+type: page
+title: Properties | Framework | Core
+
+description: BackendImport class properties
+---
+
+# BackendImport
+
+The `BackendImport` class handles mappings, permissions and users import.
+
+It is accessible from the [Backend.import](/core/2/framework/classes/backend/properties#import) property.
+
+::: info
+This class does not have any properties.
+:::

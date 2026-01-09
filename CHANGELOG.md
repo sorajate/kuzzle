@@ -1,337 +1,787 @@
-# [1.0.0](https://github.com/kuzzleio/kuzzle/releases/tag/1.0.0) (2017-06-20)
-
-### Compatibility
-
-| Kuzzle | Proxy |
-|--------|-------|
-| 1.0.0 | 1.0.0 |
-
-#### Breaking changes
-
-- [ [#882](https://github.com/kuzzleio/kuzzle/pull/882) ] Modernize notifier core module   ([scottinet](https://github.com/scottinet))
-- [ [#879](https://github.com/kuzzleio/kuzzle/pull/879) ] Remove obsolete "proxy:*" events   ([scottinet](https://github.com/scottinet))
-- [ [#815](https://github.com/kuzzleio/kuzzle/pull/815) ] Prevent dynamic collection/index creation   ([AnthonySendra](https://github.com/AnthonySendra))
-- [ [#859](https://github.com/kuzzleio/kuzzle/pull/859) ] Use native elasticsearch constructor options   ([benoitvidis](https://github.com/benoitvidis))
-- [ [#845](https://github.com/kuzzleio/kuzzle/pull/845) ] Re-add HTTP GET route for user login   ([ballinette](https://github.com/ballinette))
-- [ [#840](https://github.com/kuzzleio/kuzzle/pull/840) ] Login API reshape   ([xbill82](https://github.com/xbill82))
-- [ [#804](https://github.com/kuzzleio/kuzzle/pull/804) ] Refactor authentication plugin structure   ([dbengsch](https://github.com/dbengsch))
-- [ [#771](https://github.com/kuzzleio/kuzzle/pull/771) ] Rename _kuzzle_info and metadata   ([AnthonySendra](https://github.com/AnthonySendra))
-- [ [#753](https://github.com/kuzzleio/kuzzle/pull/753) ] Fixes #745 DSL.not* should match when the field is missing   ([benoitvidis](https://github.com/benoitvidis))
-- [ [#778](https://github.com/kuzzleio/kuzzle/pull/778) ] Remove the route security:createOrReplaceUser    ([dbengsch](https://github.com/dbengsch))
-- [ [#764](https://github.com/kuzzleio/kuzzle/pull/764) ] Inject the request in authentication verify callbacks   ([scottinet](https://github.com/scottinet))
-- [ [#723](https://github.com/kuzzleio/kuzzle/pull/723) ] Implement the PluginContext "storage" accessor   ([dbengsch](https://github.com/dbengsch))
-- [ [#710](https://github.com/kuzzleio/kuzzle/pull/710) ] Remove ES 2.x support and enforce use of ES 5+   ([dbengsch](https://github.com/dbengsch))
-- [ [#698](https://github.com/kuzzleio/kuzzle/pull/698) ] The security/searchProfiles has a misleading argument   ([dbengsch](https://github.com/dbengsch))
-- [ [#680](https://github.com/kuzzleio/kuzzle/pull/680) ] Standardization of the memory storage API   ([scottinet](https://github.com/scottinet))
-
-#### Bug fixes
-
-- [ [#884](https://github.com/kuzzleio/kuzzle/pull/884) ] Force uri to not ends with a slash (registration & requests)   ([stafyniaksacha](https://github.com/stafyniaksacha))
-- [ [#878](https://github.com/kuzzleio/kuzzle/pull/878) ] Embeds non-KuzzleError errors from pipe plugins in PluginImplementationError error   ([scottinet](https://github.com/scottinet))
-- [ [#877](https://github.com/kuzzleio/kuzzle/pull/877) ] Fix Kuzzle returning an unknown request id to the proxy   ([scottinet](https://github.com/scottinet))
-- [ [#867](https://github.com/kuzzleio/kuzzle/pull/867) ] Fix incoherent behaviors regarding user credentials management   ([scottinet](https://github.com/scottinet))
-- [ [#842](https://github.com/kuzzleio/kuzzle/pull/842) ] Fix unhandled errors on client disconnect   ([benoitvidis](https://github.com/benoitvidis))
-- [ [#847](https://github.com/kuzzleio/kuzzle/pull/847) ] Fix response headers after authentication step using HTTP   ([ballinette](https://github.com/ballinette))
-- [ [#828](https://github.com/kuzzleio/kuzzle/pull/828) ] Fixes broker consistency    ([stafyniaksacha](https://github.com/stafyniaksacha))
-- [ [#823](https://github.com/kuzzleio/kuzzle/pull/823) ] Fix missing notifications   ([benoitvidis](https://github.com/benoitvidis))
-- [ [#825](https://github.com/kuzzleio/kuzzle/pull/825) ] Fix unhandled exception on unsubscribing multiple range operators   ([benoitvidis](https://github.com/benoitvidis))
-- [ [#827](https://github.com/kuzzleio/kuzzle/pull/827) ] Fix elasticsearch unhandled 404 error   ([stafyniaksacha](https://github.com/stafyniaksacha))
-- [ [#820](https://github.com/kuzzleio/kuzzle/pull/820) ] Fix internal error on realtime:join   ([benoitvidis](https://github.com/benoitvidis))
-- [ [#817](https://github.com/kuzzleio/kuzzle/pull/817) ] Kuzzle fails to install on older Linux kernels   ([scottinet](https://github.com/scottinet))
-- [ [#810](https://github.com/kuzzleio/kuzzle/pull/810) ] Fix Kuzzle crash report on a beforeAction plugin error   ([scottinet](https://github.com/scottinet))
-- [ [#792](https://github.com/kuzzleio/kuzzle/pull/792) ] Fix Multiple concurrent requests being executed multiple times   ([benoitvidis](https://github.com/benoitvidis))
-- [ [#797](https://github.com/kuzzleio/kuzzle/pull/797) ] DSL - Allow simple form for "regexp" operator   ([benoitvidis](https://github.com/benoitvidis))
-- [ [#798](https://github.com/kuzzleio/kuzzle/pull/798) ] Fix elasticsearch error parser which crash when error got no body   ([stafyniaksacha](https://github.com/stafyniaksacha))
-- [ [#783](https://github.com/kuzzleio/kuzzle/pull/783) ] Fix dsl & canonization heap space exhaustion   ([benoitvidis](https://github.com/benoitvidis))
-- [ [#788](https://github.com/kuzzleio/kuzzle/pull/788) ] Prevent crash reports on controller plugins bugs   ([scottinet](https://github.com/scottinet))
-- [ [#753](https://github.com/kuzzleio/kuzzle/pull/753) ] Fixes #745 DSL.not* should match when the field is missing   ([benoitvidis](https://github.com/benoitvidis))
-- [ [#784](https://github.com/kuzzleio/kuzzle/pull/784) ] Wrap authentication errors in PluginImplementationError object   ([scottinet](https://github.com/scottinet))
-- [ [#752](https://github.com/kuzzleio/kuzzle/pull/752) ] Disable Redis cache in profile and role repositories   ([dbengsch](https://github.com/dbengsch))
-- [ [#777](https://github.com/kuzzleio/kuzzle/pull/777) ] Revoke associated JWTs on user deletion   ([scottinet](https://github.com/scottinet))
-- [ [#767](https://github.com/kuzzleio/kuzzle/pull/767) ] DSL "bool" & "not" factorization fix   ([benoitvidis](https://github.com/benoitvidis))
-- [ [#751](https://github.com/kuzzleio/kuzzle/pull/751) ] TypeError exception when removing a subscription   ([benoitvidis](https://github.com/benoitvidis))
-- [ [#727](https://github.com/kuzzleio/kuzzle/pull/727) ] Fix the way we default the profile if it is not set   ([dbengsch](https://github.com/dbengsch))
-- [ [#738](https://github.com/kuzzleio/kuzzle/pull/738) ] [HOTFIX] Remove customer subscriptions on disconnection   ([benoitvidis](https://github.com/benoitvidis))
-- [ [#725](https://github.com/kuzzleio/kuzzle/pull/725) ] Elasticsearch 5 expects index property in mapping to be a boolean   ([dbengsch](https://github.com/dbengsch))
-- [ [#718](https://github.com/kuzzleio/kuzzle/pull/718) ] Allow to define 0 for thread in plugin config   ([AnthonySendra](https://github.com/AnthonySendra))
-- [ [#715](https://github.com/kuzzleio/kuzzle/pull/715) ] Fix server:getConfig route   ([scottinet](https://github.com/scottinet))
-- [ [#684](https://github.com/kuzzleio/kuzzle/pull/684) ] Fix security:searchRole API route   ([ballinette](https://github.com/ballinette))
-- [ [#704](https://github.com/kuzzleio/kuzzle/pull/704) ] Missing PartialError serialization   ([scottinet](https://github.com/scottinet))
-- [ [#701](https://github.com/kuzzleio/kuzzle/pull/701) ] Fix bug:websocketClient clear ping timer on close if socket is down   ([benoitvidis](https://github.com/benoitvidis))
-- [ [#693](https://github.com/kuzzleio/kuzzle/pull/693) ] Use repositories.validateAndSave* method to reset profiles and roles at createFirstAdmin action   ([ballinette](https://github.com/ballinette))
-- [ [#688](https://github.com/kuzzleio/kuzzle/pull/688) ] Fix mapping for profile:   ([ballinette](https://github.com/ballinette))
-- [ [#683](https://github.com/kuzzleio/kuzzle/pull/683) ] Add new request events   ([scottinet](https://github.com/scottinet))
-- [ [#671](https://github.com/kuzzleio/kuzzle/pull/671) ] Protect document creation to avoid collision with http routes   ([dbengsch](https://github.com/dbengsch))
-- [ [#674](https://github.com/kuzzleio/kuzzle/pull/674) ] Prevent plugins infinite loop caused by triggered before/after events   ([scottinet](https://github.com/scottinet))
-
-#### New features
-
-- [ [#807](https://github.com/kuzzleio/kuzzle/pull/807) ] Adds a replaceUser route   ([samniisan](https://github.com/samniisan))
-- [ [#821](https://github.com/kuzzleio/kuzzle/pull/821) ] Add Document:exists route   ([samniisan](https://github.com/samniisan))
-- [ [#838](https://github.com/kuzzleio/kuzzle/pull/838) ] Add healthCheck action   ([ballinette](https://github.com/ballinette))
-- [ [#833](https://github.com/kuzzleio/kuzzle/pull/833) ] Graceful shutdown implementation   ([scottinet](https://github.com/scottinet))
-- [ [#780](https://github.com/kuzzleio/kuzzle/pull/780) ] Added a new route to list registrated plugin passport strategies   ([samniisan](https://github.com/samniisan))
-- [ [#750](https://github.com/kuzzleio/kuzzle/pull/750) ] Add methods scrollUsers, scrollProfiles and scrollSpecifications   ([scottinet](https://github.com/scottinet))
-- [ [#723](https://github.com/kuzzleio/kuzzle/pull/723) ] Implement the PluginContext "storage" accessor   ([dbengsch](https://github.com/dbengsch))
-
-#### Enhancements
-
-- [ [#869](https://github.com/kuzzleio/kuzzle/pull/869) ] Add new trigger on error   ([AnthonySendra](https://github.com/AnthonySendra))
-- [ [#873](https://github.com/kuzzleio/kuzzle/pull/873) ] Add trigger pipe after authentication   ([ballinette](https://github.com/ballinette))
-- [ [#859](https://github.com/kuzzleio/kuzzle/pull/859) ] Use native elasticsearch constructor options   ([benoitvidis](https://github.com/benoitvidis))
-- [ [#844](https://github.com/kuzzleio/kuzzle/pull/844) ] Add HTTP request headers to request context   ([ballinette](https://github.com/ballinette))
-- [ [#840](https://github.com/kuzzleio/kuzzle/pull/840) ] Login API reshape   ([xbill82](https://github.com/xbill82))
-- [ [#806](https://github.com/kuzzleio/kuzzle/pull/806) ] Delete now deactivate a document and notify by filters   ([jenow](https://github.com/jenow))
-- [ [#839](https://github.com/kuzzleio/kuzzle/pull/839) ] Improve healthCheck result message   ([ballinette](https://github.com/ballinette))
-- [ [#809](https://github.com/kuzzleio/kuzzle/pull/809) ] Anonymous should always be able to log in   ([benoitvidis](https://github.com/benoitvidis))
-- [ [#799](https://github.com/kuzzleio/kuzzle/pull/799) ] Autogenerate JWT salt   ([benoitvidis](https://github.com/benoitvidis))
-- [ [#771](https://github.com/kuzzleio/kuzzle/pull/771) ] Rename _kuzzle_info and metadata   ([AnthonySendra](https://github.com/AnthonySendra))
-- [ [#786](https://github.com/kuzzleio/kuzzle/pull/786) ] Add crash reports history limits   ([scottinet](https://github.com/scottinet))
-- [ [#749](https://github.com/kuzzleio/kuzzle/pull/749) ] Wait plugin initialization with promises   ([dbengsch](https://github.com/dbengsch))
-- [ [#748](https://github.com/kuzzleio/kuzzle/pull/748) ] Enable to setup kuzzle with a Elasticsearch cluster   ([ballinette](https://github.com/ballinette))
-- [ [#741](https://github.com/kuzzleio/kuzzle/pull/741) ] Make ES actions responsible of retrieving their id and body attributes   ([scottinet](https://github.com/scottinet))
-- [ [#739](https://github.com/kuzzleio/kuzzle/pull/739) ] Keep track of previously run requests   ([scottinet](https://github.com/scottinet))
-- [ [#734](https://github.com/kuzzleio/kuzzle/pull/734) ] Improve Elasticsearch errors handling   ([scottinet](https://github.com/scottinet))
-- [ [#736](https://github.com/kuzzleio/kuzzle/pull/736) ] Add a new request:onUnauthorized global event   ([scottinet](https://github.com/scottinet))
-- [ [#706](https://github.com/kuzzleio/kuzzle/pull/706) ] Add support for HTTP HEAD requests   ([scottinet](https://github.com/scottinet))
-- [ [#695](https://github.com/kuzzleio/kuzzle/pull/695) ] Add new role & profile core events   ([ballinette](https://github.com/ballinette))
-- [ [#689](https://github.com/kuzzleio/kuzzle/pull/689) ] Remove usage of `allowInternalIndex` within policies   ([ballinette](https://github.com/ballinette))
-- [ [#673](https://github.com/kuzzleio/kuzzle/pull/673) ] Add error stacktrace when a plugin fails to load   ([scottinet](https://github.com/scottinet))
-
-#### Others
+## [2.51.0](https://github.com/kuzzleio/kuzzle/compare/v2.50.3...v2.51.0) (2026-01-09)
 
-- [ [#826](https://github.com/kuzzleio/kuzzle/pull/826) ] Improve debug function to allow toggle one/multiple lines   ([stafyniaksacha](https://github.com/stafyniaksacha))
-- [ [#732](https://github.com/kuzzleio/kuzzle/pull/732) ] Hotfix test that randomly break due to randomness introduced by highwayhash   ([dbengsch](https://github.com/dbengsch))
-- [ [#717](https://github.com/kuzzleio/kuzzle/pull/717) ] Remove PluginImplementationError from the diagtools whitelist   ([scottinet](https://github.com/scottinet))
-- [ [#658](https://github.com/kuzzleio/kuzzle/pull/658) ] Enable hot reload on plugins   ([stafyniaksacha](https://github.com/stafyniaksacha))
-- [ [#647](https://github.com/kuzzleio/kuzzle/pull/647) ] Elasticsearch emits unnecessary log events   ([dbengsch](https://github.com/dbengsch))
-- [ [#686](https://github.com/kuzzleio/kuzzle/pull/686) ] Add extraParams argument to getElasticsearchRequest   ([xbill82](https://github.com/xbill82))
-- [ [#675](https://github.com/kuzzleio/kuzzle/pull/675) ] Update node prerequisite in package.json   ([scottinet](https://github.com/scottinet))
-- [ [#661](https://github.com/kuzzleio/kuzzle/pull/661) ] Protect against multi-index and multi-collection search requests   ([dbengsch](https://github.com/dbengsch))
-- [ [#654](https://github.com/kuzzleio/kuzzle/pull/654) ] Improve separation of concern on roleRepository::searchRole() method   ([ballinette](https://github.com/ballinette))
+### Features
 
-#### Securities
+* add strategy handling for refreshtoken in the auth controller ([9c2a34f](https://github.com/kuzzleio/kuzzle/commit/9c2a34f7d0de00c97901f6cd7ee38fb053c67f4d))
 
-- [ [#799](https://github.com/kuzzleio/kuzzle/pull/799) ] Autogenerate JWT salt   ([benoitvidis](https://github.com/benoitvidis))
-- [ [#721](https://github.com/kuzzleio/kuzzle/pull/721) ] Replace MD5 with HighwayHash   ([scottinet](https://github.com/scottinet))
-- [ [#719](https://github.com/kuzzleio/kuzzle/pull/719) ] Do not export sensitive configuration on server:getConfig API route   ([scottinet](https://github.com/scottinet))
----
+## [2.51.0-beta.1](https://github.com/kuzzleio/kuzzle/compare/v2.50.3...v2.51.0-beta.1) (2026-01-09)
 
-*__note:__ the # at the end of lines are the pull request numbers on GitHub*
+### Features
 
-# Current
+* add strategy handling for refreshtoken in the auth controller ([9c2a34f](https://github.com/kuzzleio/kuzzle/commit/9c2a34f7d0de00c97901f6cd7ee38fb053c67f4d))
 
-# 1.0.0-RC9
+## [2.50.3](https://github.com/kuzzleio/kuzzle/compare/v2.50.2...v2.50.3) (2026-01-02)
 
-* https://github.com/kuzzleio/kuzzle/releases/tag/1.0.0-RC9
+### Bug Fixes
 
-### Breaking changes
+* user.isActionAllowed now await properly ([0045fe4](https://github.com/kuzzleio/kuzzle/commit/0045fe42d784e946bf5db7c7268ee507b28ba566))
 
-* Plugin: full refactoring of the plugin management and installation: #609 #633
-* HTTP: Some routes are redefined to comply more with method meanings: #603 #607 #616
-* Controllers: `getUserMapping` and `setUserMapping` actions moved from `collection` to `security` controller #624
-* Controllers: rename action `mGetProfiles` and `mGetRoles` to respectively `mGetProfile` and `mGetRole` #623
+## [2.50.2](https://github.com/kuzzleio/kuzzle/compare/v2.50.1...v2.50.2) (2026-01-02)
 
+### Bug Fixes
 
-# 1.0.0-RC8
+* user.isActionAllowed in hotel clerc ([fa71948](https://github.com/kuzzleio/kuzzle/commit/fa719486ddb2473ca64cbf4cd0b75a10d2a08bd9))
 
-* https://github.com/kuzzleio/kuzzle/releases/tag/1.0.0-RC8
+## [2.50.1](https://github.com/kuzzleio/kuzzle/compare/v2.50.0...v2.50.1) (2026-01-02)
 
-### Breaking changes
+### Bug Fixes
 
-* Events: Normalize memoryStorage events to ms events #582
-* Events, Controller and Actions: Controllers and actions refactor #569
-* Events, Plugin, HTTP routes and internals: Harmonization of the Request and result handling #559
-* Internal: Moved default docker-compose.yml file in [kuzzle-build](https://github.com/kuzzleio/kuzzle-build) #566
-* Internal: New real-time engine #510
-* Plugin: Controller plugins definition #563
-* API: Protect internal index in elasticsearch service #538
+* an issue with user typings ([ebef54a](https://github.com/kuzzleio/kuzzle/commit/ebef54a6dc019f48ec3eab3a0fcb70022fe18825))
+* await a to isActionAllowed ([dafc313](https://github.com/kuzzleio/kuzzle/commit/dafc31363cdf000a02c2829b0b249e4d0cb40af6))
+* conflicting user class between kuzzle and sdk-javascript ([ee92777](https://github.com/kuzzleio/kuzzle/commit/ee92777326b90ff0b83bf8da7420d3ba875bb5ca))
+* import with new version of sdk ([0622b77](https://github.com/kuzzleio/kuzzle/commit/0622b7710504e04fe99297ce0be1ef02d17cf779))
+* keep the await at boudfunction ([8f83127](https://github.com/kuzzleio/kuzzle/commit/8f83127e439919c667a451746323f0789ece5f7d))
 
-# 1.0.0-RC7
+## [2.50.1-beta.3](https://github.com/kuzzleio/kuzzle/compare/v2.50.1-beta.2...v2.50.1-beta.3) (2026-01-02)
 
-* https://github.com/kuzzleio/kuzzle/releases/tag/1.0.0-RC7
+### Bug Fixes
 
-### Breaking changes
+* await a to isActionAllowed ([dafc313](https://github.com/kuzzleio/kuzzle/commit/dafc31363cdf000a02c2829b0b249e4d0cb40af6))
 
-* CLI: `service` commands removed #405
-* Kuzzle `bulk`.`import` action now expects a `body.bulkData` property that contains an array #387
-* DSL: `term` and `terms` operators are repectively replaced by `equals`and `in` #392
-* DSL: filters ids cannot be set manually anymore #401
+## [2.50.1-beta.2](https://github.com/kuzzleio/kuzzle/compare/v2.50.1-beta.1...v2.50.1-beta.2) (2026-01-02)
 
-# 1.0.0-RC6.2
-
-* https://github.com/kuzzleio/kuzzle/releases/tag/1.0.0-RC6.2
-
-# 1.0.0-RC6.1
-
-* https://github.com/kuzzleio/kuzzle/releases/tag/1.0.0-RC6.1
-
-# 1.0.0-RC6
-
-* https://github.com/kuzzleio/kuzzle/releases/tag/1.0.0-RC6
-
-### Breaking changes
-
-* Rename a couple of DSL keywords to avoid confusion with Elasticsearch's DSL #392
-* Remove `createFilterId` from the real-time engine exposed methods. The filter's unique ID is now returned by the `register` method #401
-
-
-# 1.0.0-RC5
-
-* https://github.com/kuzzleio/kuzzle/releases/tag/1.0.0-RC5
-
-# 1.0.0-RC4
-
-* Add new hooks allowing to manage Kuzzle internal states #329
-* Add a `--noColors` option to the command-line interface #330
-* Remove `remoteActions` core component from the plugin context #331
-* Overhaul of the plugin context to make it simpler and more consistent #316, #323, #333
-* Add a ``--importConfig`` flag to the plugin management part of the CLI #315
-* Improve code documentation, IDE integration and lint checks #317
-* Add regular expression support to the real-time DSL #321
-* Fix #339: unsubscribing from a subfilter cleans all related global filters #340
-* Fix #335: startup sequence fails if the index cache initialization takes too long #336
-* Fix #337: cannot install npm-based plugins after installing a plugin from a directory path #338
-* Fix #322: broker client does not initialize if an error occurs on its first try #324
-* Fix #302: unable to unsubscribe filters containing nested attributes #304
-* Fix: plugin installation from a git repository doesn't work #325
-
-
-# 1.0.0-RC3
-
-* Temporary fix repositories #312
-* Add Errors objects into PluginContext #310
-* Fix issue #295 : Kuzzle Worker doesn't start correctly
-* Add swagger support #281 #307
-* Fix filtering issues: #302, #263
-* Fix docker-compose images #261 #278 #300
-* Share DSL to plugins #291
-* Roles refactoring #232 #286
-* Fixed status code 0 on default HTTP route #297
-* Update plugins dependencies #293
-* Add communication with Kuzzle proxy #284
-* Fix plugins installation implementation #290
-* Replace eval with arguments storage #289
-* Split internal broker into client and server #285
-* Add cli plugins --list option #288
-* Implements kuzzle-common-objects #283
-* Little fix on closure args definition #279
-* Expose httpPort config in context #280
-* Fix user profile update #275
-* Allow plugins to register an event on multiple functions #274
-* Fix realtime collections listing #267
-* Make roles impossible to remove if profiles still use them #259
-* Fix issue #264 : ./bin/kuzzle install fails
-* ElasticSearch autorefresh workaround #257
-* Path plugins configuration now taken from plugins dir #260
-* Remove unnecessary passport local plugin default config #258
-* Redis Cluster + Worker & Services catch error #254
+### Bug Fixes
 
-# 1.0.0-RC2.1
+* an issue with user typings ([ebef54a](https://github.com/kuzzleio/kuzzle/commit/ebef54a6dc019f48ec3eab3a0fcb70022fe18825))
+* conflicting user class between kuzzle and sdk-javascript ([ee92777](https://github.com/kuzzleio/kuzzle/commit/ee92777326b90ff0b83bf8da7420d3ba875bb5ca))
 
-* Solves issue #264
+## [2.50.1-beta.1](https://github.com/kuzzleio/kuzzle/compare/v2.50.0...v2.50.1-beta.1) (2026-01-02)
 
-# 1.0.0-RC2
+### Bug Fixes
 
-* Refactored CLI and Remote actions #208
-* Fixed index and filter removal path #236
-* Refactored ResponseObject #238
-* Added plugin worker and events documentation #237
-* Added the list of available API routes to root url #243
-* Added unit test stubs #240
-* Moved the embedded documentation to external "kuzzle-guide" repository #249
-* Removed obsolete internal broker queue #251
-* Added updateSelf action in auth controller #248
-* Fixed the plugin controller #256
-* Moved the plugin configurations in database #253
-* Refactored Error Response #255
+* import with new version of sdk ([0622b77](https://github.com/kuzzleio/kuzzle/commit/0622b7710504e04fe99297ce0be1ef02d17cf779))
+* keep the await at boudfunction ([8f83127](https://github.com/kuzzleio/kuzzle/commit/8f83127e439919c667a451746323f0789ece5f7d))
 
-# 1.0.0-RC1
+## [2.50.0](https://github.com/kuzzleio/kuzzle/compare/v2.49.1...v2.50.0) (2025-12-18)
 
-* Fix getServerInfo route #231
-* Documentation about path in plugin configuration #228
-* New memoryStorage controller, aliased to ms #224
-* All redis commands are exposed, excepted: #224
-  * script related commands
-  * cluster related commands
-  * pubsub commands
-  * cursor commands
-* ResponseObject now accepts a result that can be resolved to false #224
-* Security routes fixes #225 :
-   Fixes issue #215 and more: several security weren't returning any useful data in the response, namely updateRole, updateProfile, updateUser, and deleteUser
-* Started to update repositories to make them return raw objects instead of ResponseObject. #225
-* Removed useless MQ functional tests #223
-* Prevent event loop saturation (see #217 for details)
-* Fix problem with multi scope on same app #220
-* Fixed performance issue + updated dependencies #216
-  - Hydrated roles weren't stored in the profile cache, forcing a call to Elasticsearch on each request
-  - Updated dependencies
-  - Fixed breaking changes between lodash 3.10 and 4.6
-  - Fixed new errors fired by ESLint 2
-  - Deactivated ESLint `consistent-return` rule, as it appears to be bugged for the moment
-  - Removed `async` use from `Request.checkInformation`, as it was overkill
-* Feature/docker switch to alpine #207
-* small doc refactor #213
-* Fix from/to dsl operators #211
-* Beta fix admin user token #210
-* Removed hardcoded loading of user admin in token repository #209
-* Removed hardcoded loading of user admin #205
-* fixes issue #199 #202
-* Add enabled false on indexes in roles mapping #196
-* Feature user rights documentation #195
-* Reapply " Migration to ES 2.2" #201
-* Enhance closures with fetch in users roles #183
+### Features
 
-# 1.0.0-beta.4
+* bump deps ([b796f0b](https://github.com/kuzzleio/kuzzle/commit/b796f0bd214667b3e18cf4bbe36c0ce4e1f68b43))
+* nodejs 24 in actions ([723488c](https://github.com/kuzzleio/kuzzle/commit/723488c1c4f7647c46cbd26ba82a71952ccbba9e))
+* nodejs 24 support ([f420b17](https://github.com/kuzzleio/kuzzle/commit/f420b171e8dab9afcbf57f2ca732d90ef4b1f99b))
+* typescript updates ([a8256ca](https://github.com/kuzzleio/kuzzle/commit/a8256ca0b3e0790ae72ccbf4a2bc5cdd56d76b23))
 
-* updated dependency version for kuzzle-plugin-auth-passport-local #181
-* refactor cli / first Admin creation process (add option to not reset roles/profiles) #182
+### Bug Fixes
 
-# 1.0.0-beta.3
+* _id sort on searchRoles not allowed with es8 ([f8d5c3e](https://github.com/kuzzleio/kuzzle/commit/f8d5c3e0a06870be3f65a083c077cb668c0e5da3))
+* add main and types entries in packa ([4f8be51](https://github.com/kuzzleio/kuzzle/commit/4f8be5154d8303f504f113d836460235de96c446))
+* add proper permission to release id-token ([e5e5749](https://github.com/kuzzleio/kuzzle/commit/e5e5749de32043652a69e9bb0d5164446c978507))
+* build ([6d51c6d](https://github.com/kuzzleio/kuzzle/commit/6d51c6dc6bbb389faea981dc8322e4516086055a))
+* modify github token to allow workflow to be triggered sequantialy ([3c4dce9](https://github.com/kuzzleio/kuzzle/commit/3c4dce919913bd18c2ab4f29ebd1f4da55e37e5f))
+* package-lock.json update, along side kuzzle-sdk ([94dd59b](https://github.com/kuzzleio/kuzzle/commit/94dd59bf79728aaa2e487f03e5288be516c429ee))
+* publish sbom after release to let semantic push ([34d6424](https://github.com/kuzzleio/kuzzle/commit/34d6424f20648edf103214b5ce3fc6728c7eacc9))
+* remove the script in preinstall ([edce3d7](https://github.com/kuzzleio/kuzzle/commit/edce3d7293a4f2e7e8c6df037ee29b8536f4cd1b))
+* remove version 18 from trixoe ([01f9d53](https://github.com/kuzzleio/kuzzle/commit/01f9d5343db4b095881e1bfcdcde437f2a58084d))
+* removed the token used for npm, use trusted publisher system instead ([fcb0f06](https://github.com/kuzzleio/kuzzle/commit/fcb0f0640587db61d46065e716b347d0a089724e))
+* runner ci ([538428c](https://github.com/kuzzleio/kuzzle/commit/538428c1f897c1b636ff3383e02bd0d155f0dd97))
+* runner image, wasn't build for arm ([5f25b9d](https://github.com/kuzzleio/kuzzle/commit/5f25b9d530a4a31f9cb6d577095f77d9fb801939))
+* sonarcloud update ([bc084f7](https://github.com/kuzzleio/kuzzle/commit/bc084f7047597ef4d4a46a2980e02b4e18ff3a0c))
 
-* Add auth:checkToken into the anonymous & default role
+## [2.50.0-beta.9](https://github.com/kuzzleio/kuzzle/compare/v2.50.0-beta.8...v2.50.0-beta.9) (2025-12-17)
 
-# 1.0.0-beta.1
+### Bug Fixes
 
-* Fix bug on update role & profile #176
+* sonarcloud update ([bc084f7](https://github.com/kuzzleio/kuzzle/commit/bc084f7047597ef4d4a46a2980e02b4e18ff3a0c))
 
-# 1.0.0-beta.0
+## [2.50.0-beta.8](https://github.com/kuzzleio/kuzzle/compare/v2.50.0-beta.7...v2.50.0-beta.8) (2025-12-17)
 
-* Kuzzle is now entering in beta! Feel free to contribute.
+### Bug Fixes
 
-# 0.18.2
+* publish sbom after release to let semantic push ([34d6424](https://github.com/kuzzleio/kuzzle/commit/34d6424f20648edf103214b5ce3fc6728c7eacc9))
 
-* Role serialization now allows indexing custom properties
-* Fixed updateRole REST API route
+## [2.50.0-beta.7](https://github.com/kuzzleio/kuzzle/compare/v2.50.0-beta.6...v2.50.0-beta.7) (2025-12-16)
 
-# 0.18.1
+### Bug Fixes
 
-* uniform response from createOrReplaceRole / createOrReplaceProfile
+* build ([6d51c6d](https://github.com/kuzzleio/kuzzle/commit/6d51c6dc6bbb389faea981dc8322e4516086055a))
+* package-lock.json update, along side kuzzle-sdk ([94dd59b](https://github.com/kuzzleio/kuzzle/commit/94dd59bf79728aaa2e487f03e5288be516c429ee))
 
-# 0.18.0
+## [2.50.0-beta.6](https://github.com/kuzzleio/kuzzle/compare/v2.50.0-beta.5...v2.50.0-beta.6) (2025-12-16)
 
-* Adds the first admin creation process to the CLI
+### Bug Fixes
 
-# 0.17.5
+* modify github token to allow workflow to be triggered sequantialy ([3c4dce9](https://github.com/kuzzleio/kuzzle/commit/3c4dce919913bd18c2ab4f29ebd1f4da55e37e5f))
 
-* format user for serialization hydrate #170
+## [2.50.0-beta.5](https://github.com/kuzzleio/kuzzle/compare/v2.50.0-beta.4...v2.50.0-beta.5) (2025-12-16)
 
-# 0.17.4
+### Bug Fixes
 
-* Bugfix: the token manager didn't check the availability of the connection part of a connection context before adding the token to the cache.
+* add main and types entries in packa ([4f8be51](https://github.com/kuzzleio/kuzzle/commit/4f8be5154d8303f504f113d836460235de96c446))
 
-# 0.17.3
+## [2.50.0-beta.4](https://github.com/kuzzleio/kuzzle/compare/v2.50.0-beta.3...v2.50.0-beta.4) (2025-12-16)
 
-* Bugfix:remove bad return responseobject in createOrReplaceUser
+### Bug Fixes
 
-# 0.17.2
+* remove the script in preinstall ([edce3d7](https://github.com/kuzzleio/kuzzle/commit/edce3d7293a4f2e7e8c6df037ee29b8536f4cd1b))
 
-* Bugfix on index creation rights
+## [2.50.0-beta.3](https://github.com/kuzzleio/kuzzle/compare/v2.50.0-beta.2...v2.50.0-beta.3) (2025-12-16)
 
-# 0.17.1
+### Bug Fixes
 
-* Bugfix: Profile creation was not stopped when attempting to link to a non-existing role
+* add proper permission to release id-token ([e5e5749](https://github.com/kuzzleio/kuzzle/commit/e5e5749de32043652a69e9bb0d5164446c978507))
+* removed the token used for npm, use trusted publisher system instead ([fcb0f06](https://github.com/kuzzleio/kuzzle/commit/fcb0f0640587db61d46065e716b347d0a089724e))
 
-# 0.17.0
+## [2.50.0-beta.2](https://github.com/kuzzleio/kuzzle/compare/v2.50.0-beta.1...v2.50.0-beta.2) (2025-12-16)
 
-* createRole & createProfile routes #160
+### Features
+
+* bump deps ([b796f0b](https://github.com/kuzzleio/kuzzle/commit/b796f0bd214667b3e18cf4bbe36c0ce4e1f68b43))
+
+## [2.50.0-beta.1](https://github.com/kuzzleio/kuzzle/compare/v2.49.1...v2.50.0-beta.1) (2025-12-16)
+
+
+### Features
+
+* nodejs 24 in actions ([723488c](https://github.com/kuzzleio/kuzzle/commit/723488c1c4f7647c46cbd26ba82a71952ccbba9e))
+* nodejs 24 support ([f420b17](https://github.com/kuzzleio/kuzzle/commit/f420b171e8dab9afcbf57f2ca732d90ef4b1f99b))
+* typescript updates ([a8256ca](https://github.com/kuzzleio/kuzzle/commit/a8256ca0b3e0790ae72ccbf4a2bc5cdd56d76b23))
+
+
+### Bug Fixes
+
+* _id sort on searchRoles not allowed with es8 ([f8d5c3e](https://github.com/kuzzleio/kuzzle/commit/f8d5c3e0a06870be3f65a083c077cb668c0e5da3))
+* remove version 18 from trixoe ([01f9d53](https://github.com/kuzzleio/kuzzle/commit/01f9d5343db4b095881e1bfcdcde437f2a58084d))
+* runner ci ([538428c](https://github.com/kuzzleio/kuzzle/commit/538428c1f897c1b636ff3383e02bd0d155f0dd97))
+* runner image, wasn't build for arm ([5f25b9d](https://github.com/kuzzleio/kuzzle/commit/5f25b9d530a4a31f9cb6d577095f77d9fb801939))
+
+## [2.49.1](https://github.com/kuzzleio/kuzzle/compare/v2.49.0...v2.49.1) (2025-11-18)
+
+
+### Bug Fixes
+
+* **accessLogger:** fix missing file transport acceslogger config scenario ([88a3459](https://github.com/kuzzleio/kuzzle/commit/88a3459fb7ae38c7b107cf79cd7e3468fd983286))
+
+## [2.49.0](https://github.com/kuzzleio/kuzzle/compare/v2.48.0...v2.49.0) (2025-11-17)
+
+
+### Features
+
+* **accessLogger:** replace winston by pino ([#2630](https://github.com/kuzzleio/kuzzle/issues/2630)) ([9c06ce3](https://github.com/kuzzleio/kuzzle/commit/9c06ce3886593196970deed38e90a2575ff71b7e))
+
+
+### Bug Fixes
+
+* **mWrite test:** do not delete index on start ([58e58be](https://github.com/kuzzleio/kuzzle/commit/58e58be6cae5a4d577ff89fd7f9e9e034ea64fd3))
+* **mWrite:** do not remove custom kuzzleInfo from mWrite ([40f0131](https://github.com/kuzzleio/kuzzle/commit/40f01311b30634c8d5e1a9398a00c74872685c64))
+* **plugin:** use global.nodeId to fill the plugin context accessors.nodeId ([0bc3314](https://github.com/kuzzleio/kuzzle/commit/0bc3314b54065a793b27b215967fac3d284ed7e0))
+* **updateByQuery:** kuzinfo updated after updateByQuery ([caacf9b](https://github.com/kuzzleio/kuzzle/commit/caacf9b0613a5d4b33ce1fcd99f04ea71e632502))
+* **updateByQuery:** no need to add kuzzleinfo to changes, it is updated later ([969d160](https://github.com/kuzzleio/kuzzle/commit/969d160c8d6e96ff85e0755ba3c82453608c093a))
+
+<<<<<<< HEAD
+=======
+## [2.48.0](https://github.com/kuzzleio/kuzzle/compare/v2.47.0...v2.48.0) (2025-10-02)
+
+
+### Features
+
+* kuzzle is compatible with redis-8 7 6 and 5 ([87e283e](https://github.com/kuzzleio/kuzzle/commit/87e283e913e526c96998243fdd6d57ef4a4715ad))
+* **logger:** create logger child instances for plugins  ([#2621](https://github.com/kuzzleio/kuzzle/issues/2621)) ([05a8e57](https://github.com/kuzzleio/kuzzle/commit/05a8e57b96c94e638820ea3654e5c668c6c7cd28))
+* update secrets usage in ci ([b6c5fe7](https://github.com/kuzzleio/kuzzle/commit/b6c5fe72fa606a4eda1841515b16171a2c645120))
+
+
+### Bug Fixes
+
+* **elasticsearch:** do not allow user to provide _kuzzle_info for M operations ([#2607](https://github.com/kuzzleio/kuzzle/issues/2607)) ([b6adb34](https://github.com/kuzzleio/kuzzle/commit/b6adb3461a213afddcc6f7c2fc92252c5204fc12))
+* revert uuid upgrade, because of ESM compat ([dbe582a](https://github.com/kuzzleio/kuzzle/commit/dbe582a241fe9d85b21c856a47a26f2d9dd6c498))
+* **tokenManager:** change log level to trace ([#2625](https://github.com/kuzzleio/kuzzle/issues/2625)) ([a91eeb2](https://github.com/kuzzleio/kuzzle/commit/a91eeb2c2b9e4bf0b9dc8cb8d0ce7a5f8d841325))
+
+## [2.48.0-beta.2](https://github.com/kuzzleio/kuzzle/compare/v2.48.0-beta.1...v2.48.0-beta.2) (2025-10-02)
+
+
+### Bug Fixes
+
+* **tokenManager:** change log level to trace ([#2625](https://github.com/kuzzleio/kuzzle/issues/2625)) ([a91eeb2](https://github.com/kuzzleio/kuzzle/commit/a91eeb2c2b9e4bf0b9dc8cb8d0ce7a5f8d841325))
+
+## [2.48.0-beta.1](https://github.com/kuzzleio/kuzzle/compare/v2.47.0...v2.48.0-beta.1) (2025-10-02)
+
+
+### Features
+
+* kuzzle is compatible with redis-8 7 6 and 5 ([87e283e](https://github.com/kuzzleio/kuzzle/commit/87e283e913e526c96998243fdd6d57ef4a4715ad))
+* **logger:** create logger child instances for plugins  ([#2621](https://github.com/kuzzleio/kuzzle/issues/2621)) ([05a8e57](https://github.com/kuzzleio/kuzzle/commit/05a8e57b96c94e638820ea3654e5c668c6c7cd28))
+* update secrets usage in ci ([b6c5fe7](https://github.com/kuzzleio/kuzzle/commit/b6c5fe72fa606a4eda1841515b16171a2c645120))
+
+
+### Bug Fixes
+
+* **elasticsearch:** do not allow user to provide _kuzzle_info for M operations ([#2607](https://github.com/kuzzleio/kuzzle/issues/2607)) ([b6adb34](https://github.com/kuzzleio/kuzzle/commit/b6adb3461a213afddcc6f7c2fc92252c5204fc12))
+* revert uuid upgrade, because of ESM compat ([dbe582a](https://github.com/kuzzleio/kuzzle/commit/dbe582a241fe9d85b21c856a47a26f2d9dd6c498))
+
+>>>>>>> master
+## [2.47.0](https://github.com/kuzzleio/kuzzle/compare/v2.46.0...v2.47.0) (2025-09-16)
+
+
+### Features
+
+* be able to use `propsToLabels` option when using loki logger preset ([#2619](https://github.com/kuzzleio/kuzzle/issues/2619)) ([0da8fbf](https://github.com/kuzzleio/kuzzle/commit/0da8fbf4d6d0fd4872ef1a142e2b94abc0d86c22))
+
+## [2.46.0](https://github.com/kuzzleio/kuzzle/compare/v2.45.0...v2.46.0) (2025-09-10)
+
+
+### Features
+
+* **log:** allow Kuzzle application devs to use the logger before the application startup ([#2617](https://github.com/kuzzleio/kuzzle/issues/2617)) ([9067241](https://github.com/kuzzleio/kuzzle/commit/906724108d503c4a2e9b19351b6e3937910329ec))
+
+## [2.45.0](https://github.com/kuzzleio/kuzzle/compare/v2.44.0...v2.45.0) (2025-08-25)
+
+
+### Features
+
+* **funnel:** trigger success/error events with trigger events ([2fc501f](https://github.com/kuzzleio/kuzzle/commit/2fc501f716499a208483b8a44791fd518f8d48df))
+* update to redis:7 ([f8ee151](https://github.com/kuzzleio/kuzzle/commit/f8ee151f14c6c47a41c024fa79d70c891c765969))
+* use the Kuzzle logger on the Application ([#2616](https://github.com/kuzzleio/kuzzle/issues/2616)) ([d30652e](https://github.com/kuzzleio/kuzzle/commit/d30652e89d4cb789ca5dff5d51b49c604c5c20d1))
+
+
+### Bug Fixes
+
+* **funnel:** handle errors for trigger events same way as base requests ([8bc9ca2](https://github.com/kuzzleio/kuzzle/commit/8bc9ca283969b6c104bc3709a4e5e838117273f2))
+
+## [2.44.0](https://github.com/kuzzleio/kuzzle/compare/v2.43.2...v2.44.0) (2025-07-24)
+
+
+### Features
+
+* **kuzzle.mock:** add child logger stub to KuzzleMock class ([8300582](https://github.com/kuzzleio/kuzzle/commit/83005825d3721dbd3c5f1ed368142a09e4da6906))
+* **kuzzle.mock:** enhance child logger stub with additional log levels ([d30063f](https://github.com/kuzzleio/kuzzle/commit/d30063faba2c4cc65a1aec2c39595ea79d2e969a))
+* qol around docker compose ([70eba27](https://github.com/kuzzleio/kuzzle/commit/70eba27b35e99c6942a35672eddc01102cb649c8))
+* **token-manager:** enhance logging for token management operations ([f27b702](https://github.com/kuzzleio/kuzzle/commit/f27b70279acc5baabd72563ab722851b55e2cf7f))
+* **token-manager:** first attempt at fixing concurrency ([6e8760c](https://github.com/kuzzleio/kuzzle/commit/6e8760c1c4bb8651af70eaf36a1635963d80b795))
+
+
+### Bug Fixes
+
+* **kuzzle.mock:** correct child logger stub implementation to return an object ([8dac44b](https://github.com/kuzzleio/kuzzle/commit/8dac44b3af5786b858aff5b7b945a1247d825cef))
+* **logger:** namespace property prefix ([deddf2c](https://github.com/kuzzleio/kuzzle/commit/deddf2c70902d3891dd12d785ccc2768a96aca6d))
+
+## [2.44.0-beta.1](https://github.com/kuzzleio/kuzzle/compare/v2.43.2...v2.44.0-beta.1) (2025-07-24)
+
+
+### Features
+
+* **kuzzle.mock:** add child logger stub to KuzzleMock class ([8300582](https://github.com/kuzzleio/kuzzle/commit/83005825d3721dbd3c5f1ed368142a09e4da6906))
+* **kuzzle.mock:** enhance child logger stub with additional log levels ([d30063f](https://github.com/kuzzleio/kuzzle/commit/d30063faba2c4cc65a1aec2c39595ea79d2e969a))
+* qol around docker compose ([70eba27](https://github.com/kuzzleio/kuzzle/commit/70eba27b35e99c6942a35672eddc01102cb649c8))
+* **token-manager:** enhance logging for token management operations ([f27b702](https://github.com/kuzzleio/kuzzle/commit/f27b70279acc5baabd72563ab722851b55e2cf7f))
+* **token-manager:** first attempt at fixing concurrency ([6e8760c](https://github.com/kuzzleio/kuzzle/commit/6e8760c1c4bb8651af70eaf36a1635963d80b795))
+
+
+### Bug Fixes
+
+* **kuzzle.mock:** correct child logger stub implementation to return an object ([8dac44b](https://github.com/kuzzleio/kuzzle/commit/8dac44b3af5786b858aff5b7b945a1247d825cef))
+* **logger:** namespace property prefix ([deddf2c](https://github.com/kuzzleio/kuzzle/commit/deddf2c70902d3891dd12d785ccc2768a96aca6d))
+
+## [2.43.2](https://github.com/kuzzleio/kuzzle/compare/v2.43.1...v2.43.2) (2025-06-10)
+
+
+### Bug Fixes
+
+* **hotelClerk:** error logging context in unsubscribe method ([ce85842](https://github.com/kuzzleio/kuzzle/commit/ce85842aeb1bf703c974e1b10085a089a684990d))
+
+## [2.43.2-beta.1](https://github.com/kuzzleio/kuzzle/compare/v2.43.1...v2.43.2-beta.1) (2025-06-10)
+
+
+### Bug Fixes
+
+* **hotelClerk:** error logging context in unsubscribe method ([ce85842](https://github.com/kuzzleio/kuzzle/commit/ce85842aeb1bf703c974e1b10085a089a684990d))
+
+## [2.43.1](https://github.com/kuzzleio/kuzzle/compare/v2.43.0...v2.43.1) (2025-04-08)
+
+
+### Bug Fixes
+
+* pino in depedencies instead of DevDeps ([91f193a](https://github.com/kuzzleio/kuzzle/commit/91f193a8358169bca59815d61342665d960a155a))
+
+## [2.43.0](https://github.com/kuzzleio/kuzzle/compare/v2.42.0...v2.43.0) (2025-04-07)
+
+
+### Features
+
+* **core-plugins:** remove kuzzle-plugin-logger from core plugins and mark its config as deprecated ([4c14811](https://github.com/kuzzleio/kuzzle/commit/4c14811a3f3f6d92a43796db211cf61759ceb961))
+* **internallogger:** add function to change log level at runtime ([31f7622](https://github.com/kuzzleio/kuzzle/commit/31f7622cd2dfe41cac2541774ff6e80ededbd3da))
+* **logger:** allow setting initial level from config ([da7ba47](https://github.com/kuzzleio/kuzzle/commit/da7ba47857894aabff7ddab6b067d871ec7b8390))
+* **logger:** flush logs on app shutdown ([9108da4](https://github.com/kuzzleio/kuzzle/commit/9108da47743e5954d7d15af8c6c39599498b00b3))
+* **logger:** implement logger ([57159f4](https://github.com/kuzzleio/kuzzle/commit/57159f46496610ff79383f4313fc2ccb5d603e5e))
+
+
+### Bug Fixes
+
+* Add sudo command for apt install ([002811b](https://github.com/kuzzleio/kuzzle/commit/002811b8232272ddf1437f03d04556f40d42e6b9))
+* **config:** fix config breaking change ([8e0eb04](https://github.com/kuzzleio/kuzzle/commit/8e0eb0466efd91b07183eb2a8dcea4eb617bd622))
+* **elasticsearch:** allow bulk updateByQuery without changes ([8b5df0b](https://github.com/kuzzleio/kuzzle/commit/8b5df0b3d00209dd10d27da19df114b04113e3fb))
+* Fix CI missing update when installing libuwind ([967d89c](https://github.com/kuzzleio/kuzzle/commit/967d89c296d90987148b78c8fd0b7b632e616f0e))
+* **logger:** pass config in constructor instead of accessing it through global ([ab92b9c](https://github.com/kuzzleio/kuzzle/commit/ab92b9c68e39263de94d16b337df21acaa6bcdc7))
+
+## [2.43.0-beta.1](https://github.com/kuzzleio/kuzzle/compare/v2.42.0...v2.43.0-beta.1) (2025-04-07)
+
+
+### Features
+
+* **core-plugins:** remove kuzzle-plugin-logger from core plugins and mark its config as deprecated ([4c14811](https://github.com/kuzzleio/kuzzle/commit/4c14811a3f3f6d92a43796db211cf61759ceb961))
+* **internallogger:** add function to change log level at runtime ([31f7622](https://github.com/kuzzleio/kuzzle/commit/31f7622cd2dfe41cac2541774ff6e80ededbd3da))
+* **logger:** allow setting initial level from config ([da7ba47](https://github.com/kuzzleio/kuzzle/commit/da7ba47857894aabff7ddab6b067d871ec7b8390))
+* **logger:** flush logs on app shutdown ([9108da4](https://github.com/kuzzleio/kuzzle/commit/9108da47743e5954d7d15af8c6c39599498b00b3))
+* **logger:** implement logger ([57159f4](https://github.com/kuzzleio/kuzzle/commit/57159f46496610ff79383f4313fc2ccb5d603e5e))
+
+
+### Bug Fixes
+
+* Add sudo command for apt install ([002811b](https://github.com/kuzzleio/kuzzle/commit/002811b8232272ddf1437f03d04556f40d42e6b9))
+* **config:** fix config breaking change ([8e0eb04](https://github.com/kuzzleio/kuzzle/commit/8e0eb0466efd91b07183eb2a8dcea4eb617bd622))
+* **elasticsearch:** allow bulk updateByQuery without changes ([8b5df0b](https://github.com/kuzzleio/kuzzle/commit/8b5df0b3d00209dd10d27da19df114b04113e3fb))
+* Fix CI missing update when installing libuwind ([967d89c](https://github.com/kuzzleio/kuzzle/commit/967d89c296d90987148b78c8fd0b7b632e616f0e))
+* **logger:** pass config in constructor instead of accessing it through global ([ab92b9c](https://github.com/kuzzleio/kuzzle/commit/ab92b9c68e39263de94d16b337df21acaa6bcdc7))
+
+## [2.42.0](https://github.com/kuzzleio/kuzzle/compare/v2.41.0...v2.42.0) (2025-03-11)
+
+
+### Features
+
+* bump deps ([3c59605](https://github.com/kuzzleio/kuzzle/commit/3c596057ea01e4f0081856de0aa7529753e5c94b))
+
+## [2.42.0-beta.1](https://github.com/kuzzleio/kuzzle/compare/v2.41.0...v2.42.0-beta.1) (2025-03-11)
+
+
+### Features
+
+* bump deps ([3c59605](https://github.com/kuzzleio/kuzzle/commit/3c596057ea01e4f0081856de0aa7529753e5c94b))
+
+## [2.41.0](https://github.com/kuzzleio/kuzzle/compare/v2.40.1...v2.41.0) (2025-03-05)
+
+
+### Features
+
+* add a new unauthenticated `/_ready` HTTP endpoint ([#2592](https://github.com/kuzzleio/kuzzle/issues/2592)) ([52d54fa](https://github.com/kuzzleio/kuzzle/commit/52d54fa9ce10ec50fab46f9ca44dc01e46893e64))
+* collection getSettings ([#2588](https://github.com/kuzzleio/kuzzle/issues/2588)) ([da75cbc](https://github.com/kuzzleio/kuzzle/commit/da75cbc011adb6abd6a6db295f7355d9dc088e85))
+
+
+### Bug Fixes
+
+* add a getter for started property and a setter, create _started private property ([aacee11](https://github.com/kuzzleio/kuzzle/commit/aacee11ce3598a324ebc774bb624614ed50314bf))
+* update es version to avoid anyController error ([6d594dd](https://github.com/kuzzleio/kuzzle/commit/6d594ddb9a454b404af4c5c8f85d264c9029ba59))
+
+## [2.40.1](https://github.com/kuzzleio/kuzzle/compare/v2.40.0...v2.40.1) (2025-02-11)
+
+
+### Bug Fixes
+
+* arm architecture not needed ([dd751a9](https://github.com/kuzzleio/kuzzle/commit/dd751a990be3211f71490b31de285f25dd3600ff))
+
+## [2.40.1-beta.1](https://github.com/kuzzleio/kuzzle/compare/v2.40.0...v2.40.1-beta.1) (2025-02-11)
+
+
+### Bug Fixes
+
+* arm architecture not needed ([dd751a9](https://github.com/kuzzleio/kuzzle/commit/dd751a990be3211f71490b31de285f25dd3600ff))
+
+# [2.40.0](https://github.com/kuzzleio/kuzzle/compare/v2.39.0...v2.40.0) (2025-01-16)
+
+
+### Features
+
+* **elasticsearch:** add post_filter to whitelist of body terms for ES 7 and 8 ([99344c6](https://github.com/kuzzleio/kuzzle/commit/99344c6f8e161d7c428e7bb9195c263dd15ac645))
+
+# [2.39.0](https://github.com/kuzzleio/kuzzle/compare/v2.38.1...v2.39.0) (2025-01-15)
+
+
+### Features
+
+* update deps ([1477510](https://github.com/kuzzleio/kuzzle/commit/14775108247661f70ef538ae27f1aea5fe2659c1))
+
+# [2.39.0-beta.1](https://github.com/kuzzleio/kuzzle/compare/v2.38.1...v2.39.0-beta.1) (2025-01-15)
+
+
+### Features
+
+* update deps ([1477510](https://github.com/kuzzleio/kuzzle/commit/14775108247661f70ef538ae27f1aea5fe2659c1))
+
+## [2.38.1](https://github.com/kuzzleio/kuzzle/compare/v2.38.0...v2.38.1) (2025-01-13)
+
+
+### Bug Fixes
+
+* **plugin:** fix allowAdditionalActionProperties config accessing ([5fc8096](https://github.com/kuzzleio/kuzzle/commit/5fc80968c62a5bca675e154dfb1e22d43493f09c))
+
+# [2.38.0](https://github.com/kuzzleio/kuzzle/compare/v2.37.1...v2.38.0) (2025-01-09)
+
+
+### Features
+
+* **funnel:** add request:onExecution pipe ([8711746](https://github.com/kuzzleio/kuzzle/commit/87117468bc6e9d33072a3875416f80bb34c39ec6))
+
+# [2.38.0-beta.1](https://github.com/kuzzleio/kuzzle/compare/v2.37.1...v2.38.0-beta.1) (2025-01-09)
+
+
+### Features
+
+* **funnel:** add request:onExecution pipe ([8711746](https://github.com/kuzzleio/kuzzle/commit/87117468bc6e9d33072a3875416f80bb34c39ec6))
+
+## [2.37.1](https://github.com/kuzzleio/kuzzle/compare/v2.37.0...v2.37.1) (2025-01-08)
+
+
+### Bug Fixes
+
+* reverting zeromq to 6.0.0-beta.6, need futher investigation ([0ec5a73](https://github.com/kuzzleio/kuzzle/commit/0ec5a73b8943d8022d318864f2413988cbab04d8))
+* update package-lock.json ([e80b6ab](https://github.com/kuzzleio/kuzzle/commit/e80b6aba6e55583b760edfff7f374688afe7aec2))
+
+# [2.37.0](https://github.com/kuzzleio/kuzzle/compare/v2.36.0...v2.37.0) (2025-01-08)
+
+
+### Bug Fixes
+
+* Add COPY instead of ADD in dockerfile ([24e5be6](https://github.com/kuzzleio/kuzzle/commit/24e5be6059ecbdcd072dcc8c5d091253896a3656))
+* Add version check in docker images ([32a2efd](https://github.com/kuzzleio/kuzzle/commit/32a2efd896d4f5cf3d010cc7710ca8d523389ef3))
+* cookie import ([f582a9f](https://github.com/kuzzleio/kuzzle/commit/f582a9fbb97b2231399bbf84dfa7123937283e42))
+* fixing tests with aedes upgrade ([212e98e](https://github.com/kuzzleio/kuzzle/commit/212e98ef7f5ec26946d984564151ed4b0ca9cb92))
+* tsconfig.json ([328a04d](https://github.com/kuzzleio/kuzzle/commit/328a04d22ee6cb0310b5194e14afe1d8354361b3))
+
+
+### Features
+
+* update deps ([563a6ba](https://github.com/kuzzleio/kuzzle/commit/563a6ba5507c3cdc90e31065c2f4c6a2c5086bd9))
+
+# [2.37.0-beta.1](https://github.com/kuzzleio/kuzzle/compare/v2.36.0...v2.37.0-beta.1) (2025-01-08)
+
+
+### Bug Fixes
+
+* Add COPY instead of ADD in dockerfile ([24e5be6](https://github.com/kuzzleio/kuzzle/commit/24e5be6059ecbdcd072dcc8c5d091253896a3656))
+* Add version check in docker images ([32a2efd](https://github.com/kuzzleio/kuzzle/commit/32a2efd896d4f5cf3d010cc7710ca8d523389ef3))
+* cookie import ([f582a9f](https://github.com/kuzzleio/kuzzle/commit/f582a9fbb97b2231399bbf84dfa7123937283e42))
+* fixing tests with aedes upgrade ([212e98e](https://github.com/kuzzleio/kuzzle/commit/212e98ef7f5ec26946d984564151ed4b0ca9cb92))
+* tsconfig.json ([328a04d](https://github.com/kuzzleio/kuzzle/commit/328a04d22ee6cb0310b5194e14afe1d8354361b3))
+
+
+### Features
+
+* update deps ([563a6ba](https://github.com/kuzzleio/kuzzle/commit/563a6ba5507c3cdc90e31065c2f4c6a2c5086bd9))
+
+# [2.36.0](https://github.com/kuzzleio/kuzzle/compare/v2.35.3...v2.36.0) (2025-01-08)
+
+
+### Bug Fixes
+
+* issue with tests and array sorting ([345563e](https://github.com/kuzzleio/kuzzle/commit/345563eff3b1a08d4c8401a21dbb443297982459))
+
+
+### Features
+
+* **controllers:** add a config to allow additional properties in actions definitions ([8c3eabe](https://github.com/kuzzleio/kuzzle/commit/8c3eabe5cd5b8d438a33c8b5e36d18243560599e))
+* remove murmurhash native in favor of murmurhashJS ([453f8e4](https://github.com/kuzzleio/kuzzle/commit/453f8e412e3526da1bed88663dceb68d24db3c08))
+
+## [2.35.3](https://github.com/kuzzleio/kuzzle/compare/v2.35.2...v2.35.3) (2024-12-31)
+
+
+### Bug Fixes
+
+* remove if statement that was blocking release ([486ad1a](https://github.com/kuzzleio/kuzzle/commit/486ad1a0863d1258d89b8f85d5421126124dd137))
+
+## [2.35.2](https://github.com/kuzzleio/kuzzle/compare/v2.35.1...v2.35.2) (2024-12-31)
+
+
+### Bug Fixes
+
+* Remove needs statement in action ([2dec872](https://github.com/kuzzleio/kuzzle/commit/2dec8724b994685fe38a6b6d5fc11821fe897939))
+
+## [2.35.1](https://github.com/kuzzleio/kuzzle/compare/v2.35.0...v2.35.1) (2024-12-31)
+
+
+### Bug Fixes
+
+* process was releasing beta version of images ([9b541f9](https://github.com/kuzzleio/kuzzle/commit/9b541f94879d29e298b730c2371e05eeb98d6015))
+
+## [2.35.1-beta.1](https://github.com/kuzzleio/kuzzle/compare/v2.35.0...v2.35.1-beta.1) (2024-12-31)
+
+
+### Bug Fixes
+
+* process was releasing beta version of images ([9b541f9](https://github.com/kuzzleio/kuzzle/commit/9b541f94879d29e298b730c2371e05eeb98d6015))
+
+# [2.35.0](https://github.com/kuzzleio/kuzzle/compare/v2.34.0...v2.35.0) (2024-12-19)
+
+
+### Bug Fixes
+
+* add node_version env var in workflow ([05ff115](https://github.com/kuzzleio/kuzzle/commit/05ff1155b109b86b39a5e254742ab200beba3a80))
+* ci was not running properly ([699f180](https://github.com/kuzzleio/kuzzle/commit/699f180006fb4e061273428fcb8f375f8f1ba720))
+* deployment workflow run rework ([db0501e](https://github.com/kuzzleio/kuzzle/commit/db0501e4581b773d1ca5e53bb4d6b118974b4451))
+* elasticsearch docker_platforms ([b91edfe](https://github.com/kuzzleio/kuzzle/commit/b91edfed7c2ddd54b4de4f36ac3e117cf83054fa))
+* only deploy on master branch ([c481243](https://github.com/kuzzleio/kuzzle/commit/c4812438bebd61147a37300680908414e9d4e10d))
+* typo in workflow ([e565d7d](https://github.com/kuzzleio/kuzzle/commit/e565d7dbadbe5fad4e7bc98e4615525d56fc6ed4))
+* ubuntu version and deps issues ([8ef4738](https://github.com/kuzzleio/kuzzle/commit/8ef4738389833e6caf7406e33e108f70105724df))
+
+
+### Features
+
+* **protocols:** add logging socket closing ([5da5930](https://github.com/kuzzleio/kuzzle/commit/5da5930af18d447d82dd4c4f7c2810257479fec2))
+
+# [2.35.0-beta.4](https://github.com/kuzzleio/kuzzle/compare/v2.35.0-beta.3...v2.35.0-beta.4) (2024-12-19)
+
+
+### Bug Fixes
+
+* only deploy on master branch ([c481243](https://github.com/kuzzleio/kuzzle/commit/c4812438bebd61147a37300680908414e9d4e10d))
+
+# [2.35.0-beta.3](https://github.com/kuzzleio/kuzzle/compare/v2.35.0-beta.2...v2.35.0-beta.3) (2024-12-19)
+
+
+### Bug Fixes
+
+* elasticsearch docker_platforms ([b91edfe](https://github.com/kuzzleio/kuzzle/commit/b91edfed7c2ddd54b4de4f36ac3e117cf83054fa))
+
+# [2.35.0-beta.2](https://github.com/kuzzleio/kuzzle/compare/v2.35.0-beta.1...v2.35.0-beta.2) (2024-12-19)
+
+
+### Bug Fixes
+
+* add node_version env var in workflow ([05ff115](https://github.com/kuzzleio/kuzzle/commit/05ff1155b109b86b39a5e254742ab200beba3a80))
+
+# [2.35.0-beta.1](https://github.com/kuzzleio/kuzzle/compare/v2.34.0...v2.35.0-beta.1) (2024-12-19)
+
+
+### Bug Fixes
+
+* ci was not running properly ([699f180](https://github.com/kuzzleio/kuzzle/commit/699f180006fb4e061273428fcb8f375f8f1ba720))
+* deployment workflow run rework ([db0501e](https://github.com/kuzzleio/kuzzle/commit/db0501e4581b773d1ca5e53bb4d6b118974b4451))
+* typo in workflow ([e565d7d](https://github.com/kuzzleio/kuzzle/commit/e565d7dbadbe5fad4e7bc98e4615525d56fc6ed4))
+* ubuntu version and deps issues ([8ef4738](https://github.com/kuzzleio/kuzzle/commit/8ef4738389833e6caf7406e33e108f70105724df))
+
+
+### Features
+
+* **protocols:** add logging socket closing ([5da5930](https://github.com/kuzzleio/kuzzle/commit/5da5930af18d447d82dd4c4f7c2810257479fec2))
+
+# [2.34.0](https://github.com/kuzzleio/kuzzle/compare/v2.33.1...v2.34.0) (2024-11-07)
+
+
+### Bug Fixes
+
+* do not store api keys in internal index, use fingerprint instead ([c9cb2b8](https://github.com/kuzzleio/kuzzle/commit/c9cb2b869a1e94ff19a8812415985290d7efb95f))
+* remove un wanted breaking change ([a351f96](https://github.com/kuzzleio/kuzzle/commit/a351f968383e9a9d7cd28970332f514b7f08272a))
+* target right ecma version in  eslint ([a96e7e1](https://github.com/kuzzleio/kuzzle/commit/a96e7e1434c2e765bf40cc6535d99b9381c28eb7))
+
+
+### Features
+
+* remove seed from internal storage if we have it from config ([2467201](https://github.com/kuzzleio/kuzzle/commit/24672019074a30384bcfa7cdc6af148e39338ef3))
+
+# [2.34.0-beta.1](https://github.com/kuzzleio/kuzzle/compare/v2.33.1...v2.34.0-beta.1) (2024-11-07)
+
+
+### Bug Fixes
+
+* do not store api keys in internal index, use fingerprint instead ([c9cb2b8](https://github.com/kuzzleio/kuzzle/commit/c9cb2b869a1e94ff19a8812415985290d7efb95f))
+* remove un wanted breaking change ([a351f96](https://github.com/kuzzleio/kuzzle/commit/a351f968383e9a9d7cd28970332f514b7f08272a))
+* target right ecma version in  eslint ([a96e7e1](https://github.com/kuzzleio/kuzzle/commit/a96e7e1434c2e765bf40cc6535d99b9381c28eb7))
+
+
+### Features
+
+* remove seed from internal storage if we have it from config ([2467201](https://github.com/kuzzleio/kuzzle/commit/24672019074a30384bcfa7cdc6af148e39338ef3))
+
+## [2.33.1](https://github.com/kuzzleio/kuzzle/compare/v2.33.0...v2.33.1) (2024-10-29)
+
+
+### Bug Fixes
+
+* **npm:** fix ES7 sdk pulled from Github instead of NPM ([33098dd](https://github.com/kuzzleio/kuzzle/commit/33098ddce1e574bc622109a1d9a56aa996615a59))
+
+# [2.33.0](https://github.com/kuzzleio/kuzzle/compare/v2.32.0...v2.33.0) (2024-10-04)
+
+
+### Bug Fixes
+
+* improve typing to avoid typescript build errors ([569bf2c](https://github.com/kuzzleio/kuzzle/commit/569bf2c680e70c47cb5b8f81a326f4039e8a5214))
+
+
+### Features
+
+* **elasticsearch:** add flag to reindex collection after an update ([3cbc2b5](https://github.com/kuzzleio/kuzzle/commit/3cbc2b55e3ff1eb7ddd9c682fd34c87e18c86cbb))
+
+# [2.32.0](https://github.com/kuzzleio/kuzzle/compare/v2.31.0...v2.32.0) (2024-10-02)
+
+
+### Bug Fixes
+
+* bump deps to remove vulnerabilities ([ef27719](https://github.com/kuzzleio/kuzzle/commit/ef277194e0ed355ca0a5c16c9131875094f3a0b8))
+* **ci:** indent to pass linter ([f849e2c](https://github.com/kuzzleio/kuzzle/commit/f849e2c9d2aff5a3636a0b2fc0d11ac86561277a))
+* **conflicts:** merge conflict ([e763392](https://github.com/kuzzleio/kuzzle/commit/e76339261029262aac31af972dc81f05a082e469))
+* **es8:** add elasticsearch-8 in listened branches ([e59cedd](https://github.com/kuzzleio/kuzzle/commit/e59cedd2a2404e315024f18eb3823af03e341411))
+* **es8:** update deployment to allow elasticsearch-8 package to be deployed as a pre-release ([8286522](https://github.com/kuzzleio/kuzzle/commit/8286522368ee70efd54a6d631a5917f02d96b952))
+* **kuzzleeventemitter:** add missing generics parameters ([48cbcf2](https://github.com/kuzzleio/kuzzle/commit/48cbcf2e2713e96a1e5e21ba6bf23452669edaad))
+* **storage:** update more types ([50bfe58](https://github.com/kuzzleio/kuzzle/commit/50bfe580db9e86d6e1de761605ac86debdae2e48))
+* **tests:** fixing unit tests ([50f2cac](https://github.com/kuzzleio/kuzzle/commit/50f2cac418f1616ec1c9c68ef149f8072a7a45e4))
+* **triggerEvents:** fix response format for request with triggerEvents ([#2546](https://github.com/kuzzleio/kuzzle/issues/2546)) ([ffed901](https://github.com/kuzzleio/kuzzle/commit/ffed901d6051d6c0558019d1b67d30fdec3093ff))
+
+
+### Features
+
+* **dockerfiles:** move images from bullseye to bookworm ([#2545](https://github.com/kuzzleio/kuzzle/issues/2545)) ([c225aa1](https://github.com/kuzzleio/kuzzle/commit/c225aa183267fcdbd842e37fce1e4091780e7b1d))
+* **elasticsearch8:** tests unit are now okay ([1f4d1e8](https://github.com/kuzzleio/kuzzle/commit/1f4d1e8686c3f460496f8a73d983371a173d3a14))
+* **es8:** elasticsearch 8 unit tests & functional tests running ([bdcce96](https://github.com/kuzzleio/kuzzle/commit/bdcce96fc97ff58143f29484ae1da2076ee2e885))
+* **es8:** support both es7 and es8 ([e12c35a](https://github.com/kuzzleio/kuzzle/commit/e12c35af6b3a8d375005177cdf56509396db5cb4))
+* only support ES 8.x ([4a8038e](https://github.com/kuzzleio/kuzzle/commit/4a8038e7729a9cdf5b9d7b2c0540899f8911d11c))
+* **storage:** add more types, fix some requests ([a18d454](https://github.com/kuzzleio/kuzzle/commit/a18d454b36d5fe565ad6b08a772c13c3e6a16bab))
+* **storage:** upgrade to the Elasticsearch 8 client ([6753640](https://github.com/kuzzleio/kuzzle/commit/675364013e3b07fc665bfea70e2489b28bad0d8e))
+
+# [2.32.0-elasticsearch-8.1](https://github.com/kuzzleio/kuzzle/compare/v2.31.0...v2.32.0-elasticsearch-8.1) (2024-08-28)
+
+
+### Bug Fixes
+
+* **ci:** indent to pass linter ([f849e2c](https://github.com/kuzzleio/kuzzle/commit/f849e2c9d2aff5a3636a0b2fc0d11ac86561277a))
+* **conflicts:** merge conflict ([e763392](https://github.com/kuzzleio/kuzzle/commit/e76339261029262aac31af972dc81f05a082e469))
+* **es8:** add elasticsearch-8 in listened branches ([e59cedd](https://github.com/kuzzleio/kuzzle/commit/e59cedd2a2404e315024f18eb3823af03e341411))
+* **es8:** update deployment to allow elasticsearch-8 package to be deployed as a pre-release ([8286522](https://github.com/kuzzleio/kuzzle/commit/8286522368ee70efd54a6d631a5917f02d96b952))
+* **kuzzleeventemitter:** add missing generics parameters ([48cbcf2](https://github.com/kuzzleio/kuzzle/commit/48cbcf2e2713e96a1e5e21ba6bf23452669edaad))
+* **storage:** update more types ([50bfe58](https://github.com/kuzzleio/kuzzle/commit/50bfe580db9e86d6e1de761605ac86debdae2e48))
+* **tests:** fixing unit tests ([50f2cac](https://github.com/kuzzleio/kuzzle/commit/50f2cac418f1616ec1c9c68ef149f8072a7a45e4))
+* **triggerEvents:** fix response format for request with triggerEvents ([#2546](https://github.com/kuzzleio/kuzzle/issues/2546)) ([ffed901](https://github.com/kuzzleio/kuzzle/commit/ffed901d6051d6c0558019d1b67d30fdec3093ff))
+
+
+### Features
+
+* **dockerfiles:** move images from bullseye to bookworm ([#2545](https://github.com/kuzzleio/kuzzle/issues/2545)) ([c225aa1](https://github.com/kuzzleio/kuzzle/commit/c225aa183267fcdbd842e37fce1e4091780e7b1d))
+* **elasticsearch8:** tests unit are now okay ([1f4d1e8](https://github.com/kuzzleio/kuzzle/commit/1f4d1e8686c3f460496f8a73d983371a173d3a14))
+* **es8:** elasticsearch 8 unit tests & functional tests running ([bdcce96](https://github.com/kuzzleio/kuzzle/commit/bdcce96fc97ff58143f29484ae1da2076ee2e885))
+* **es8:** support both es7 and es8 ([e12c35a](https://github.com/kuzzleio/kuzzle/commit/e12c35af6b3a8d375005177cdf56509396db5cb4))
+* only support ES 8.x ([4a8038e](https://github.com/kuzzleio/kuzzle/commit/4a8038e7729a9cdf5b9d7b2c0540899f8911d11c))
+* **storage:** add more types, fix some requests ([a18d454](https://github.com/kuzzleio/kuzzle/commit/a18d454b36d5fe565ad6b08a772c13c3e6a16bab))
+* **storage:** upgrade to the Elasticsearch 8 client ([6753640](https://github.com/kuzzleio/kuzzle/commit/675364013e3b07fc665bfea70e2489b28bad0d8e))
+
+# [2.31.0-elasticsearch-8.2](https://github.com/kuzzleio/kuzzle/compare/v2.31.0-elasticsearch-8.1...v2.31.0-elasticsearch-8.2) (2024-06-24)
+
+
+### Bug Fixes
+
+* **ci:** indent to pass linter ([f849e2c](https://github.com/kuzzleio/kuzzle/commit/f849e2c9d2aff5a3636a0b2fc0d11ac86561277a))
+
+# [2.31.0-elasticsearch-8.1](https://github.com/kuzzleio/kuzzle/compare/v2.30.0...v2.31.0-elasticsearch-8.1) (2024-05-15)
+
+
+### Bug Fixes
+
+* **conflicts:** merge conflict ([e763392](https://github.com/kuzzleio/kuzzle/commit/e76339261029262aac31af972dc81f05a082e469))
+* **es8:** add elasticsearch-8 in listened branches ([e59cedd](https://github.com/kuzzleio/kuzzle/commit/e59cedd2a2404e315024f18eb3823af03e341411))
+* **es8:** update deployment to allow elasticsearch-8 package to be deployed as a pre-release ([8286522](https://github.com/kuzzleio/kuzzle/commit/8286522368ee70efd54a6d631a5917f02d96b952))
+* **storage:** update more types ([50bfe58](https://github.com/kuzzleio/kuzzle/commit/50bfe580db9e86d6e1de761605ac86debdae2e48))
+* **tests:** fixing unit tests ([50f2cac](https://github.com/kuzzleio/kuzzle/commit/50f2cac418f1616ec1c9c68ef149f8072a7a45e4))
+
+
+### Features
+
+* **elasticsearch8:** tests unit are now okay ([1f4d1e8](https://github.com/kuzzleio/kuzzle/commit/1f4d1e8686c3f460496f8a73d983371a173d3a14))
+* **es8:** elasticsearch 8 unit tests & functional tests running ([bdcce96](https://github.com/kuzzleio/kuzzle/commit/bdcce96fc97ff58143f29484ae1da2076ee2e885))
+* **es8:** support both es7 and es8 ([e12c35a](https://github.com/kuzzleio/kuzzle/commit/e12c35af6b3a8d375005177cdf56509396db5cb4))
+* only support ES 8.x ([4a8038e](https://github.com/kuzzleio/kuzzle/commit/4a8038e7729a9cdf5b9d7b2c0540899f8911d11c))
+* **storage:** add more types, fix some requests ([a18d454](https://github.com/kuzzleio/kuzzle/commit/a18d454b36d5fe565ad6b08a772c13c3e6a16bab))
+* **storage:** upgrade to the Elasticsearch 8 client ([6753640](https://github.com/kuzzleio/kuzzle/commit/675364013e3b07fc665bfea70e2489b28bad0d8e))
+
+
+# [2.31.0](https://github.com/kuzzleio/kuzzle/compare/v2.30.0...v2.31.0) (2024-07-22)
+
+
+### Bug Fixes
+
+* **doc:** fix a typo in documentation ([35256f0](https://github.com/kuzzleio/kuzzle/commit/35256f0299c01424af397707c02062128ebc98b2))
+* hmset accepts value: 0 ([d973c4f](https://github.com/kuzzleio/kuzzle/commit/d973c4fe3f0b1d51d8389c606e5f3e1b31b47b86))
+* mset accepts value: 0 ([d8168a8](https://github.com/kuzzleio/kuzzle/commit/d8168a8c5158c4ebcf7a51dddcaa9b2fa5fa1e65))
+
+
+### Features
+
+* **doc:** add documentation in the event-system guide ([4913389](https://github.com/kuzzleio/kuzzle/commit/4913389e4be38f3cb23d85ca2bc769fc979dd64e))
+* **funnel:** add optional parameter to request to trigger pipes ([508ac72](https://github.com/kuzzleio/kuzzle/commit/508ac72a25b690ac452ff32dbe80e0833c00290d))
+
+# [2.31.0-beta.1](https://github.com/kuzzleio/kuzzle/compare/v2.30.1-beta.1...v2.31.0-beta.1) (2024-07-22)
+
+
+### Features
+
+* **doc:** add documentation in the event-system guide ([4913389](https://github.com/kuzzleio/kuzzle/commit/4913389e4be38f3cb23d85ca2bc769fc979dd64e))
+* **funnel:** add optional parameter to request to trigger pipes ([508ac72](https://github.com/kuzzleio/kuzzle/commit/508ac72a25b690ac452ff32dbe80e0833c00290d))
+
+## [2.30.1-beta.1](https://github.com/kuzzleio/kuzzle/compare/v2.30.0...v2.30.1-beta.1) (2024-06-03)
+
+
+### Bug Fixes
+
+* **doc:** fix a typo in documentation ([35256f0](https://github.com/kuzzleio/kuzzle/commit/35256f0299c01424af397707c02062128ebc98b2))
+* hmset accepts value: 0 ([d973c4f](https://github.com/kuzzleio/kuzzle/commit/d973c4fe3f0b1d51d8389c606e5f3e1b31b47b86))
+* mset accepts value: 0 ([d8168a8](https://github.com/kuzzleio/kuzzle/commit/d8168a8c5158c4ebcf7a51dddcaa9b2fa5fa1e65))
+
+# [2.30.0](https://github.com/kuzzleio/kuzzle/compare/v2.29.1...v2.30.0) (2024-05-07)
+
+
+### Bug Fixes
+
+* **objectrepository:** fix SonarCloud minor issues ([6696cab](https://github.com/kuzzleio/kuzzle/commit/6696cab5b7c8e9bd75434383fa1c166b2ed7c085))
+
+
+### Features
+
+* **index:** export Store and ObjectRepository ([8b6e4e7](https://github.com/kuzzleio/kuzzle/commit/8b6e4e74f888c59d2d9d485a11951f513b9c63aa))
+* **index:** expose cacheDbEnum and storeScopeEnum ([b52f6f2](https://github.com/kuzzleio/kuzzle/commit/b52f6f20b84b9b38484f24b04a28a4894f35b416))
+
+## [2.29.1](https://github.com/kuzzleio/kuzzle/compare/v2.29.0...v2.29.1) (2024-04-02)
+
+
+### Bug Fixes
+
+* **global:** fix global types ([b4661b9](https://github.com/kuzzleio/kuzzle/commit/b4661b9e1e2d8c169d93e7a17f030338875faed0))
+* **openapi:** remove dedicated components files as we need to generate it automaticaly ([a3036f6](https://github.com/kuzzleio/kuzzle/commit/a3036f6336c1c6e14eb874acde04976f3de1c1ed))
+* **settings:** elasticsearch default setting on imports collection ([228482a](https://github.com/kuzzleio/kuzzle/commit/228482af41b822c0e064286083811c9aca95e532))
+* **ts:** export Kuzzle class so typedef is generated ([448c235](https://github.com/kuzzleio/kuzzle/commit/448c235ef3db8316f02b00d997a48a7e3a30784c))
+
+## [2.29.1-beta.2](https://github.com/kuzzleio/kuzzle/compare/v2.29.1-beta.1...v2.29.1-beta.2) (2024-03-22)
+
+
+### Bug Fixes
+
+* **global:** fix global types ([b4661b9](https://github.com/kuzzleio/kuzzle/commit/b4661b9e1e2d8c169d93e7a17f030338875faed0))
+* **ts:** export Kuzzle class so typedef is generated ([448c235](https://github.com/kuzzleio/kuzzle/commit/448c235ef3db8316f02b00d997a48a7e3a30784c))
+
+## [2.29.1-beta.1](https://github.com/kuzzleio/kuzzle/compare/v2.29.0...v2.29.1-beta.1) (2024-03-13)
+
+
+### Bug Fixes
+
+* **openapi:** remove dedicated components files as we need to generate it automaticaly ([a3036f6](https://github.com/kuzzleio/kuzzle/commit/a3036f6336c1c6e14eb874acde04976f3de1c1ed))
+* **settings:** elasticsearch default setting on imports collection ([228482a](https://github.com/kuzzleio/kuzzle/commit/228482af41b822c0e064286083811c9aca95e532))
+
+# [2.29.0](https://github.com/kuzzleio/kuzzle/compare/v2.28.0...v2.29.0) (2024-02-01)
+
+
+### Bug Fixes
+
+* **cluster:** update a condition where node were evicted for a wrong reason ([8dae2bc](https://github.com/kuzzleio/kuzzle/commit/8dae2bce91240d5851b58cd1f5c10d0525a07d41))
+* **kuzzlerc:** there was a mismatch between default variable and kuzzlerc example ([32a3853](https://github.com/kuzzleio/kuzzle/commit/32a3853bdbc68f969c15e23faa1b40c6fbfa1194))
+* **lint:** fixed lint and ts issues in elasticsearch file ([4acba1f](https://github.com/kuzzleio/kuzzle/commit/4acba1f71a683d4cf30ef67f011763d2e83f66ba))
+* **semantic-release:** fix an issue where semver would not satisfies pre-release versions ([cc0f9f0](https://github.com/kuzzleio/kuzzle/commit/cc0f9f0e2051ad970791ee9254ea915a3c5f6f37))
+* **semantic:** update workflow to match beta branch from semantic ([51d92b6](https://github.com/kuzzleio/kuzzle/commit/51d92b69b7d347b5808e9073bdbe8266117d8353))
+
+
+### Features
+
+* **semantic-release:** add semantic release ([dba84a4](https://github.com/kuzzleio/kuzzle/commit/dba84a4788bcf0ff20000002891f859f4b8a420e))
+
+# [2.29.0-beta.2](https://github.com/kuzzleio/kuzzle/compare/v2.29.0-beta.1...v2.29.0-beta.2) (2024-02-01)
+
+
+### Bug Fixes
+
+* **cluster:** update a condition where node were evicted for a wrong reason ([8dae2bc](https://github.com/kuzzleio/kuzzle/commit/8dae2bce91240d5851b58cd1f5c10d0525a07d41))
+* **semantic-release:** fix an issue where semver would not satisfies pre-release versions ([cc0f9f0](https://github.com/kuzzleio/kuzzle/commit/cc0f9f0e2051ad970791ee9254ea915a3c5f6f37))
+
+# [2.29.0-beta.1](https://github.com/kuzzleio/kuzzle/compare/v2.28.0...v2.29.0-beta.1) (2024-01-16)
+
+
+### Bug Fixes
+
+* **kuzzlerc:** there was a mismatch between default variable and kuzzlerc example ([32a3853](https://github.com/kuzzleio/kuzzle/commit/32a3853bdbc68f969c15e23faa1b40c6fbfa1194))
+* **lint:** fixed lint and ts issues in elasticsearch file ([4acba1f](https://github.com/kuzzleio/kuzzle/commit/4acba1f71a683d4cf30ef67f011763d2e83f66ba))
+* **semantic:** update workflow to match beta branch from semantic ([51d92b6](https://github.com/kuzzleio/kuzzle/commit/51d92b69b7d347b5808e9073bdbe8266117d8353))
+
+
+### Features
+
+* **semantic-release:** add semantic release ([dba84a4](https://github.com/kuzzleio/kuzzle/commit/dba84a4788bcf0ff20000002891f859f4b8a420e))

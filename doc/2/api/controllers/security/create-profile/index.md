@@ -1,12 +1,10 @@
 ---
 code: true
 type: page
-title: createProfile
+title: createProfile | API | Core
 ---
 
 # createProfile
-
-
 
 Creates a new profile.
 
@@ -17,13 +15,15 @@ Creates a new profile.
 ### HTTP
 
 ```http
-URL: http://kuzzle:7512/profiles/<_id>/_create[?refresh=wait_for]
+URL: http://kuzzle:7512/profiles/<_id>/_create[?refresh=wait_for][&strict]
 Method: POST
 Body:
 ```
 
 ```js
 {
+  "rateLimit": 50,
+  "tags": ["moderators"],
   "policies": [
     {
       "roleId": "<roleId>"
@@ -55,6 +55,8 @@ Body:
   "action": "createProfile",
   "_id": "<profileId>",
   "body": {
+    "rateLimit": 50,
+    "tags": ["moderators"],
     "policies": [
       {
         "roleId": "<roleId>"
@@ -75,7 +77,10 @@ Body:
         ]
       }
     ]
-  }
+  },
+  // Optional parameters
+  "refresh": "wait_for",
+  "strict": true
 }
 ```
 
@@ -87,13 +92,14 @@ Body:
 
 ### Optional:
 
-- `refresh`: if set to `wait_for`, Kuzzle will not respond until the created profile is indexed
+- `refresh`: if set to `wait_for`, Kuzzle will not respond until the created profile is indexed (default: `"wait_for"`)
+- `strict` (default: `false`): if set to true, will only allow the profile to be restricted on existing indexes or collections <SinceBadge version="2.6.0"/>
 
 ---
 
 ## Body properties
 
-- `policies`: [profile definition](/core/2/guides/essentials/security#defining-profiles)
+See the [profile definition guide](/core/2/guides/main-concepts/permissions#profiles).
 
 ---
 

@@ -1,9 +1,13 @@
 ---
 code: false
 type: branch
-title: Getting Started
-description: learn kuzzle in a few steps
-order: 100
+order: 200
+title: Kuzzle Getting Started | Guide | Core
+meta:
+  - name: description
+    content: Learn how to use Kuzzle to develop your backend application
+  - name: keywords
+    content: Kuzzle, Documentation, kuzzle write pluggins, General purpose backend
 ---
-
+<Redirect to="run-kuzzle" />
 

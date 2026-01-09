@@ -2,12 +2,10 @@
 type: page
 
 code: true
-title: resetCache
+title: resetCache | API | Core
 ---
 
 # resetCache
-
-<SinceBadge version="1.4.0" />
 
 Asynchronously clears the cache database.
 

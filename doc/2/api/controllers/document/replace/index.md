@@ -1,7 +1,7 @@
 ---
 code: true
 type: page
-title: replace
+title: replace | API | Core
 ---
 
 # replace
@@ -17,7 +17,7 @@ Replaces the content of an existing document.
 ### HTTP
 
 ```http
-URL: http://kuzzle:7512/<index>/<collection>/<documentId>/_replace[?refresh=wait_for]
+URL: http://kuzzle:7512/<index>/<collection>/<documentId>/_replace[?refresh=wait_for][&silent]
 Method: PUT
 Body:
 ```
@@ -44,17 +44,25 @@ Body:
 }
 ```
 
+### Kourou
+
+```bash
+kourou document:replace <index> <collection> <id> <body>
+kourou document:replace <index> <collection> <id> <body> -a silent=true
+```
+
 ---
 
 ## Arguments
 
 - `collection`: collection name
-- `documentId`: unique ID of the document to replace
+- `_id`: unique ID of the document to replace
 - `index`: index name
 
 ### Optional:
 
 - `refresh`: if set to `wait_for`, Kuzzle will not respond until the new document content is indexed
+- `silent`: if set, then Kuzzle will not generate notifications <SinceBadge version="2.9.2" />
 
 ---
 

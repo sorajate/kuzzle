@@ -1,24 +1,30 @@
 ---
 code: true
 type: page
-title: create
+title: create | API | Core
 ---
 
 # create
 
-Creates a new [collection](/core/2/guides/essentials/store-access-data), in the provided `index`.
+Creates a new [collection](/core/2/guides/main-concepts/data-storage), in the provided `index`.
 
-<SinceBadge version="1.3.0" />
+Collection names must meet the following criteria:
 
-You can also provide an optional body with a [collection mapping](/core/2/guides/essentials/database-mappings) allowing you to exploit the full capabilities of our persistent data storage layer.
+* Lowercase only
+* Cannot include one of the following characters: `\\`, `/`, `*`, `?`, `"`, `<`, `>`, `|`, ` ` (space character), `,`, `#`, `:`, `%`, `&`, `.`
+* Cannot be longer than 126 bytes (note it is bytes, so multi-byte characters will count towards the 126 limit faster)
+
+You can also provide an optional body with a [collection mapping](/core/2/guides/main-concepts/data-storage#collection-mappings) allowing you to exploit the full capabilities of our persistent data storage layer.
 
 This method will only update the mapping when the collection already exists.
 
-<SinceBadge version="1.7.1" />
+You can define the collection [dynamic mapping policy](/core/2/guides/main-concepts/data-storage#mappings-dynamic-policy) by setting the `dynamic` field to the desired value.
 
-You can define the collection [dynamic mapping policy](/core/2/guides/essentials/database-mappings#dynamic-mapping-policy) by setting the `dynamic` field to the desired value.
+You can define [collection additional metadata](/core/2/guides/main-concepts/data-storage#mappings-metadata) within the `_meta` root field.
 
-You can define [collection additional metadata](/core/2/guides/essentials/database-mappings#collection-metadata) within the `_meta` root field.
+<SinceBadge version="2.1.0"/>
+
+You can also provide Elasticsearch index [settings](https://www.elastic.co/guide/en/elasticsearch/reference/7.5/index-modules.html#index-modules-settings) when creating a new collection.
 
 ---
 
@@ -31,6 +37,43 @@ URL: http://kuzzle:7512/<index>/<collection>
 Method: PUT
 Body:
 ```
+
+<SinceBadge version="2.1.0"/>
+
+```js
+{
+  "mappings": {
+    "dynamic": "[true|false|strict]", // boolean are also accepted
+    "_meta": {
+      "field": "value"
+    },
+    "properties": {
+      "field1": {
+        "type": "integer"
+      },
+      "field2": {
+        "type": "keyword"
+      },
+      "field3": {
+        "type":   "date",
+        "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
+      }
+    }
+  },
+  "settings": {
+    "analysis" : {
+      "analyzer":{
+        "content":{
+          "type":"custom",
+          "tokenizer":"whitespace"
+        }
+      }
+    }
+  }
+}
+```
+
+<DeprecatedBadge version="2.1.0"/>
 
 ```js
 {
@@ -55,6 +98,8 @@ Body:
 
 ### Other protocols
 
+<SinceBadge version="2.1.0"/>
+
 ```js
 {
   "index": "<index>",
@@ -62,7 +107,48 @@ Body:
   "controller": "collection",
   "action": "create",
   "body": {
-    "dynamic": "[false|true|strict]",
+    "mappings": {
+      "dynamic": "[true|false|strict]", // boolean are also accepted
+      "_meta": {
+        "field": "value"
+      },
+      "properties": {
+        "field1": {
+          "type": "integer"
+        },
+        "field2": {
+          "type": "keyword"
+        },
+        "field3": {
+          "type":   "date",
+          "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
+        }
+      }
+    },
+    "settings": {
+      "analysis" : {
+        "analyzer":{
+          "content":{
+            "type":"custom",
+            "tokenizer":"whitespace"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+<DeprecatedBadge version="2.1.0"/>
+
+```js
+{
+  "index": "<index>",
+  "collection": "<collection>",
+  "controller": "collection",
+  "action": "create",
+  "body": {
+    "dynamic": "[true|false|strict]",
     "_meta": {
       "field": "value"
     },
@@ -82,6 +168,7 @@ Body:
 }
 ```
 
+
 ---
 
 ## Arguments
@@ -95,9 +182,16 @@ Body:
 
 ### Optional:
 
-* `dynamic`: [dynamic mapping policy](/core/2/guides/essentials/database-mappings#dynamic-mapping-policy) for new fields. Allowed values: `true` (default), `false`, `strict`
-* `_meta`: [collection additional metadata](/core/2/guides/essentials/database-mappings#collection-metadata) stored next to the collection
-* `properties`: object describing the data mapping to associate to the new collection, using [Elasticsearch types definitions format](/core/2/guides/essentials/database-mappings#properties-types-definition)
+<SinceBadge version="2.1.0"/>
+
+* `settings`: Elasticsearch index [settings](https://www.elastic.co/guide/en/elasticsearch/reference/7.5/index-modules.html#index-modules-settings)
+* `mappings`: [collection mappings](/core/2/guides/main-concepts/data-storage#mappings-properties)
+
+<DeprecatedBadge version="2.1.0"/>
+
+* `dynamic`: [dynamic mapping policy](/core/2/guides/main-concepts/data-storage#mappings-dynamic-policy) for new fields. Allowed string values: `true` (default), `false`, `strict` or a boolean
+* `_meta`: [collection additional metadata](/core/2/guides/main-concepts/data-storage#mappings-metadata) stored next to the collection
+* `properties`: object describing the data mapping to associate to the new collection, using [Elasticsearch types definitions format](/core/2/guides/main-concepts/data-storage#mappings-properties)
 
 ---
 
@@ -124,6 +218,6 @@ Returns a confirmation that the collection is being created:
 
 ## Possible errors
 
-- [Common errors](/core/2/api/essentials/errors/handling#common-errors)
-- [PreconditionError](/core/2/api/essentials/errors/handling#preconditionerror)
+- [Common errors](/core/2/api/errors/types#common-errors)
+- [PreconditionError](/core/2/api/errors/types#preconditionerror)
 

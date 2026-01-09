@@ -1,14 +1,12 @@
 ---
 code: true
 type: page
-title: update
+title: update | API | Core
 ---
 
 # update
 
-
-
-Updates a document content.
+Applies partial changes to a document. The document must exist in the storage layer.
 
 ---
 
@@ -16,11 +14,21 @@ Updates a document content.
 
 ### HTTP
 
+<SinceBadge version="2.11.0"/>
 ```http
-URL: http://kuzzle:7512/<index>/<collection>/<documentId>/_update[?refresh=wait_for][&retryOnConflict=<int>]
+URL: http://kuzzle:7512/<index>/<collection>/<_id>/_update[?refresh=wait_for][&retryOnConflict=<int>][&source][&silent]
+Method: PATCH
+Body:
+```
+
+<DeprecatedBadge version="2.11.0">
+
+```http
+URL: http://kuzzle:7512/<index>/<collection>/<_id>/_update[?refresh=wait_for][&retryOnConflict=<int>][&source][&silent]
 Method: PUT
 Body:
 ```
+</DeprecatedBadge>
 
 ```js
 {
@@ -43,18 +51,28 @@ Body:
 }
 ```
 
+### Kourou
+
+```bash
+kourou document:update <index> <collection> <id> <body>
+kourou document:update <index> <collection> <id> <body> -a silent=true
+```
+
+
 ---
 
 ## Arguments
 
+- `_id`: unique identifier of the document to update
 - `collection`: collection name
-- `documentId`: unique identifier of the document to update
 - `index`: index name
 
-### Optional:
+### Optional
 
 - `refresh`: if set to `wait_for`, Kuzzle will not respond until the update is indexed
 - `retryOnConflict`: conflicts may occur if the same document gets updated multiple times within a short timespan, in a database cluster. You can set the `retryOnConflict` optional argument (with a retry count), to tell Kuzzle to retry the failing updates the specified amount of times before rejecting the request with an error.
+- `source`: if set to `true` Kuzzle will return the entire updated document body in the response.
+- `silent`: if set, then Kuzzle will not generate notifications <SinceBadge version="2.9.2" />
 
 ---
 
@@ -66,10 +84,11 @@ Partial changes to apply to the document.
 
 ## Response
 
-Returns information about the updated documents:
+Returns information about the updated document:
 
 - `_id`: document unique identifier
 - `_version`: updated document version
+- `_source`: contains only changes or the full document if `source` is set to `true`
 
 ```js
 {
@@ -82,7 +101,8 @@ Returns information about the updated documents:
   "requestId": "<unique request identifier>",
   "result": {
     "_id": "<documentId>",
-    "_version": 2
+    "_version": 2,
+    "_source": "<partial or entire document>"
   }
 }
 ```

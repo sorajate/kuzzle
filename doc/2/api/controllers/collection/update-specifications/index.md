@@ -1,7 +1,7 @@
 ---
 code: true
 type: page
-title: updateSpecifications
+title: updateSpecifications | API | Core
 ---
 
 # updateSpecifications
@@ -93,6 +93,6 @@ The returned result contains the updated specification:
 
 ## Possible errors
 
-- [Common errors](/core/2/api/essentials/errors/handling#common-errors)
-- [NotFoundError](/core/2/api/essentials/errors/handling#notfounderror)
+- [Common errors](/core/2/api/errors/types#common-errors)
+- [NotFoundError](/core/2/api/errors/types#notfounderror)
 
