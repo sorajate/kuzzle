@@ -1,14 +1,14 @@
 ---
 code: true
 type: page
-title: createRestrictedUser
+title: createRestrictedUser | API | Core
 ---
 
 # createRestrictedUser
 
 Creates a new user in Kuzzle, with a preset list of security profiles.
 
-The list of security profiles attributed to restricted users is fixed, and must be configured in the [Kuzzle configuration file](/core/2/guides/essentials/configuration).
+The list of security profiles attributed to restricted users is fixed, and must be configured in the [Kuzzle configuration file](/core/2/guides/advanced/configuration).
 
 This method allows users with limited rights to create other accounts, but blocks them from creating accounts with unwanted privileges (e.g. an anonymous user creating his own account).
 
@@ -27,8 +27,8 @@ Body:
 
 ```js
 {
+  // user additional information (optional)
   "content": {
-    // user additional information (optional)
     "fullname": "John Doe"
   },
   "credentials": {
@@ -48,6 +48,7 @@ Body:
   "controller": "security",
   "action": "createRestrictedUser",
   "body": {
+    // optional
     "content": {
       "fullname": "John Doe"
     },
@@ -62,7 +63,8 @@ Body:
 
   // optional arguments
   "_id": "<kuid>",
-  "refresh": "wait_for"
+  "refresh": "wait_for",
+  "kuid": "human"
 }
 ```
 
@@ -70,16 +72,17 @@ Body:
 
 ## Arguments
 
-### Optional:
+### Optional
 
-- `_id`: user [kuid](/core/2/guides/kuzzle-depth/authentication#the-kuzzle-user-identifier). An error is returned if the provided identifier already exists. If not provided, a random kuid is automatically generated.
-- `refresh`: if set to `wait_for`, Kuzzle will not respond until the newly created user is indexed
+- `_id`: user [kuid](/core/2/guides/main-concepts/authentication#kuzzle-user-identifier-kuid). An error is returned if the provided identifier already exists. If not provided, a random kuid is automatically generated.
+- `refresh`: if set to `wait_for`, Kuzzle will not respond until the newly created user is indexed (default: `"wait_for"`)
+- `kuid`: if set to `human`, Kuzzle will generate a human readable id, otherwise if set to `uuid` Kuzzle will generate a standard uuid (default: `"human"`)
 
 ---
 
 ## Body properties
 
-- `content`: user additional information. Can be left empty.
+- `content`: optional user additional information.
 - `credentials`: describe how the new user can be authenticated. This object contains any number of properties, named after the target authentication strategy to use. Each one of these properties are objects containing the credentials information, corresponding to that authentication strategy. If left empty, the new user is created but cannot be authenticated.
 
 ---

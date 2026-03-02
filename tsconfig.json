@@ -1,0 +1,57 @@
+{
+  "compilerOptions": {
+    "outDir": "dist",
+    "noUncheckedIndexedAccess": true,
+    "declaration": true,
+    "listEmittedFiles": true,
+    "module": "commonjs",
+    "target": "es2020",
+    "allowJs": true,
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "baseUrl": ".",
+    "paths": {
+      "*": [
+        "node_modules/*",
+        "src/types/*"
+      ]
+    },
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "types": [
+      "node",
+      "vitest",
+      "@cucumber/cucumber"
+    ]
+  },
+  "rootDir": "lib/",
+  "include": [
+    // Kuzzle core files
+    "lib/**/*.ts",
+    "lib/**/*.js",
+    "lib/**/*.json",
+    "index.ts",
+    // Functional tests
+    "features/**/*.ts",
+    "features-legacy/**/*.ts",
+    // Unit tests vitest
+    "tests/**/*.ts",
+    "tests/**/*.js",
+    "tests/**/*.json",
+    // Unit tests mocha
+    "test/**/*.ts",
+    "test/**/*.js",
+    "test/**/*.json",
+    // Binaries
+    "bin/copy-protobuf.js",
+    "bin/start-kuzzle-server.js",
+    // development files
+    "start-kuzzle-test.ts",
+    "start-kuzzle-dev.ts"
+  ],
+  "exclude": [
+    "dist"
+  ]
+}
