@@ -1,7 +1,7 @@
 ---
 code: true
 type: page
-title: deleteSpecifications
+title: deleteSpecifications | API | Core
 ---
 
 # deleteSpecifications
@@ -65,5 +65,5 @@ Returns a confirmation that the specifications are deleted:
 
 ## Possible errors
 
-- [Common errors](/core/2/api/essentials/errors/handling#common-errors)
+- [Common errors](/core/2/api/errors/types#common-errors)
 

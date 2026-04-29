@@ -1,7 +1,7 @@
 ---
 code: true
 type: page
-title: updateMyCredentials
+title: updateMyCredentials | API | Core
 ---
 
 # updateMyCredentials
@@ -16,12 +16,23 @@ Updates the credentials of the currently logged in user.
 
 ### HTTP
 
+<SinceBadge version="2.4.0"/>
+```http
+URL: http://kuzzle:7512/_me/credentials/<strategy>/_update
+Method: PUT
+Headers: Authorization: "Bearer <authentication token>"
+Body:
+```
+
+<DeprecatedBadge version="2.4.0">
+
 ```http
 URL: http://kuzzle:7512/credentials/<strategy>/_me/_update
 Method: PUT
 Headers: Authorization: "Bearer <authentication token>"
 Body:
 ```
+</DeprecatedBadge>
 
 ```js
 {

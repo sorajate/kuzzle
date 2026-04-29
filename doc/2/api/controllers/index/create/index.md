@@ -1,14 +1,19 @@
 ---
 code: true
 type: page
-title: create
+title: create | API | Core
 ---
 
 # create
 
 
+Creates a new [index](/core/2/guides/main-concepts/data-storage) in Kuzzle.
 
-Creates a new [index](/core/2/guides/essentials/store-access-data) in Kuzzle.
+Index names must meet the following criteria:
+
+* Lowercase only
+* Cannot include one of the following characters: `\\`, `/`, `*`, `?`, `"`, `<`, `>`, `|`, ` ` (space character), `,`, `#`, `:`, `%`, `&`, `.`
+* Cannot be longer than 126 bytes (note it is bytes, so multi-byte characters will count towards the 126 limit faster)
 
 ---
 
@@ -50,8 +55,7 @@ Returns a confirmation that the index is being created:
   "index": "<index>",
   "action": "create",
   "controller": "index",
-  "requestId": "<unique request identifier>",
-  "result": {}
+  "requestId": "<unique request identifier>"
 }
 ```
 
@@ -59,5 +63,5 @@ Returns a confirmation that the index is being created:
 
 ## Possible errors
 
-- [Common errors](/core/2/api/essentials/errors/handling#common-errors)
+- [Common errors](/core/2/api/errors/types#common-errors)
 
