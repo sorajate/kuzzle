@@ -1,236 +1,305 @@
-const
-  rewire = require('rewire'),
-  should = require('should'),
-  sinon = require('sinon'),
-  {
-    Request,
-    errors: { PreconditionError, NotFoundError }
-  } = require('kuzzle-common-objects'),
-  KuzzleMock = require('../../mocks/kuzzle.mock'),
-  AdminController = rewire('../../../lib/api/controllers/adminController'),
-  BaseController = require('../../../lib/api/controllers/baseController');
+"use strict";
 
-describe('AdminController', () => {
-  let
-    adminController,
-    kuzzle,
-    request;
+const should = require("should");
+const sinon = require("sinon");
+const mockRequire = require("mock-require");
+const { Request, PreconditionError, NotFoundError } = require("../../../index");
+
+const KuzzleMock = require("../../mocks/kuzzle.mock");
+const MutexMock = require("../../mocks/mutex.mock.js");
+
+const {
+  NativeController,
+} = require("../../../lib/api/controllers/baseController");
+
+describe("AdminController", () => {
+  let AdminController;
+  let adminController;
+  let kuzzle;
+  let request;
+
+  before(() => {
+    mockRequire("../../../lib/util/mutex", { Mutex: MutexMock });
+    AdminController = mockRequire.reRequire(
+      "../../../lib/api/controllers/adminController",
+    );
+  });
+
+  after(() => {
+    mockRequire.stopAll();
+  });
 
   beforeEach(() => {
     kuzzle = new KuzzleMock();
 
-    adminController = new AdminController(kuzzle);
+    adminController = new AdminController.default();
 
-    request = new Request({ controller: 'admin' });
+    request = new Request({ controller: "admin" });
 
-    request.input.args.refresh = 'wait_for';
+    request.input.args.refresh = "wait_for";
   });
 
-  describe('#constructor', () => {
-    it('should inherit the base constructor', () => {
-      should(adminController).instanceOf(BaseController);
+  describe("#constructor", () => {
+    it("should inherit the base constructor", () => {
+      should(adminController).instanceOf(NativeController);
     });
   });
 
-  describe('#resetCache', () => {
-    let flushdbStub = sinon.stub();
+  describe("#refreshIndexCache", () => {
+    it("should trigger the corresponding event", async () => {
+      await adminController.refreshIndexCache();
 
+      should(kuzzle.ask).be.calledWith("core:storage:public:cache:refresh");
+    });
+  });
+
+  describe("#resetCache", () => {
     beforeEach(() => {
-      request.input.action = 'resetCache';
+      request.input.action = "resetCache";
     });
 
-    it('should flush the cache for the specified database', done => {
-      kuzzle.cacheEngine.public.flushdb = flushdbStub.returns();
-      request.input.args.database = 'memoryStorage';
+    it("should flush the cache for the public database", async () => {
+      request.input.args.database = "memoryStorage";
 
-      adminController.resetCache(request)
-        .then(() => {
-          should(flushdbStub).be.calledOnce();
-          done();
-        })
-        .catch(error => done(error));
+      await adminController.resetCache(request);
+
+      should(kuzzle.ask).be.calledWith("core:cache:public:flushdb");
     });
 
-    it('should raise an error if database does not exist', () => {
-      request.input.args.database = 'city17';
+    it("should flush the cache for the internal database", async () => {
+      request.input.args.database = "internalCache";
 
-      should(() => adminController.resetCache(request)).throw(
+      await adminController.resetCache(request);
+
+      should(kuzzle.ask).be.calledWith("core:cache:internal:flushdb");
+    });
+
+    it("should raise an error if database does not exist", () => {
+      request.input.args.database = "city17";
+
+      return should(adminController.resetCache(request)).rejectedWith(
         NotFoundError,
-        { id: 'services.cache.database_not_found' });
-    });
-  });
-
-  describe('#resetSecurity', () => {
-    beforeEach(() => {
-      request.input.action = 'resetSecurity';
-    });
-
-    it('should scroll and delete all registered users, profiles and roles', async () => {
-      await adminController.resetSecurity(request);
-
-      should(kuzzle.repositories.user.truncate).be.calledOnce();
-      should(kuzzle.repositories.profile.truncate).be.calledOnce();
-      should(kuzzle.repositories.role.truncate).be.calledOnce();
-      should(kuzzle.internalIndex.bootstrap.createInitialSecurities)
-        .be.calledOnce();
-
-      sinon.assert.callOrder(
-        kuzzle.repositories.user.truncate,
-        kuzzle.repositories.profile.truncate,
-        kuzzle.repositories.role.truncate,
-        kuzzle.internalIndex.bootstrap.createInitialSecurities
+        { id: "services.cache.database_not_found" },
       );
     });
+  });
 
-    it('should unlock the action even if the promise reject', done => {
-      request.input.args.refresh = 'wait_for';
-      kuzzle.repositories.user.truncate.rejects();
+  describe("#resetSecurity", () => {
+    beforeEach(() => {
+      request.input.action = "resetSecurity";
+      kuzzle.internalIndex.createInitialSecurities.resolves({
+        profileIds: ["anonymous", "default", "admin"],
+        roleIds: ["anonymous", "default", "admin"],
+      });
+    });
 
-      adminController.resetSecurity(request)
-        .then(() => {
-          done(new Error('Should reject'));
-        })
-        .catch(error => {
-          should(error).be.instanceOf(Error);
+    it("should scroll and delete all registered users, profiles and roles", async () => {
+      await adminController.resetSecurity(request);
 
-          kuzzle.repositories.user.truncate.resolves();
-          return adminController.resetSecurity(request);
-        })
-        .then(() => done())
-        .catch(error => done(error));
+      const userSpy = kuzzle.ask.withArgs("core:security:user:truncate");
+      const profileSpy = kuzzle.ask.withArgs("core:security:profile:truncate");
+      const roleSpy = kuzzle.ask.withArgs("core:security:role:truncate");
+      should(kuzzle.internalIndex.createInitialSecurities).be.calledOnce();
+      should(kuzzle.ask).be.calledWith(
+        "core:cache:internal:del",
+        `backend:init:import:permissions`,
+      );
 
+      sinon.assert.callOrder(
+        userSpy,
+        profileSpy,
+        roleSpy,
+        kuzzle.internalIndex.createInitialSecurities,
+      );
+
+      const mutex = MutexMock.__getLastMutex();
+
+      should(mutex.resource).eql("resetSecurity");
+      should(mutex.timeout).eql(0);
+      should(mutex.lock).calledOnce();
+      should(mutex.unlock).calledOnce();
+    });
+
+    it("should unlock the action even if the promise rejects", async () => {
+      request.input.args.refresh = "wait_for";
+      kuzzle.ask.withArgs("core:security:user:truncate").rejects();
+
+      await should(adminController.resetSecurity(request)).be.rejected();
+
+      const mutex1 = MutexMock.__getLastMutex();
+
+      should(mutex1.resource).eql("resetSecurity");
+      should(mutex1.timeout).eql(0);
+      should(mutex1.lock).calledOnce();
+      should(mutex1.unlock).calledOnce();
+
+      kuzzle.ask.withArgs("core:security:user:truncate").resolves();
+
+      await should(adminController.resetSecurity(request)).fulfilled();
+
+      const mutex2 = MutexMock.__getLastMutex();
+
+      should(mutex2.resource).eql("resetSecurity");
+      should(mutex2.timeout).eql(0);
+      should(mutex2.lock).calledOnce();
+      should(mutex2.unlock).calledOnce();
+      should(mutex2).not.eql(mutex1);
+    });
+
+    it("should reject if a security reset is already underway", async () => {
+      MutexMock.__canLock(false);
+
+      try {
+        await should(adminController.resetSecurity(request)).rejectedWith(
+          PreconditionError,
+          { id: "api.process.action_locked" },
+        );
+        should(MutexMock.__getLastMutex().resource).eql("resetSecurity");
+      } finally {
+        MutexMock.__canLock(true);
+      }
     });
   });
 
-  describe('#resetDatabase', () => {
+  describe("#resetDatabase", () => {
     beforeEach(() => {
-      request.input.action = 'resetDatabase';
+      request.input.action = "resetDatabase";
     });
 
-    it('remove all indexes handled by Kuzzle', async () => {
-      adminController.publicStorage.listIndexes.resolves(['a', 'b', 'c']);
+    it("remove all indexes handled by Kuzzle", async () => {
+      kuzzle.ask
+        .withArgs("core:storage:public:index:list")
+        .resolves(["a", "b", "c"]);
 
       const response = await adminController.resetDatabase(request);
 
-      should(adminController.publicStorage.listIndexes).be.calledOnce();
-      should(adminController.publicStorage.deleteIndexes)
-        .be.calledWith(['a', 'b', 'c']);
+      should(kuzzle.ask).be.calledWith("core:storage:public:index:list");
+      should(kuzzle.ask).be.calledWith("core:storage:public:index:mDelete", [
+        "a",
+        "b",
+        "c",
+      ]);
 
       should(response).match({ acknowledge: true });
+
+      should(kuzzle.ask).be.calledWith(
+        "core:cache:internal:del",
+        `backend:init:import:mappings`,
+      );
+
+      const mutex = MutexMock.__getLastMutex();
+
+      should(mutex.resource).eql("resetDatabase");
+      should(mutex.timeout).eql(0);
+      should(mutex.lock).calledOnce();
+      should(mutex.unlock).calledOnce();
+    });
+
+    it("should reject if a database reset is already underway", async () => {
+      MutexMock.__canLock(false);
+
+      try {
+        await should(adminController.resetDatabase(request)).rejectedWith(
+          PreconditionError,
+          { id: "api.process.action_locked" },
+        );
+        should(MutexMock.__getLastMutex().resource).eql("resetDatabase");
+      } finally {
+        MutexMock.__canLock(true);
+      }
     });
   });
 
-  describe('#dump', () => {
-    it('should call janitor dump action', done => {
-      request.input.action = 'dump';
-      request.input.args.suffix = 'dump-me-master';
+  describe("#dump", () => {
+    it("should call kuzzle dump action", async () => {
+      request.input.action = "dump";
+      request.input.args.suffix = "dump-me-master";
 
-      adminController.dump(request)
-        .then(() => {
-          should(kuzzle.janitor.dump).be.calledOnce();
-          should(kuzzle.janitor.dump.getCall(0).args[0]).be.eql('dump-me-master');
+      await adminController.dump(request);
 
-          done();
-        })
-        .catch(error => done(error));
+      should(kuzzle.dump).be.calledOnce();
+      should(kuzzle.dump.getCall(0).args[0]).be.eql("dump-me-master");
     });
   });
 
-  describe('#shutdown', () => {
-    let
-      originalKill;
-
+  describe("#shutdown", () => {
     beforeEach(() => {
-      originalKill = process.kill;
-      Object.defineProperty(process, 'kill', {
-        value: sinon.stub()
-      });
-
-      request.input.action = 'shutdown';
+      request.input.action = "shutdown";
     });
 
-    afterEach(() => {
-      Object.defineProperty(process, 'kill', {
-        value: originalKill
-      });
-      AdminController.__set__('_locks', { shutdown: null });
+    it("should throw an error if shutdown is in progress", async () => {
+      adminController = new AdminController.default();
+      adminController.shuttingDown = true;
+
+      await should(adminController.shutdown(request)).rejectedWith(
+        PreconditionError,
+        { id: "api.process.action_locked" },
+      );
     });
 
-    it('should throw an error if shutdown is in progress', () => {
-      AdminController.__set__('_locks', { shutdown: true });
-      adminController = new AdminController(kuzzle);
+    it("should send invoke kuzzle.shutdown", async () => {
+      await adminController.shutdown(request);
 
-      return should(() => {
-        adminController.shutdown(request);
-      }).throw(PreconditionError);
-    });
-
-    it('should send a SIGTERM', done => {
-      adminController.shutdown(request);
-
-      setTimeout(() => {
-        should(process.kill).be.calledOnce();
-        should(process.kill.getCall(0).args[0]).be.eql(process.pid);
-        should(process.kill.getCall(0).args[1]).be.eql('SIGTERM');
-        done();
-      }, 50);
+      should(kuzzle.shutdown).be.calledOnce();
     });
   });
 
-  describe('#loadMappings', () => {
+  describe("#loadMappings", () => {
     beforeEach(() => {
-      request.input.action = 'loadMappings';
+      request.input.action = "loadMappings";
       request.input.body = { city: { seventeen: {} } };
     });
 
-    it('should call Janitor.loadMappings', () => {
-      return adminController.loadMappings(request)
-        .then(() => {
-          should(kuzzle.janitor.loadMappings)
-            .be.calledOnce()
-            .be.calledWith({ city: { seventeen: {} } });
-        });
+    it("should call loadMappings from the public storage engine", async () => {
+      await adminController.loadMappings(request);
+
+      should(kuzzle.ask).be.calledWith(
+        "core:storage:public:mappings:import",
+        request.input.body,
+      );
     });
   });
 
-  describe('#loadFixtures', () => {
+  describe("#loadFixtures", () => {
     beforeEach(() => {
-      request.input.action = 'loadFixtures';
+      request.input.action = "loadFixtures";
       request.input.body = { city: { seventeen: [] } };
+      request.input.args.refresh = "false";
     });
 
-    it('should call Janitor.loadFixtures', () => {
-      return adminController.loadFixtures(request)
-        .then(() => {
-          should(kuzzle.janitor.loadFixtures)
-            .be.calledOnce()
-            .be.calledWith({ city: { seventeen: [] } });
-        });
-    });
+    it("should call loadFixtures from the public storage engine", async () => {
+      await adminController.loadFixtures(request);
 
-    it('should handle rejections if the janitor rejects when not waiting for a refresh', () => {
-      const err = new Error('err');
-      kuzzle.janitor.loadFixtures.rejects(err);
-      request.input.args.refresh = null;
-
-      return adminController.loadFixtures(request)
-        .then(() => should(kuzzle.log.error).calledWith(err));
+      should(kuzzle.ask).be.calledWith(
+        "core:storage:public:document:import",
+        request.input.body,
+        { refresh: "false" },
+      );
     });
   });
 
-  describe('#loadSecurities', () => {
+  describe("#loadSecurities", () => {
     beforeEach(() => {
-      request.input.action = 'loadSecurities';
+      request.input.action = "loadSecurities";
+      request.input.args.onExistingUsers = "overwrite";
       request.input.body = { gordon: { freeman: [] } };
     });
 
-    it('should call Janitor.loadSecurities', () => {
-      return adminController.loadSecurities(request)
-        .then(() => {
-          should(kuzzle.janitor.loadSecurities)
-            .be.calledOnce()
-            .be.calledWith({ gordon: { freeman: [] } });
-        });
+    it("should call loadSecurities from the secutiry module", async () => {
+      await adminController.loadSecurities(request);
+
+      should(kuzzle.ask)
+        .be.calledOnce()
+        .be.calledWith(
+          "core:security:load",
+          { gordon: { freeman: [] } },
+          {
+            onExistingUsers: "overwrite",
+            refresh: "wait_for",
+            user: null,
+            force: false,
+          },
+        );
     });
   });
 });
