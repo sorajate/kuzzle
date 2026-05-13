@@ -1299,22 +1299,13 @@ describe("Test: security controller - users", () => {
 
   describe("#createFirstAdmin", () => {
     const adminExistsEvent = "core:security:user:admin:exist";
-    const createOrReplaceRoleEvent = "core:security:role:createOrReplace";
-    const createOrReplaceProfileEvent = "core:security:profile:createOrReplace";
-    let createOrReplaceRoleStub;
-    let createOrReplaceProfileStub;
     let adminExistsStub;
 
     beforeEach(() => {
       sinon.stub(securityController, "_persistUser");
+      sinon.stub(securityController, "restrictDefaultRights");
 
       request.input.args._id = "test";
-
-      createOrReplaceRoleStub = kuzzle.ask.withArgs(createOrReplaceRoleEvent);
-
-      createOrReplaceProfileStub = kuzzle.ask.withArgs(
-        createOrReplaceProfileEvent,
-      );
 
       adminExistsStub = kuzzle.ask.withArgs(adminExistsEvent).resolves(false);
     });
@@ -1327,8 +1318,7 @@ describe("Test: security controller - users", () => {
       ).be.rejectedWith(PreconditionError, { id: "api.process.admin_exists" });
 
       should(securityController._persistUser).not.called();
-      should(createOrReplaceRoleStub).not.called();
-      should(createOrReplaceProfileStub).not.called();
+      should(securityController.restrictDefaultRights).not.called();
     });
 
     it("should create the admin user and not reset roles & profiles if not asked to", async () => {
@@ -1340,8 +1330,7 @@ describe("Test: security controller - users", () => {
         .calledOnce()
         .calledWithMatch(request, ["admin"], request.input.body.content);
 
-      should(createOrReplaceRoleStub).not.called();
-      should(createOrReplaceProfileStub).not.called();
+      should(securityController.restrictDefaultRights).not.called();
     });
 
     it("should create the admin user and reset roles & profiles if asked to", async () => {
@@ -1352,6 +1341,30 @@ describe("Test: security controller - users", () => {
       should(securityController._persistUser)
         .calledOnce()
         .calledWithMatch(request, ["admin"], {});
+
+      should(securityController.restrictDefaultRights)
+        .calledOnce()
+        .calledWithMatch(request);
+    });
+  });
+
+  describe("#restrictDefaultRights", () => {
+    const createOrReplaceRoleEvent = "core:security:role:createOrReplace";
+    const createOrReplaceProfileEvent = "core:security:profile:createOrReplace";
+    let createOrReplaceRoleStub;
+    let createOrReplaceProfileStub;
+
+    beforeEach(() => {
+      request.input.args._id = "test";
+
+      createOrReplaceRoleStub = kuzzle.ask.withArgs(createOrReplaceRoleEvent);
+      createOrReplaceProfileStub = kuzzle.ask.withArgs(
+        createOrReplaceProfileEvent,
+      );
+    });
+
+    it("should reset roles & profiles", async () => {
+      await securityController.restrictDefaultRights(request);
 
       const config = kuzzle.config.security.standard;
 
