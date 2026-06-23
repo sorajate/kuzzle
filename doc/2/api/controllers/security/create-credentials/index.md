@@ -1,7 +1,7 @@
 ---
 code: true
 type: page
-title: createCredentials
+title: createCredentials | API | Core
 ---
 
 # createCredentials
@@ -50,7 +50,7 @@ Body:
 
 ## Arguments
 
-- `_id`: user unique [kuid](/core/2/guides/essentials/user-authentication#kuzzle-user-identifier-kuid)
+- `_id`: user unique [kuid](/core/2/guides/main-concepts/authentication#kuzzle-user-identifier-kuid)
 - `strategy`: name of the target authentication strategy for the credentials
 
 ---

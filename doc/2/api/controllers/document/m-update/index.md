@@ -1,14 +1,16 @@
 ---
 code: true
 type: page
-title: mUpdate
+title: mUpdate | API | Core
 ---
 
 # mUpdate
 
-
-
 Updates multiple documents.
+
+::: info
+The number of documents that can be updated by a single request is limited by the `documentsWriteCount` server configuration (see the [Configuring Kuzzle](/core/2/guides/advanced/configuration) guide).
+:::
 
 ---
 
@@ -16,11 +18,21 @@ Updates multiple documents.
 
 ### HTTP
 
+<SinceBadge version="2.11.0"/>
 ```http
-URL: http://kuzzle:7512/<index>/<collection>/_mUpdate[?refresh=wait_for][&retryOnConflict=<retries>]
+URL: http://kuzzle:7512/<index>/<collection>/_mUpdate[?refresh=wait_for][&retryOnConflict=<retries>][&silent]
+Method: PATCH
+Body:
+```
+
+<DeprecatedBadge version="2.11.0">
+
+```http
+URL: http://kuzzle:7512/<index>/<collection>/_mUpdate[?refresh=wait_for][&retryOnConflict=<retries>][&silent]
 Method: PUT
 Body:
 ```
+</DeprecatedBadge>
 
 ```js
 {
@@ -68,6 +80,13 @@ Body:
 }
 ```
 
+### Kourou
+
+```bash
+kourou document:mUpdate <index> <collection> <body>
+kourou document:mUpdate <index> <collection> <body> -a silent=true
+```
+
 ---
 
 ## Arguments
@@ -79,6 +98,8 @@ Body:
 
 - `refresh`: if set to `wait_for`, Kuzzle will not respond until the updates are indexed
 - `retryOnConflict`: conflicts may occur if the same document gets updated multiple times within a short timespan in a database cluster. You can set the `retryOnConflict` optional argument (with a retry count), to tell Kuzzle to retry the failing updates the specified amount of times before rejecting the request with an error.
+- `silent`: if set, then Kuzzle will not generate notifications <SinceBadge version="2.9.2" />
+- `strict`: if set, an error will occur if a document was not updated <SinceBadge version="2.11.0" />
 
 ---
 
@@ -92,15 +113,22 @@ Body:
 
 ## Response
 
-Returns a `hits` array containing the list of updated documents.
+Returns an object containing 2 arrays: `successes` and `errors`
 
-Each document has the following properties:
+Each updated document is an object of the `successes` array with the following properties:
 
 - `_id`: document unique identifier
-- `_source`: updated document content
-- `_version`: version number of the document
+- `_source`: document content
+- `_version`: updated document version
+- `status`: HTTP status code
 
-If one or more document cannot be updated, the response status is set to `206`, and the `error` object contain a [partial error](/core/2/api/essentials/errors/handling#partialerror) error.
+Each errored document is an object of the `errors` array with the following properties:
+
+- `document`: original document that caused the error
+- `status`: HTTP error status code
+- `reason`: human readable reason
+
+If `strict` mode is enabled, will rather return an error if at least one document has not been updated.
 
 ```js
 {
@@ -112,23 +140,33 @@ If one or more document cannot be updated, the response status is set to `206`, 
   "controller": "document",
   "requestId": "<unique request identifier>",
   "result": {
-    "hits": [
+    "successes": [
       {
         "_id": "<documentId>",
-        "_version": 2,
+        "status": 200,
         "_source": {
           // updated document content
-        }
+        },
+        "_version": 2
       },
       {
         "_id": "<anotherDocumentId>",
-        "_version": 4,
+        "status": 200,
         "_source": {
           // updated document content
-        }
+        },
+        "_version": 2
       }
     ],
-    "total": 2
+    "errors": [
+      {
+        "document": {
+          // updated document content
+        },
+        "status": 404,
+        "reason": "Document 'foobar' not found"
+      }
+    ]
   }
 }
 ```

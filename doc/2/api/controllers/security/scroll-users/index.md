@@ -1,7 +1,7 @@
 ---
 code: true
 type: page
-title: scrollUsers
+title: scrollUsers | API | Core
 ---
 
 # scrollUsers
@@ -42,7 +42,7 @@ Method: GET
 
 ### Optional:
 
-- `scroll`: refresh the cursor duration, using the [time to live](https://www.elastic.co/guide/en/elasticsearch/reference/5.6/common-options.html#time-units) syntax.
+- `scroll`: refresh the cursor duration, using the [time to live](https://www.elastic.co/guide/en/elasticsearch/reference/7.4/common-options.html#time-units) syntax.
 
 ---
 
@@ -51,7 +51,7 @@ Method: GET
 Returns a paginated search result set, with the following properties:
 
 - `hits`: array of found profiles. Each document has the following properties:
-  - `_id`: user [kuid](/core/2/guides/kuzzle-depth/authentication#the-kuzzle-user-identifier)
+  - `_id`: user [kuid](/core/2/guides/main-concepts/authentication#kuzzle-user-identifier-kuid)
   - `_source`: user definition
 - `scrollId`: identifier to the next page of result. Can be different than the previous one(s)
 - `total`: total number of found users. Usually greater than the number of users in a result page

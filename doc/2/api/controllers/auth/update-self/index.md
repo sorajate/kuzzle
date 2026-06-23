@@ -1,12 +1,10 @@
 ---
 code: true
 type: page
-title: updateSelf
+title: updateSelf | API | Core
 ---
 
 # updateSelf
-
-
 
 Updates the currently logged in user information.
 
@@ -18,12 +16,23 @@ This route cannot update the list of associated security profiles. To change a u
 
 ### HTTP
 
+<SinceBadge version="2.4.0"/>
 ```http
-URL: http://kuzzle:7512/_updateSelf
+URL: http://kuzzle:7512/_me[?refresh=wait_for][?retryOnConflict=10]
 Method: PUT
 Headers: Authorization: "Bearer <authentication token>"
 Body:
 ```
+
+<DeprecatedBadge version="2.4.0">
+
+```http
+URL: http://kuzzle:7512/_updateSelf[?refresh=wait_for][?retryOnConflict=10]
+Method: PUT
+Headers: Authorization: "Bearer <authentication token>"
+Body:
+```
+</DeprecatedBadge>
 
 ```js
 {
@@ -42,7 +51,10 @@ Body:
   "body": {
     "foo": "bar",
     "name": "Walter Smith"
-  }
+  },
+  // Optional
+  "refresh": "wait_for",
+  "retryOnConflict": 10
 }
 ```
 
@@ -51,6 +63,11 @@ Body:
 ## Arguments
 
 - `jwt`: valid authentication token (for the HTTP protocol, the token is to be passed to the `Authorization` header instead)
+
+### Optional arguments
+
+- `refresh`: if set to `wait_for`, Kuzzle will not respond until the user changes are indexed (default: `"wait_for"`)
+- `retryOnConflict`: in case of an update conflict in Elasticsearch, the number of retries before aborting the operation (default: `10`)
 
 ---
 
@@ -64,7 +81,7 @@ User properties that can be set or updated depend on the application hosted by K
 
 Returns the following properties:
 
-- `_id`: current user's [kuid](/core/2/guides/essentials/user-authentication#kuzzle-user-identifier-kuid)
+- `_id`: current user's [kuid](/core/2/guides/main-concepts/authentication#kuzzle-user-identifier-kuid)
 - `_source`: additional (and optional) user properties
 
 ```js

@@ -1,7 +1,7 @@
 ---
 code: true
 type: page
-title: create
+title: create | API | Core
 ---
 
 # create
@@ -19,8 +19,8 @@ Returns an error if the document already exists.
 ### HTTP
 
 ```http
-URL: http://kuzzle:7512/<index>/<collection>/_create[?refresh=wait_for]
-URL(2): http://kuzzle:7512/<index>/<collection>/<documentId>/_create[?refresh=wait_for]
+URL: http://kuzzle:7512/<index>/<collection>/_create[?refresh=wait_for][&silent]
+URL(2): http://kuzzle:7512/<index>/<collection>/<documentId>/_create[?refresh=wait_for][&silent]
 Method: POST
 Body:
 ```
@@ -46,6 +46,14 @@ Body:
 }
 ```
 
+### Kourou
+
+```bash
+kourou document:create <index> <collection> <body>
+kourou document:create <index> <collection> <id> <body>
+kourou document:create <index> <collection> <body> -a silent=true
+```
+
 ---
 
 ## Arguments
@@ -55,8 +63,9 @@ Body:
 
 ### Optional:
 
-- `documentId`: set the document unique ID to the provided value, instead of auto-generating a random ID
+- `_id`: set the document unique ID to the provided value, instead of auto-generating a random ID
 - `refresh`: if set to `wait_for`, Kuzzle will not respond until the newly created document is indexed
+- `silent`: if set, then Kuzzle will not generate notifications <SinceBadge version="2.9.2" />
 
 ---
 

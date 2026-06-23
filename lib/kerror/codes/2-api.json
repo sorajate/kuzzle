@@ -1,0 +1,195 @@
+{
+  "code": 2,
+  "subDomains": {
+    "assert": {
+      "code": 1,
+      "errors": {
+        "invalid_type": {
+          "description": "Wrong argument type",
+          "code": 1,
+          "message": "Wrong type for argument \"%s\" (expected: %s)",
+          "class": "BadRequestError"
+        },
+        "invalid_argument": {
+          "description": "A request argument holds an invalid value",
+          "code": 2,
+          "message": "Invalid argument \"%s\". Expected: %s",
+          "class": "BadRequestError"
+        },
+        "missing_argument": {
+          "description": "A required argument is missing",
+          "code": 3,
+          "message": "Missing argument \"%s\".",
+          "class": "BadRequestError"
+        },
+        "empty_argument": {
+          "description": "The argument cannot be empty",
+          "code": 4,
+          "message": "The argument \"%s\" is empty.",
+          "class": "BadRequestError"
+        },
+        "mutually_exclusive": {
+          "description": "Mutually exclusive parameters have been provided",
+          "code": 5,
+          "message": "Arguments \"%s\" and \"%s\" are mutually exclusive",
+          "class": "BadRequestError"
+        },
+        "too_many_arguments": {
+          "description": "An argument contains too many keys or values",
+          "code": 6,
+          "message": "Argument \"%s\" contains too many values",
+          "class": "BadRequestError"
+        },
+        "unexpected_argument": {
+          "description": "An unexpected argument has been provided",
+          "code": 7,
+          "message": "Unexpected argument \"%s\" (accepted arguments: %s)",
+          "class": "BadRequestError"
+        },
+        "body_required": {
+          "description": "A request body is required",
+          "code": 8,
+          "message": "The request must specify a body.",
+          "class": "BadRequestError"
+        },
+        "unexpected_type_assertion": {
+          "description": "Unexpected type assertion",
+          "code": 9,
+          "message": "An unexepected type assertion \"%s\" has been invoked on attribute \"%s\".",
+          "class": "InternalError"
+        },
+        "invalid_id": {
+          "description": "_id values cannot start with an underscore",
+          "code": 10,
+          "message": "Invalid \"_id\" value: cannot start with an underscore",
+          "class": "BadRequestError"
+        },
+        "forbidden_argument": {
+          "description": "A forbidden argument has been provided",
+          "code": 11,
+          "message": "The argument \"%s\" is not allowed by this API action.",
+          "class": "BadRequestError"
+        },
+        "koncorde_unknown_keyword": {
+          "description": "An unknown keyword has been provided in filters",
+          "code": 12,
+          "message": "The keyword \"%s\" is not part of Koncorde filters DSL keywords. Are you trying to use an Elasticsearch query?",
+          "class": "BadRequestError"
+        },
+        "koncorde_restricted_keyword": {
+          "description": "A restricted keyword has been provided in filters",
+          "code": 13,
+          "message": "The %s \"%s\" of Koncorde DSL is not supported for search queries.",
+          "class": "BadRequestError"
+        },
+        "koncorde_dsl_error": {
+          "description": "Provided filters contains an error",
+          "code": 14,
+          "message": "%s",
+          "class": "BadRequestError"
+        },
+        "forbidden_stream": {
+          "description": "A forbidden HttpStream has been provided in a response",
+          "code": 15,
+          "message": "Cannot set an HttpStream as a request's response in a non-http protocol",
+          "class": "InternalError"
+        },
+        "unsupported_protocol": {
+          "description": "A request has been made with an unsupported protocol",
+          "code": 16,
+          "message": "The protocol \"%s\" is not supported by the API action \"%s\".",
+          "class": "InternalError"
+        }
+      }
+    },
+    "process": {
+      "code": 2,
+      "errors": {
+        "action_locked": {
+          "description": "Cannot execute the requested action because it's already executing",
+          "code": 1,
+          "message": "Cannot execute action \"%s\": already executing.",
+          "class": "PreconditionError"
+        },
+        "overloaded": {
+          "description": "The request has been discarded because the server is overloaded",
+          "code": 2,
+          "message": "Request discarded: Kuzzle Server is temporarily overloaded.",
+          "class": "ServiceUnavailableError"
+        },
+        "connection_dropped": {
+          "description": "The request has been discarded because its linked client connection has dropped",
+          "code": 3,
+          "message": "Client connection dropped",
+          "class": "BadRequestError"
+        },
+        "controller_not_found": {
+          "description": "API controller not found",
+          "code": 4,
+          "message": "API controller \"%s\" not found.",
+          "class": "NotFoundError"
+        },
+        "action_not_found": {
+          "description": "API controller action not found",
+          "code": 5,
+          "message": "API action \"%s\":\"%s\" not found",
+          "class": "NotFoundError"
+        },
+        "incompatible_sdk_version": {
+          "description": "SDK is incompatible with the current Kuzzle version. You can set \"config.server.strictSdkVersion\" to false to disable this safety check at your own risk.",
+          "code": 6,
+          "message": "Incompatible SDK client. Your SDK version (%s) does not match Kuzzle requirement (%s).",
+          "class": "BadRequestError"
+        },
+        "shutting_down": {
+          "description": "This Kuzzle node is shutting down and refuses new requests",
+          "code": 7,
+          "message": "Rejected: this node is shutting down.",
+          "class": "ServiceUnavailableError"
+        },
+        "too_many_requests": {
+          "description": "The request has been refused because a rate limit has been exceeded for this user",
+          "code": 8,
+          "message": "Rejected: requests rate limit exceeded for this user.",
+          "class": "TooManyRequestsError"
+        },
+        "admin_exists": {
+          "description": "Attempted to create the first administrator, when one already exists",
+          "code": 9,
+          "message": "Admin user is already set.",
+          "class": "PreconditionError"
+        },
+        "incomplete_multiple_request": {
+          "description": "Failed to execute some or all actions requested",
+          "code": 10,
+          "message": "At least one of the %s actions failed.",
+          "class": "MultipleErrorsError"
+        },
+        "not_enough_nodes": {
+          "description": "The Kuzzle cluster has not enough nodes available, and no new requests can be processed until new nodes are added",
+          "code": 11,
+          "message": "Rejected: this cluster is disabled because there aren't enough nodes connected.",
+          "class": "ServiceUnavailableError"
+        },
+        "unauthorized_origin": {
+          "description": "The domain reaching out to Kuzzle is not authorized",
+          "code": 12,
+          "message": "The origin \"%s\" is not authorized.",
+          "class": "UnauthorizedError"
+        },
+        "too_many_logins_requests": {
+          "description": "The request was denied because the maximum (\"limits.loginsPerSecond\") number of login attempts per second has been exceeded.",
+          "code": 13,
+          "message": "Rejected: Too many login attempts per second",
+          "class": "TooManyRequestsError"
+        },
+        "forbidden_embedded_sdk_action": {
+          "description": "A forbidden EmbdeddedSDK action has been called",
+          "code": 14,
+          "message": "The action %s:%s has been called while it is forbidden in the EmbeddedSDK%s.",
+          "class": "PluginImplementationError"
+        }
+      }
+    }
+  }
+}

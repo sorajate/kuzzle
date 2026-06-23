@@ -1,7 +1,7 @@
 ---
 code: true
 type: page
-title: replaceUser
+title: replaceUser | API | Core
 ---
 
 # replaceUser
@@ -49,11 +49,11 @@ Body:
 
 ## Arguments
 
-- `_id`: user [kuid](/core/2/guides/kuzzle-depth/authentication#the-kuzzle-user-identifier)
+- `_id`: user [kuid](/core/2/guides/main-concepts/authentication#kuzzle-user-identifier-kuid)
 
 ### Optional:
 
-- `refresh`: if set to `wait_for`, Kuzzle will not respond until the user replacement is indexed
+- `refresh`: if set to `wait_for`, Kuzzle will not respond until the user replacement is indexed (default: `"wait_for"`)
 
 ---
 

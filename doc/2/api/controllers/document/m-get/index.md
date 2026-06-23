@@ -1,12 +1,16 @@
 ---
 code: true
 type: page
-title: mGet
+title: mGet | API | Core
 ---
 
 # mGet
 
 Gets multiple documents.
+
+::: info
+The number of documents that can be fetched by a single request is limited by the `documentsFetchCount` server configuration (see the [Configuring Kuzzle](/core/2/guides/advanced/configuration) guide).
+:::
 
 ---
 
@@ -26,6 +30,13 @@ Body:
 }
 ```
 
+You can also access this route with the `GET` verb:
+
+```http
+URL: http://kuzzle:7512/<index>/<collection>/_mGet?ids=documentId,anotherDocumentId
+Method: GET
+```
+
 ### Other protocols
 
 ```js
@@ -40,12 +51,22 @@ Body:
 }
 ```
 
+### Kourou
+
+```bash
+kourou document:mGet <index> <collection> <body>
+```
+
 ---
 
 ## Arguments
 
 - `collection`: collection name
 - `index`: index name
+
+### Optional:
+
+- `strict`: if set, an error will occur if any of the documents could not be retrieved <SinceBadge version="2.11.0" />
 
 ---
 
@@ -57,20 +78,19 @@ Body:
 
 ## Response
 
-Returns a `hits` array with the list of retrieved documents.
+Returns an object containing 2 arrays: `successes` and `errors`
+
+The `successes` array contain the list of retrieved documents.
 
 Each document is an object with the following properties:
 
 - `_id`: document unique identifier
 - `_source`: document content
 - `_version`: version number of the document
-- `found`: false if the document was missing
 
-If one or more document retrievals fail, the response status is set to `206`, and the `error` object contain a [partial error](/core/2/api/essentials/errors/handling#partialerror) error.  
+The `errors` array contain the IDs of not found documents.
 
-::: info
-You can use the `found` attribute to identify missing documents.
-:::
+If `strict` mode is enabled, will rather return an error if at least one document could not been retreived.
 
 ```js
 {
@@ -82,29 +102,23 @@ You can use the `found` attribute to identify missing documents.
   "controller": "document",
   "requestId": "<unique request identifier>",
   "result": {
-    "hits": [
+    "successes": [
       {
         "_id": "<documentId>",
         "_source": {
           // document content
         },
-        "_version": 4,
-        "found": true
+        "_version": 4
       },
       {
         "_id": "<anotherDocumentId>",
         "_source": {
           // document content
         },
-        "_version": 2,
-        "found": true
-      },
-      {
-        "_id": "<anotherDocumentId>",
-        "found": false
+        "_version": 2
       }
     ]
-    "total": 2
+    "errors": ["<anotherDocumentId>"]
   }
 }
 ```

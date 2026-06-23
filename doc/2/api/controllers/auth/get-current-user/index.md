@@ -1,7 +1,7 @@
 ---
 code: true
 type: page
-title: getCurrentUser
+title: getCurrentUser | API | Core
 ---
 
 # getCurrentUser
@@ -16,11 +16,21 @@ Returns information about the currently logged in user.
 
 ### HTTP
 
+<SinceBadge version="2.4.0"/>
+```http
+URL: http://kuzzle:7512/_me
+Method: GET
+Headers: Authorization: "Bearer <authentication token>"
+```
+
+<DeprecatedBadge version="2.4.0">
+
 ```http
 URL: http://kuzzle:7512/users/_me
 Method: GET
 Headers: Authorization: "Bearer <authentication token>"
 ```
+</DeprecatedBadge>
 
 ### Other protocols
 
@@ -44,9 +54,9 @@ Headers: Authorization: "Bearer <authentication token>"
 
 The result contains the following properties:
 
-- `_id`: current user's [kuid](/core/2/guides/essentials/user-authentication#kuzzle-user-identifier-kuid)
+- `_id`: current user's [kuid](/core/2/guides/main-concepts/authentication#kuzzle-user-identifier-kuid)
 - `_source`: user information
-  - `profileIds`: list of [profile](/core/2/guides/essentials/security#users-profiles-and-roles) names associated to the user
+  - `profileIds`: list of [profile](/core/2/guides/main-concepts/permissions#profiles-list) names associated to the user
   - any other properties: additional (and optional) user information
 - `strategies`: available authentication strategies for that user
 
