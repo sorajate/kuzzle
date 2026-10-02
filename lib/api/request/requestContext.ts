@@ -1,0 +1,260 @@
+/*
+ * Kuzzle, a backend software, self-hostable and ready to use
+ * to power modern apps
+ *
+ * Copyright 2015-2022 Kuzzle
+ * mailto: support AT kuzzle.io
+ * website: http://kuzzle.io
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import type { JSONObject } from "../../types/JSONObject";
+
+import * as assert from "../../util/assertType";
+
+import type { Token } from "../../model/security/token";
+import type { User } from "../../model/security/user";
+
+// private properties
+// \u200b is a zero width space, used to masquerade console.log output
+const _token = "token\u200b";
+const _user = "user\u200b";
+const _connection = "connection\u200b";
+// Connection class properties
+const _c_id = "id\u200b";
+const _c_protocol = "protocol\u200b";
+const _c_ips = "ips\u200b";
+const _c_misc = "misc\u200b";
+
+export type ContextMisc = {
+  /**
+   * HTTP url
+   * @deprecated use "path" instead
+   */
+  url?: string;
+  /**
+   * HTTP path
+   */
+  path?: string;
+  /**
+   * HTTP headers
+   */
+  verb?: string;
+  /**
+   * HTTP headers
+   */
+  headers?: JSONObject;
+
+  [key: string]: any;
+};
+
+/**
+ * Information about the connection at the origin of the request.
+ */
+export class Connection {
+  /*
+   * The backing fields behind the accessors below, declared so that the
+   * compiler checks them. They keep the zero-width-space keys rather than
+   * becoming `private` or `#` names, which is what keeps `console.log` output
+   * as it has been for ten years — see the comment on those constants.
+   * Declaring them changes nothing at runtime.
+   */
+  [_c_id]: string | null;
+  [_c_protocol]: string | null;
+  [_c_ips]: string[];
+  [_c_misc]: ContextMisc;
+
+  constructor(connection: any) {
+    this[_c_id] = null;
+    this[_c_protocol] = null;
+    this[_c_ips] = [];
+    this[_c_misc] = {};
+
+    Object.seal(this);
+
+    if (typeof connection !== "object" || connection === null) {
+      return;
+    }
+
+    // Assigned by name rather than through a dynamic index, and straight to the
+    // backing fields: the value read out of an arbitrary object is `unknown`,
+    // and asserting it here is the same single check the matching setter would
+    // have run.
+    for (const [prop, value] of Object.entries(connection)) {
+      if (prop === "id") {
+        this[_c_id] = assert.assertString("connection.id", value);
+      } else if (prop === "protocol") {
+        this[_c_protocol] = assert.assertString("connection.protocol", value);
+      } else if (prop === "ips") {
+        this[_c_ips] = assert.assertArray("connection.ips", value, "string");
+      } else {
+        this.misc[prop] = value;
+      }
+    }
+  }
+
+  /**
+   * Unique identifier of the user connection
+   */
+  set id(str: string | null) {
+    this[_c_id] = assert.assertString("connection.id", str);
+  }
+
+  get id(): string | null {
+    return this[_c_id];
+  }
+
+  /**
+   * Network protocol name
+   */
+  set protocol(str: string | null) {
+    this[_c_protocol] = assert.assertString("connection.protocol", str);
+  }
+
+  get protocol(): string | null {
+    return this[_c_protocol];
+  }
+
+  /**
+   * Chain of IP addresses, starting from the client
+   */
+  set ips(arr: string[]) {
+    this[_c_ips] = assert.assertArray("connection.ips", arr, "string");
+  }
+
+  get ips(): string[] {
+    return this[_c_ips];
+  }
+
+  /**
+   * Additional informations about the connection
+   */
+  get misc(): ContextMisc {
+    return this[_c_misc];
+  }
+
+  /**
+   * Serializes the Connection object
+   */
+  toJSON(): JSONObject {
+    return {
+      id: this[_c_id],
+      ips: this[_c_ips],
+      protocol: this[_c_protocol],
+      ...this[_c_misc],
+    };
+  }
+}
+
+/**
+ * Kuzzle execution context for the request.
+ *
+ * Contains informations about identity (token, user)
+ * and origin (connection, protocol).
+ */
+export class RequestContext {
+  /*
+   * The backing fields behind the accessors below, declared so that the
+   * compiler checks them. They keep the zero-width-space keys rather than
+   * becoming `private` or `#` names, which is what keeps `console.log` output
+   * as it has been for ten years — see the comment on those constants.
+   * Declaring them changes nothing at runtime.
+   */
+  [_token]: Token | null;
+  [_user]: User | null;
+  [_connection]: Connection;
+
+  constructor(options: any = {}) {
+    this[_token] = null;
+    this[_user] = null;
+    this[_connection] = new Connection(options.connection);
+
+    Object.seal(this);
+
+    this.token = options.token;
+    this.user = options.user;
+
+    // @deprecated - backward compatibility only
+    if (options.connectionId) {
+      this.connectionId = options.connectionId;
+    }
+
+    if (options.protocol) {
+      this.protocol = options.protocol;
+    }
+  }
+
+  /**
+   * Serializes the RequestContext object
+   */
+  toJSON(): JSONObject {
+    return {
+      connection: this[_connection].toJSON(),
+      token: this[_token],
+      user: this[_user],
+    };
+  }
+
+  /**
+   * @deprecated use connection.id instead
+   * Internal connection ID
+   */
+  get connectionId(): string | null {
+    return this[_connection].id;
+  }
+
+  set connectionId(str: string) {
+    this[_connection].id = assert.assertString("connectionId", str);
+  }
+
+  /**
+   * @deprecated use connection.protocol instead
+   */
+  get protocol(): string | null {
+    return this[_connection].protocol;
+  }
+
+  set protocol(str: string) {
+    this[_connection].protocol = assert.assertString("protocol", str);
+  }
+
+  /**
+   * Connection that initiated the request
+   */
+  get connection(): Connection {
+    return this[_connection];
+  }
+
+  /**
+   * Authentication token
+   */
+  get token(): Token | null {
+    return this[_token];
+  }
+
+  set token(obj: Token | null) {
+    this[_token] = assert.assertObject("token", obj);
+  }
+
+  /**
+   * Associated user
+   */
+  get user(): User | null {
+    return this[_user];
+  }
+
+  set user(obj: User | null) {
+    this[_user] = assert.assertObject("user", obj);
+  }
+}

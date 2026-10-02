@@ -1,19 +1,17 @@
 ---
 code: true
 type: page
-title: loadMappings
+title: loadMappings | API | Core
 ---
 
 # loadMappings
-
-<SinceBadge version="1.7.0" />
 
 Apply mappings to the storage layer.
 
 **Notes:**
 
 * The mapping can contain any number of index and collection configurations.
-* Field definitions follow the [Elasticsearch](https://www.elastic.co/guide/en/elasticsearch/reference/5.6/mapping.html) mapping format.
+* Field definitions follow the [Elasticsearch](https://www.elastic.co/guide/en/elasticsearch/reference/7.4/mapping.html) mapping format.
 * If an index or collection does not exist, it will be created automatically.
 * Mappings are loaded sequentially, one index/collection pair at a time. If a failure occurs, Kuzzle immediately interrupts the sequence.
 

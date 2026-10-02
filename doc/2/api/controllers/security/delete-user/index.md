@@ -1,7 +1,7 @@
 ---
 code: true
 type: page
-title: deleteUser
+title: deleteUser | API | Core
 ---
 
 # deleteUser
@@ -35,11 +35,11 @@ Method: DELETE
 
 ## Arguments
 
-- `_id`: user [kuid](/core/2/guides/kuzzle-depth/authentication#the-kuzzle-user-identifier) to delete
+- `_id`: user [kuid](/core/2/guides/main-concepts/authentication#kuzzle-user-identifier-kuid) to delete
 
 ### Optional:
 
-- `refresh`: if set to `wait_for`, Kuzzle will not respond until the user deletion is indexed
+- `refresh`: if set to `wait_for`, Kuzzle will not respond until the user deletion is indexed (default: `"wait_for"`)
 
 ---
 

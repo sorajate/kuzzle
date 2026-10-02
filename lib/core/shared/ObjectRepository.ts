@@ -1,0 +1,630 @@
+/*
+ * Kuzzle, a backend software, self-hostable and ready to use
+ * to power modern apps
+ *
+ * Copyright 2015-2022 Kuzzle
+ * mailto: support AT kuzzle.io
+ * website: http://kuzzle.io
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import type { JSONObject } from "../../types/JSONObject";
+import * as kerror from "../../kerror";
+import { cacheDbEnum } from "../cache/cacheDbEnum";
+
+/**
+ * The constructor's options. `store` used to be untyped, so it inferred from
+ * its `= null` default and every subclass passing a real store was, under
+ * strict, passing something "not assignable to null" (ADR-0001, TD-40 —
+ * #2727). Only `.index` is read here; the rest of a store's surface is
+ * exercised through `this.store`.
+ */
+interface ObjectRepositoryOptions {
+  cache?: cacheDbEnum;
+  store?: { index: string } | null;
+}
+
+/**
+ * What `formatSearchResults` builds out of a raw store answer, and what
+ * `truncate`'s recursion reads back.
+ */
+export interface RepositorySearchResult<TObject> {
+  aggregations?: JSONObject;
+  hits: TObject[];
+  scrollId?: string;
+  total: number;
+}
+
+/**
+ * What `search` and `scroll` are declared to answer: v2.56.0's shape, kept
+ * for compatibility — what they build is a {@link RepositorySearchResult},
+ * but typed members break code compiled against this one (reading
+ * `aggregations.x` under `strict`, assigning `hits` to its own type). Read
+ * the answer into a `RepositorySearchResult<T>` to get the types back.
+ */
+export type ObjectRepositorySearchAnswer = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- v2.56.0's public type, kept for compatibility
+  aggregations?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- v2.56.0's public type, kept for compatibility
+  hits: any[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- v2.56.0's public type, kept for compatibility
+  scrollId: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- v2.56.0's public type, kept for compatibility
+  total: any;
+};
+
+/**
+ * One page of a `truncate` walk, handed to the next recursive call.
+ */
+interface TruncatePart {
+  fetched: number;
+  scrollId: string;
+  total: number;
+}
+
+/**
+ * `_id` is nullable because the models are: `User`, `Profile` and `Token` are
+ * all constructed empty and get their id on the way out of the store
+ * (ADR-0001, TD-62). The repository only ever reads it off an object it
+ * loaded, which has one.
+ */
+export class ObjectRepository<TObject extends { _id: string | null }> {
+  protected ttl: number;
+  protected index: string;
+
+  /**
+   * Set by every subclass's own constructor — the `= null` this used to carry
+   * was never read (ADR-0001, TD-62).
+   */
+  protected collection!: string;
+  protected ObjectConstructor: any;
+  protected store: any;
+  protected cacheDb: cacheDbEnum;
+
+  /**
+   * `store` is declared `unknown`, as v2.56.0's `any` accepted anything; only
+   * its `index` is read here.
+   */
+  constructor(options?: { cache?: cacheDbEnum; store?: unknown });
+  constructor({
+    cache = cacheDbEnum.INTERNAL,
+    store = null,
+  }: ObjectRepositoryOptions = {}) {
+    this.ttl = global.kuzzle.config.repositories.common.cacheTTL;
+    this.ObjectConstructor = null;
+    this.store = store;
+    this.index = store ? store.index : global.kuzzle.internalIndex.index;
+    this.cacheDb = cache;
+  }
+
+  /**
+   * Resolves `null` when the document does not carry an `_id` — declared
+   * `Promise<TObject>` all the same: see `load()`.
+   */
+  async loadOneFromDatabase(id: string): Promise<TObject> {
+    let response;
+
+    try {
+      response = await this.store.get(this.collection, id);
+    } catch (error) {
+      if (error instanceof Error && "status" in error && error.status === 404) {
+        throw kerror.get("services", "storage", "not_found", id);
+      }
+
+      throw error;
+    }
+
+    if (response._id) {
+      const dto = {};
+
+      if (response._source) {
+        Object.assign(dto, response._source, { _id: response._id });
+      } else {
+        Object.assign(dto, response);
+      }
+
+      return this.fromDTO(dto);
+    }
+
+    return null!;
+  }
+
+  async loadMultiFromDatabase(ids: string[]): Promise<TObject[]> {
+    const { items } = await this.store.mGet(this.collection, ids);
+
+    if (items.length === 0) {
+      return [];
+    }
+
+    const promises = [];
+
+    for (const item of items) {
+      promises.push(
+        this.fromDTO({
+          ...item._source,
+          _id: item._id,
+        }),
+      );
+    }
+
+    const objects = await Promise.all(promises);
+
+    return objects;
+  }
+
+  /**
+   * Search in database corresponding repository according to a query
+   *
+   * @param {object} searchBody
+   * @param {object} [options] - optional search arguments (from, size, scroll)
+   * @returns {Promise}
+   *
+   * The public signature is v2.56.0's — see {@link ObjectRepositorySearchAnswer}.
+   */
+  search(
+    searchBody: unknown,
+    options?: unknown,
+  ): Promise<ObjectRepositorySearchAnswer>;
+  async search(
+    searchBody: JSONObject,
+    options: JSONObject = {},
+  ): Promise<RepositorySearchResult<TObject>> {
+    const response = await this.store.search(
+      this.collection,
+      searchBody,
+      options,
+    );
+
+    return this.formatSearchResults(response);
+  }
+
+  /**
+   * Scroll over a paginated search request
+   *
+   * The public signature is v2.56.0's — see {@link ObjectRepositorySearchAnswer}.
+   */
+  scroll(
+    scrollId: string,
+    ttl?: string | number,
+  ): Promise<ObjectRepositorySearchAnswer>;
+  async scroll(
+    scrollId: string,
+    ttl?: string | number,
+  ): Promise<RepositorySearchResult<TObject>> {
+    const response = await this.store.scroll(scrollId, ttl);
+
+    return this.formatSearchResults(response);
+  }
+
+  /**
+   * Loads an object from Cache. Returns a promise that resolves either to the
+   * retrieved object of null in case it is not found.
+   *
+   * The opts object currently accepts one optional parameter: key, which forces
+   * the cache key to fetch.
+   * In case the key is not provided, it defaults to repos/<index>/<collection>/<id>, i.e.: repos/%kuzzle/users/12
+   *
+   * @param id - The id of the object to get
+   * @param options.key - Cache key.
+   */
+  async loadFromCache(
+    id: string,
+    options: { key?: string } = {},
+  ): Promise<TObject> {
+    const key = options.key || this.getCacheKey(id);
+    let response;
+
+    try {
+      response = await global.kuzzle.ask(`core:cache:${this.cacheDb}:get`, key);
+
+      if (response === null || response === undefined) {
+        return null!;
+      }
+
+      return await this.fromDTO({ ...JSON.parse(response) });
+    } catch (err) {
+      throw kerror.get(
+        "services",
+        "cache",
+        "read_failed",
+        err instanceof Error ? err.message : String(err),
+      );
+    }
+  }
+
+  /**
+   * Loads an object from Cache or from the Database if not available in Cache.
+   * Returns a promise that resolves either to the
+   * retrieved object of null in case it is not found.
+   *
+   * All three of `load`, `loadFromCache` and `loadOneFromDatabase` have
+   * always had a `return null` path, and are declared `Promise<TObject>` all
+   * the same (the `null!`s): that is what v2.56.0 declared, and plugins and
+   * applications subclass this — `(await this.load(id)).name` compiled
+   * against it under `strict`. Stating the `| null` (ADR-0001, TD-40, #2727)
+   * broke them; a caller that can meet the `null` checks for it.
+   *
+   * If the object is not found in Cache and found in the Database,
+   * it will be written to cache also.
+   *
+   * The opts object currently accepts one optional parameter: key, which forces
+   * the cache key to fetch.
+   * In case the key is not provided, it defaults to <collection>/id
+   * (e.g. users/12)
+   *
+   * @param id - The id of the object to get
+   * @param options.key - Optional cache key
+   */
+  async load(id: string, options: { key?: string } = {}): Promise<TObject> {
+    if (this.cacheDb === cacheDbEnum.NONE) {
+      return this.loadOneFromDatabase(id);
+    }
+
+    const object = await this.loadFromCache(id, options);
+
+    if (object === null) {
+      if (this.store === null) {
+        return null!;
+      }
+
+      const objectFromDatabase = await this.loadOneFromDatabase(id);
+
+      if (objectFromDatabase !== null) {
+        await this.persistToCache(objectFromDatabase);
+      }
+
+      return objectFromDatabase;
+    }
+
+    await this.refreshCacheTTL(object);
+
+    return object;
+  }
+
+  /**
+   * Persists the given object in the collection that is attached to the repository.
+   *
+   * @param object - The object to persist
+   * @param options.method -
+   * @returns {Promise}
+   */
+  persistToDatabase(object: TObject, options: any = {}) {
+    const method = options.method || "createOrReplace";
+
+    if (method === "create") {
+      return this.store.create(
+        this.collection,
+        this.serializeToDatabase(object),
+        { ...options, id: object._id },
+      );
+    }
+
+    return this.store[method](
+      this.collection,
+      object._id,
+      this.serializeToDatabase(object),
+      options,
+    );
+  }
+
+  /**
+   * Given an object with an id, delete it from the configured storage engines
+   *
+   * @param object - The object to delete
+   * @param options.key - if provided, removes the given key instead of the default one (<collection>/<id>)
+   */
+  async delete(object: TObject, options: any = {}): Promise<void> {
+    const promises = [];
+
+    if (this.cacheDb !== cacheDbEnum.NONE) {
+      promises.push(this.deleteFromCache(this.idOf(object), options));
+    }
+
+    if (this.store) {
+      promises.push(this.deleteFromDatabase(this.idOf(object), options));
+    }
+
+    await Promise.all(promises);
+  }
+
+  /**
+   * Delete repository from database according to its id
+   */
+  deleteFromDatabase(id: string, options: JSONObject = {}) {
+    return this.store.delete(this.collection, id, options);
+  }
+
+  /**
+   * Persists the given ObjectConstructor object in cache.
+   *
+   * @param object - The object to persist
+   * @param options.key - if provided, stores the object to the given key instead of the default one (<collection>/<id>)
+   * @param options.ttl - if provided, overrides the default ttl set on the repository for the current operation
+   */
+  async persistToCache(
+    object: TObject,
+    options: { key?: string; ttl?: number } = {},
+  ): Promise<TObject> {
+    const key = options.key || this.getCacheKey(this.idOf(object));
+    const value = JSON.stringify(this.serializeToCache(object));
+    const ttl = options.ttl ?? this.ttl;
+
+    await global.kuzzle.ask(`core:cache:${this.cacheDb}:store`, key, value, {
+      ttl,
+    });
+
+    return object;
+  }
+
+  /**
+   * Removes the object from the Cache Engine
+   *
+   * @param id
+   * @param options.key - if provided, stores the object to the given key instead of the default one (<collection>/<id>)
+   */
+  async deleteFromCache(id: string, options: { key?: string } = {}) {
+    const key = options.key || this.getCacheKey(id);
+
+    await global.kuzzle.ask(`core:cache:${this.cacheDb}:del`, key);
+  }
+
+  /**
+   * @param object
+   * @param options.key - if provided, stores the object to the given key instead of the default one (<collection>/<id>)
+   * @param options.ttl - if provided, overrides the default ttl set on the repository for the current operation
+   */
+  refreshCacheTTL(
+    object: JSONObject,
+    options: { key?: string; ttl?: number } = {},
+  ) {
+    const key = options.key || this.getCacheKey(object._id);
+    let ttl;
+
+    if (options.ttl !== undefined) {
+      ttl = options.ttl;
+    } else if (object.ttl !== undefined) {
+      // if a TTL has been defined at the entry creation, we should
+      // use it
+      ttl = object.ttl;
+    } else {
+      ttl = this.ttl;
+    }
+
+    if (ttl > 0) {
+      return global.kuzzle.ask(`core:cache:${this.cacheDb}:expire`, key, ttl);
+    }
+
+    return global.kuzzle.ask(`core:cache:${this.cacheDb}:persist`, key);
+  }
+
+  /**
+   * @param object
+   * @param options.key - if provided, stores the object to the given key instead of the default one (<collection>/<id>)
+   */
+  async expireFromCache(object: TObject, options: { key?: string } = {}) {
+    const key = options.key || this.getCacheKey(this.idOf(object));
+
+    await global.kuzzle.ask(`core:cache:${this.cacheDb}:expire`, key, -1);
+  }
+
+  /**
+   * Serializes the object before being persisted to cache.
+   *
+   * @param object - The object to serialize
+   */
+  serializeToCache(object: TObject) {
+    return this.toDTO(object);
+  }
+
+  /**
+   * Serializes the object before being persisted to the database.
+   *
+   * v2.56.0 declared it `Omit<TObject, "_id">`, which subclasses do not
+   * honour (RoleRepository also drops `restrictedTo`), and which code
+   * compiled against it assigns to or overrides with. Only `any` accepts both
+   * that and the `JSONObject` Kuzzle's own subclasses answer.
+   *
+   * @param object - The object to serialize
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- v2.56.0's public type, kept for compatibility
+  serializeToDatabase(object: TObject): any {
+    const dto = this.toDTO(object);
+    delete dto._id;
+    return dto;
+  }
+
+  /**
+   * @param {string} id
+   */
+  /**
+   * The id of an object being written, removed or expired.
+   *
+   * A model carries `null` until it has been stored (ADR-0001, TD-62), and
+   * every path that calls this already holds one that has. Building a cache
+   * key out of a `null` would silently address `repos/<index>/<collection>/null`,
+   * which is the failure this replaces.
+   *
+   * @throws {PreconditionError} when the object has no id
+   */
+  protected idOf(object: { _id: string | null }): string {
+    if (object._id === null) {
+      throw kerror.get("services", "storage", "missing_argument", "_id");
+    }
+
+    return object._id;
+  }
+
+  getCacheKey(id: string): string {
+    return `repos/${this.index}/${this.collection}/${id}`;
+  }
+
+  /**
+   * @param {object} dto
+   * @returns {Promise<ObjectConstructor>}
+   */
+  async fromDTO(dto: JSONObject): Promise<TObject> {
+    const o = new this.ObjectConstructor();
+    Object.assign(o, dto);
+
+    return o;
+  }
+
+  /**
+   * @param {ObjectConstructor} o
+   * @returns {object}
+   */
+  toDTO(o: TObject): any {
+    return { ...o };
+  }
+
+  /**
+   * Recursively delete all objects in repository with a scroll
+   *
+   * @param {object} options - ES options (refresh)
+   * @param {object} part
+   * @returns {Promise<integer>} total deleted objects
+   *
+   * The public signature is v2.56.0's: untyped options, an `any` answer.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- v2.56.0's public type, kept for compatibility
+  truncate(options: unknown): Promise<any>;
+  async truncate(options: JSONObject): Promise<number> {
+    // Allows safe overrides, as _truncate is called recursively
+    return this._truncate(options);
+  }
+
+  /**
+   * Do not override this: this function calls itself.
+   */
+  private async _truncate(
+    options: JSONObject,
+    part: TruncatePart | null = null,
+  ): Promise<number> {
+    if (part === null) {
+      const objects = await this.search(
+        {},
+        { refresh: options.refresh, scroll: "5s", size: 100 },
+      );
+      const deleted = await this.truncatePart(objects, options);
+
+      // A page that holds back hits always answers a scroll id; without one
+      // there is no next page to walk, and calling `scroll(undefined)` is how
+      // that used to be discovered.
+      if (objects.hits.length < objects.total && objects.scrollId) {
+        const total = await this._truncate(options, {
+          fetched: objects.hits.length,
+          scrollId: objects.scrollId,
+          total: objects.total,
+        });
+
+        return deleted + total;
+      }
+
+      return deleted;
+    }
+
+    const objects = await this.scroll(part.scrollId, "5s");
+    const deleted = await this.truncatePart(objects, options);
+
+    part.fetched += objects.hits.length;
+
+    if (part.fetched < part.total && objects.scrollId) {
+      part.scrollId = objects.scrollId;
+
+      const total = await this._truncate(options, part);
+      return deleted + total;
+    }
+
+    return deleted;
+  }
+
+  /**
+   * @param {Array} objects
+   * @param {object} options
+   * @returns {Promise<integer>} count of deleted objects
+   */
+  private async truncatePart(
+    objects: RepositorySearchResult<TObject>,
+    options: JSONObject,
+  ): Promise<number> {
+    const promises: Array<Promise<number>> = [];
+
+    const processObject = async (object: TObject): Promise<number> => {
+      // profile and role repositories have protected objects, we can't delete
+      // them
+      const protectedObjects =
+        ["profiles", "roles"].indexOf(this.collection) !== -1
+          ? ["admin", "default", "anonymous"]
+          : [];
+
+      const id = this.idOf(object);
+
+      if (protectedObjects.includes(id)) {
+        return 0;
+      }
+
+      const loaded = await this.load(id);
+
+      if (loaded === null) {
+        return 0;
+      }
+
+      await this.delete(loaded, options);
+
+      return 1;
+    };
+
+    for (const hit of objects.hits) {
+      promises.push(processObject(hit));
+    }
+
+    const results = await Promise.all(promises);
+
+    return results.reduce((total, deleted) => total + deleted, 0);
+  }
+
+  /**
+   * Given a raw search response from ES, returns a {total: int, hits: []} object
+   * @param {object} raw
+   * @returns {Promise<object>}
+   * @private
+   */
+  private async formatSearchResults(
+    raw: JSONObject,
+  ): Promise<RepositorySearchResult<TObject>> {
+    const result: RepositorySearchResult<TObject> = {
+      aggregations: raw.aggregations,
+      hits: [],
+      scrollId: raw.scrollId,
+      total: raw.total,
+    };
+
+    if (raw.hits && raw.hits.length > 0) {
+      const promises = [];
+
+      for (const hit of raw.hits) {
+        promises.push(
+          this.fromDTO({
+            ...hit._source,
+            _id: hit._id,
+          }),
+        );
+      }
+
+      result.hits = await Promise.all(promises);
+    }
+
+    return result;
+  }
+}

@@ -1,12 +1,10 @@
 ---
 code: true
 type: page
-title: list
+title: list | API | Core
 ---
 
 # list
-
-
 
 Returns the complete list of indexes.
 
@@ -17,7 +15,7 @@ Returns the complete list of indexes.
 ### HTTP
 
 ```http
-URL: http://kuzzle:7512/_list
+URL: http://kuzzle:7512/_list[?countCollections]
 Method: GET
 ```
 
@@ -26,15 +24,27 @@ Method: GET
 ```js
 {
   "controller": "index",
-  "action": "list"
+  "action": "list",
+
+  "countCollection": true
 }
 ```
 
 ---
 
+## Arguments
+
+### Optional:
+
+- `countCollections`: if set to true, will returns the number of collections in each index
+
+---
+
 ## Response
 
-Returns a `indexes` array listing all existing index names.
+Returns an object containing an `indexes` array containing the indexes names.  
+
+If the `countCollections` argument has been set to `true`, then the object contains an `collections` object containing the number of collection in each index.
 
 ```js
 {
@@ -49,7 +59,13 @@ Returns a `indexes` array listing all existing index names.
       "index_2",
       "index_...",
       "index_n"
-    ]
+    ],
+
+    // only when countCollections is set to true
+    "collections": {
+      "index_1": 42,
+      "index_2": 21
+    }
   }
 }
 ```
@@ -58,5 +74,5 @@ Returns a `indexes` array listing all existing index names.
 
 ## Possible errors
 
-- [Common errors](/core/2/api/essentials/errors/handling#common-errors)
+- [Common errors](/core/2/api/errors/types#common-errors)
 

@@ -2,12 +2,10 @@
 type: page
 
 code: true
-title: shutdown
+title: shutdown | API | Core
 ---
 
 # shutdown
-
-<SinceBadge version="1.4.0" />
 
 Safely stops a Kuzzle instance after all remaining requests are processed.
 

@@ -1,7 +1,7 @@
 ---
 code: true
 type: page
-title: validateSpecifications
+title: validateSpecifications | API | Core
 ---
 
 # validateSpecifications
@@ -100,5 +100,5 @@ Example:
 
 ## Possible errors
 
-- [Common errors](/core/2/api/essentials/errors/handling#common-errors)
+- [Common errors](/core/2/api/errors/types#common-errors)
 

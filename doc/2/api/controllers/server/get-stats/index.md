@@ -1,12 +1,12 @@
 ---
 code: true
 type: page
-title: getStats
+title: getStats | API | Core
 ---
 
 # getStats
 
-
+<DeprecatedBadge version="2.16.0" />
 
 Returns statistics snapshots within a provided timestamp range.
 

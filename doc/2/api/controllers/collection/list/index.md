@@ -1,12 +1,10 @@
 ---
 code: true
 type: page
-title: list
+title: list | API | Core
 ---
 
 # list
-
-
 
 Returns the list of collections associated to a provided index.
 
@@ -19,7 +17,7 @@ The returned list is sorted in alphanumerical order.
 ### HTTP
 
 ```http
-URL: http://kuzzle:7512/<index>/_list[?type=<all|stored|realtime>][&from=0][&size=42]
+URL: http://kuzzle:7512/<index>/_list[?type=<all|stored|realtime>]
 Method: GET
 ```
 
@@ -30,9 +28,7 @@ Method: GET
   "index": "<index>",
   "controller": "collection",
   "action": "list",
-  "type": "stored",
-  "from": 0,
-  "size": 42
+  "type": "stored"
 }
 ```
 
@@ -43,10 +39,11 @@ Method: GET
 - `collection`: collection name
 - `index`: index name
 
+
 ### Optional:
 
-- `from` and `size`: response pagination
-- `type`: filters the returned collections. Allowed values: `all`, `stored` and `realtime` (default : `all`).
+- `from` and `size`: response pagination <DeprecatedBadge version="2.1.4" />
+- `type`: filters the returned collections. Allowed values: `all`, `stored` and `realtime` (default : `all`). <DeprecatedBadge version="2.10.2" />
 
 ---
 
@@ -103,6 +100,6 @@ Example:
 
 ## Possible errors
 
-- [Common errors](/core/2/api/essentials/errors/handling#common-errors)
-- [NotFoundError](/core/2/api/essentials/errors/handling#notfounderror)
+- [Common errors](/core/2/api/errors/types#common-errors)
+- [NotFoundError](/core/2/api/errors/types#notfounderror)
 

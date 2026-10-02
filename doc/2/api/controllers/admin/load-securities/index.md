@@ -1,20 +1,25 @@
 ---
 code: true
 type: page
-title: loadSecurities
+title: loadSecurities | API | Core
 ---
 
 # loadSecurities
 
-<SinceBadge version="1.7.0" />
-
 Load roles, profiles and users into the storage layer.
 
-The roles, profiles and users definitions follow the same structure as in the body parameter of these corresponding API routes:
+<!-- Duplicate section with /core/2/guides/main-concepts/3-permissions -->
 
- - [createRole](/core/2/api/controllers/security/create-role)
- - [createProfile](/core/2/api/controllers/security/create-profile)
- - [createUser](/core/2/api/controllers/security/create-user)
+The roles, profiles and users definitions follow the same structure as in the body parameter of their corresponding API actions:
+
+ - [security:createRole](/core/2/api/controllers/security/create-role)
+ - [security:createProfile](/core/2/api/controllers/security/create-profile)
+ - [security:createUser](/core/2/api/controllers/security/create-user)
+
+::: warning
+By default, Kuzzle prevents existing user overwriting.
+You can either skip or overwrite existing users with the `onExistingUsers` option.
+:::
 
 **Notes:**
 
@@ -29,7 +34,7 @@ The roles, profiles and users definitions follow the same structure as in the bo
 ### HTTP
 
 ```http
-URL: http://kuzzle:7512/admin/_loadSecurities[?refresh=wait_for]
+URL: http://kuzzle:7512/admin/_loadSecurities[?refresh=wait_for][&onExistingUsers=skip|overwrite|fail][&force]
 Method: POST
 Body:
 ```
@@ -86,7 +91,9 @@ Body:
 
 ### Optional:
 
+* `onExistingUsers`: can be set to either `fail` (default), `skip` or `overwrite` to either fail, skip or overwrite existing users
 * `refresh`: if set to `wait_for`, Kuzzle will not respond until the fixtures are loaded
+* `force`: if set to `true`, creates the role even if it gives access to non-existent plugins API actions.
 
 ---
 

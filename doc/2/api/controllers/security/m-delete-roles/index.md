@@ -1,7 +1,7 @@
 ---
 code: true
 type: page
-title: mDeleteRoles
+title: mDeleteRoles | API | Core
 ---
 
 # mDeleteRoles
@@ -46,7 +46,7 @@ Body:
 
 ### Optional:
 
-- `refresh`: if set to `wait_for`, Kuzzle will not respond until the deletions are indexed
+- `refresh`: if set to `wait_for`, Kuzzle will not respond until the deletions are indexed (default: `"wait_for"`)
 
 ---
 

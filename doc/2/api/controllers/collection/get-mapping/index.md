@@ -1,16 +1,14 @@
 ---
 code: true
 type: page
-title: getMapping
+title: getMapping | API | Core
 ---
 
 # getMapping
 
 Returns a collection mapping.
 
-<SinceBadge version="1.7.1" />
-
-Also returns the collection [dynamic mapping policy](/core/2/guides/essentials/database-mappings#dynamic-mapping-policy) and [collection additional metadata](/core/2/guides/essentials/database-mappings#collection-metadata).
+Also returns the collection [dynamic mapping policy](/core/2/guides/main-concepts/data-storage#mappings-dynamic-policy) and [collection additional metadata](/core/2/guides/main-concepts/data-storage#mappings-metadata).
 
 ---
 
@@ -19,7 +17,7 @@ Also returns the collection [dynamic mapping policy](/core/2/guides/essentials/d
 ### HTTP
 
 ```http
-URL: http://kuzzle:7512/<index>/<collection>/_mapping
+URL: http://kuzzle:7512/<index>/<collection>/_mapping[?includeKuzzleMeta]
 Method: GET
 ```
 
@@ -30,7 +28,8 @@ Method: GET
   "index": "<index>",
   "collection": "<collection>",
   "controller": "collection",
-  "action": "getMapping"
+  "action": "getMapping",
+  "includeKuzzleMeta": false
 }
 ```
 
@@ -40,6 +39,7 @@ Method: GET
 
 - `collection`: collection name
 - `index`: index name
+- `includeKuzzleMeta`: include [Kuzzle metadata](/core/2/guides/main-concepts/data-storage#mappings-metadata) mappings in the response
 
 ---
 
@@ -48,18 +48,15 @@ Method: GET
 Returns a mapping object with the following structure:
 
 ```
-<index>
-  |- mappings
-    |- <collection>
-      |- dynamic
-      |- _meta
-        |- metadata 1
-        |- metadata 1
-      |- properties
-        |- mapping for field 1
-        |- mapping for field 2
-        |- ...
-        |- mapping for field n
+|- dynamic
+|- _meta
+  |- metadata 1
+  |- metadata 1
+|- properties
+  |- mapping for field 1
+  |- mapping for field 2
+  |- ...
+  |- mapping for field n
 ```
 
 ### Example:
@@ -74,22 +71,16 @@ Returns a mapping object with the following structure:
   "action": "getMapping",
   "requestId": "<unique request identifier>",
   "result": {
-    "<index>": {
-      "mappings": {
-        "<collection>": {
-          "dynamic": "true",
-          "_meta": {
-            "metadata1": "value1"
-          },
-          "properties": {
-            "field1": { "type": "integer" },
-            "field2": { "type": "keyword" },
-            "field3": {
-              "type":   "date",
-              "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
-            }
-          }
-        }
+    "dynamic": "true",
+    "_meta": {
+      "metadata1": "value1"
+    },
+    "properties": {
+      "field1": { "type": "integer" },
+      "field2": { "type": "keyword" },
+      "field3": {
+        "type":   "date",
+        "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
       }
     }
   }
@@ -101,6 +92,5 @@ Returns a mapping object with the following structure:
 
 ## Possible errors
 
-- [Common errors](/core/2/api/essentials/errors/handling#common-errors)
-- [NotFoundError](/core/2/api/essentials/errors/handling#notfounderror)
-
+- [Common errors](/core/2/api/errors/types#common-errors)
+- [NotFoundError](/core/2/api/errors/types#notfounderror)

@@ -1,0 +1,73 @@
+import { When, Then } from "@cucumber/cucumber";
+import should from "should";
+import type KuzzleWorld from "../support/world";
+
+/**
+ * One bulk action, as the feature files write it: a single verb (`index`,
+ * `create`, `delete`…) mapped to that verb's payload.
+ */
+type BulkAction = Record<string, Record<string, unknown>>;
+
+const actionName = (action: BulkAction) => Object.keys(action)[0];
+const actionBody = (action: BulkAction) => action[actionName(action)];
+
+When(
+  "I perform a bulk import with the following:",
+  async function (this: KuzzleWorld, dataTable) {
+    const bulkData = dataTable.rawTable.map(JSON.parse);
+
+    this.props.result = await this.sdk.bulk.import(
+      this.props.index,
+      this.props.collection,
+      bulkData,
+    );
+  },
+);
+
+Then(
+  "I should receive a bulk result matching:",
+  function (this: KuzzleWorld, dataTable) {
+    const expectedResult = dataTable.rawTable.map(JSON.parse);
+
+    for (let i = 0; i < this.props.result.successes.length; i++) {
+      const successAction = this.props.result.successes[i];
+
+      should(actionName(successAction)).match(actionName(expectedResult[i]));
+      should(actionBody(successAction)).match(actionBody(expectedResult[i]));
+    }
+  },
+);
+
+Then(
+  "I should receive a bulk error matching:",
+  function (this: KuzzleWorld, dataTable) {
+    const expectedError = dataTable.rawTable.map(JSON.parse);
+
+    for (let i = 0; i < this.props.result.errors.length; i++) {
+      const errorAction = this.props.result.errors[i];
+
+      should(actionName(errorAction)).match(actionName(expectedError[i]));
+      should(actionBody(errorAction)).match(actionBody(expectedError[i]));
+    }
+  },
+);
+
+Then(
+  "I perform a bulk deleteByQuery with the query:",
+  async function (this: KuzzleWorld, rawQuery) {
+    const query = JSON.parse(rawQuery);
+
+    const request = {
+      action: "deleteByQuery",
+      body: { query },
+      collection: this.props.collection,
+      controller: "bulk",
+      index: this.props.index,
+      refresh: "wait_for",
+    };
+
+    const { result } = await this.sdk.query(request);
+
+    this.props.result = result;
+  },
+);

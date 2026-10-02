@@ -1,7 +1,7 @@
 ---
 code: true
 type: page
-title: deleteProfile
+title: deleteProfile | API | Core
 ---
 
 # deleteProfile
@@ -19,7 +19,7 @@ An error is returned if the profile is still in use.
 ### HTTP
 
 ```http
-URL: http://kuzzle:7512/_profiles/<_id>[?refresh=wait_for]
+URL: http://kuzzle:7512/_profiles/<_id>[?refresh=wait_for][&onAssignedUsers=remove|fail]
 Method: DELETE
 ```
 
@@ -29,7 +29,10 @@ Method: DELETE
 {
   "controller": "security",
   "action": "deleteProfile",
-  "_id": "<profileId>"
+  "_id": "<profileId> ",
+
+  // optional arguments
+  "onAssignedUsers": "<remove|fail>"
 }
 ```
 
@@ -41,7 +44,8 @@ Method: DELETE
 
 ### Optional:
 
-- `refresh`: if set to `wait_for`, Kuzzle will not respond until the profile deletion is indexed
+- `refresh`: if set to `wait_for`, Kuzzle will not respond until the profile deletion is indexed (default: `"wait_for"`)
+- `onAssignedUsers`: if set to `remove`, Kuzzle will remove this profile from assigned users. If this was a user's sole profile, then the `anonymous` profile will be assigned. (default: `"fail"`) <SinceBadge version="2.4.0" />
 
 ---
 
